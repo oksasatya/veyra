@@ -6,34 +6,31 @@ use uuid::Uuid;
 
 use crate::{
     application::errors::AppError,
-    domain::service_record::entity::ServiceRecord,
-    ports::repositories::{CreateServiceRecordParams, ServiceRecordRepository, VehicleRepository},
+    domain::fuel_log::entity::FuelLog,
+    ports::repositories::{CreateFuelLogParams, FuelLogRepository, VehicleRepository},
 };
 
-pub struct CreateServiceRecordUseCase {
-    pub repo: Arc<dyn ServiceRecordRepository>,
+pub struct CreateFuelLogUseCase {
+    pub repo: Arc<dyn FuelLogRepository>,
     pub vehicle_repo: Arc<dyn VehicleRepository>,
 }
 
-pub struct CreateServiceRecordInput {
+pub struct CreateFuelLogInput {
     pub vehicle_id: Uuid,
     pub user_id: Uuid,
-    pub service_date: NaiveDate,
+    pub log_date: NaiveDate,
     pub odometer: u32,
-    pub description: String,
-    pub workshop: Option<String>,
-    pub cost: Option<Decimal>,
-    pub notes: Option<String>,
+    pub liters: Decimal,
+    pub price_per_liter: Decimal,
+    pub station: Option<String>,
+    pub is_full_tank: bool,
 }
 
-impl CreateServiceRecordUseCase {
+impl CreateFuelLogUseCase {
     /// Verifies that `vehicle_id` belongs to `user_id` before inserting the
-    /// service record. Returns `AppError::NotFound` if the vehicle is not owned
-    /// by the caller (ownership guard — no cross-user writes).
-    pub async fn execute(
-        &self,
-        input: CreateServiceRecordInput,
-    ) -> Result<ServiceRecord, AppError> {
+    /// fuel log. Returns `AppError::NotFound` if the vehicle is not owned by
+    /// the caller (ownership guard — no cross-user writes).
+    pub async fn execute(&self, input: CreateFuelLogInput) -> Result<FuelLog, AppError> {
         // Ownership guard: vehicle must belong to the caller
         self.vehicle_repo
             .find_by_id(input.vehicle_id, input.user_id)
@@ -41,14 +38,14 @@ impl CreateServiceRecordUseCase {
             .map_err(AppError::from)?;
 
         self.repo
-            .insert(CreateServiceRecordParams {
+            .insert(CreateFuelLogParams {
                 vehicle_id: input.vehicle_id,
-                service_date: input.service_date,
+                log_date: input.log_date,
                 odometer: input.odometer,
-                description: input.description,
-                workshop: input.workshop,
-                cost: input.cost,
-                notes: input.notes,
+                liters: input.liters,
+                price_per_liter: input.price_per_liter,
+                station: input.station,
+                is_full_tank: input.is_full_tank,
             })
             .await
             .map_err(AppError::from)
@@ -60,22 +57,19 @@ mod tests {
     use super::*;
     use crate::{
         domain::{
-            service_record::entity::ServiceRecord,
+            fuel_log::entity::FuelLog,
             vehicle::{
                 entity::Vehicle,
                 value_objects::{FuelType, Odometer, PlateNumber},
             },
         },
         ports::repositories::{
-            CreateServiceRecordParams, CreateVehicleParams, RepositoryError, RepositoryResult,
+            CreateFuelLogParams, CreateVehicleParams, RepositoryError, RepositoryResult,
             UpdateVehicleParams,
         },
     };
     use async_trait::async_trait;
     use chrono::Utc;
-    use rust_decimal::Decimal;
-
-    // ── Fake repos ────────────────────────────────────────────────────────────
 
     struct FakeVehicleRepo {
         owner_id: Uuid,
@@ -114,24 +108,21 @@ mod tests {
         }
     }
 
-    struct FakeServiceRecordRepo {
+    struct FakeFuelLogRepo {
         fail_with: Option<RepositoryError>,
     }
 
     #[async_trait]
-    impl ServiceRecordRepository for FakeServiceRecordRepo {
+    impl FuelLogRepository for FakeFuelLogRepo {
         async fn list_by_vehicle(
             &self,
             _vehicle_id: Uuid,
             _user_id: Uuid,
-        ) -> RepositoryResult<Vec<ServiceRecord>> {
+        ) -> RepositoryResult<Vec<FuelLog>> {
             Ok(vec![])
         }
 
-        async fn insert(
-            &self,
-            params: CreateServiceRecordParams,
-        ) -> RepositoryResult<ServiceRecord> {
+        async fn insert(&self, params: CreateFuelLogParams) -> RepositoryResult<FuelLog> {
             if let Some(ref e) = self.fail_with {
                 return Err(match e {
                     RepositoryError::NotFound => RepositoryError::NotFound,
@@ -139,15 +130,18 @@ mod tests {
                     RepositoryError::Database(m) => RepositoryError::Database(m.clone()),
                 });
             }
-            Ok(ServiceRecord {
+            let liters = params.liters;
+            let price_per_liter = params.price_per_liter;
+            Ok(FuelLog {
                 id: Uuid::new_v4(),
                 vehicle_id: params.vehicle_id,
-                service_date: params.service_date,
+                log_date: params.log_date,
                 odometer: params.odometer,
-                description: params.description,
-                workshop: params.workshop,
-                cost: params.cost,
-                notes: params.notes,
+                liters,
+                price_per_liter,
+                total_cost: liters * price_per_liter,
+                station: params.station,
+                is_full_tank: params.is_full_tank,
                 created_at: Utc::now(),
             })
         }
@@ -170,28 +164,26 @@ mod tests {
         }
     }
 
-    fn make_input(vehicle_id: Uuid, user_id: Uuid) -> CreateServiceRecordInput {
-        CreateServiceRecordInput {
+    fn make_input(vehicle_id: Uuid, user_id: Uuid) -> CreateFuelLogInput {
+        CreateFuelLogInput {
             vehicle_id,
             user_id,
-            service_date: "2026-01-15".parse().unwrap(),
-            odometer: 5_000,
-            description: "Oil change".into(),
-            workshop: Some("Fast Lube".into()),
-            cost: Some(Decimal::new(15000, 2)),
-            notes: None,
+            log_date: "2026-01-20".parse().unwrap(),
+            odometer: 10_000,
+            liters: Decimal::new(400, 1),             // 40.0
+            price_per_liter: Decimal::new(100000, 1), // 10000.0
+            station: Some("Shell".into()),
+            is_full_tank: true,
         }
     }
 
-    // ── Tests ─────────────────────────────────────────────────────────────────
-
     #[tokio::test]
-    async fn valid_input_creates_service_record() {
+    async fn valid_input_creates_fuel_log() {
         let vehicle_id = Uuid::new_v4();
         let user_id = Uuid::new_v4();
 
-        let uc = CreateServiceRecordUseCase {
-            repo: Arc::new(FakeServiceRecordRepo { fail_with: None }),
+        let uc = CreateFuelLogUseCase {
+            repo: Arc::new(FakeFuelLogRepo { fail_with: None }),
             vehicle_repo: Arc::new(FakeVehicleRepo {
                 owner_id: user_id,
                 vehicle_id,
@@ -200,9 +192,11 @@ mod tests {
 
         let result = uc.execute(make_input(vehicle_id, user_id)).await;
         assert!(result.is_ok());
-        let rec = result.unwrap();
-        assert_eq!(rec.description, "Oil change");
-        assert_eq!(rec.odometer, 5_000);
+        let log = result.unwrap();
+        assert_eq!(log.odometer, 10_000);
+        assert!(log.is_full_tank);
+        // total_cost = 40.0 * 10000.0 = 400000
+        assert_eq!(log.total_cost, Decimal::new(4_000_000, 1));
     }
 
     #[tokio::test]
@@ -211,8 +205,8 @@ mod tests {
         let owner_id = Uuid::new_v4();
         let intruder_id = Uuid::new_v4();
 
-        let uc = CreateServiceRecordUseCase {
-            repo: Arc::new(FakeServiceRecordRepo { fail_with: None }),
+        let uc = CreateFuelLogUseCase {
+            repo: Arc::new(FakeFuelLogRepo { fail_with: None }),
             vehicle_repo: Arc::new(FakeVehicleRepo {
                 owner_id,
                 vehicle_id,
@@ -228,8 +222,8 @@ mod tests {
         let vehicle_id = Uuid::new_v4();
         let user_id = Uuid::new_v4();
 
-        let uc = CreateServiceRecordUseCase {
-            repo: Arc::new(FakeServiceRecordRepo {
+        let uc = CreateFuelLogUseCase {
+            repo: Arc::new(FakeFuelLogRepo {
                 fail_with: Some(RepositoryError::Database("db error".into())),
             }),
             vehicle_repo: Arc::new(FakeVehicleRepo {

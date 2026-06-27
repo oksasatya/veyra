@@ -4,23 +4,19 @@ use uuid::Uuid;
 
 use crate::{
     application::errors::AppError,
-    domain::service_record::entity::ServiceRecord,
-    ports::repositories::{ServiceRecordRepository, VehicleRepository},
+    domain::fuel_log::entity::FuelLog,
+    ports::repositories::{FuelLogRepository, VehicleRepository},
 };
 
-pub struct ListServiceRecordsUseCase {
-    pub repo: Arc<dyn ServiceRecordRepository>,
+pub struct ListFuelLogsUseCase {
+    pub repo: Arc<dyn FuelLogRepository>,
     pub vehicle_repo: Arc<dyn VehicleRepository>,
 }
 
-impl ListServiceRecordsUseCase {
-    /// Verifies ownership of `vehicle_id` before listing its service records.
+impl ListFuelLogsUseCase {
+    /// Verifies ownership of `vehicle_id` before listing its fuel logs.
     /// Returns `AppError::NotFound` when the vehicle is not owned by `user_id`.
-    pub async fn execute(
-        &self,
-        vehicle_id: Uuid,
-        user_id: Uuid,
-    ) -> Result<Vec<ServiceRecord>, AppError> {
+    pub async fn execute(&self, vehicle_id: Uuid, user_id: Uuid) -> Result<Vec<FuelLog>, AppError> {
         // Ownership guard: vehicle must belong to the caller
         self.vehicle_repo
             .find_by_id(vehicle_id, user_id)
@@ -39,19 +35,20 @@ mod tests {
     use super::*;
     use crate::{
         domain::{
-            service_record::entity::ServiceRecord,
+            fuel_log::entity::FuelLog,
             vehicle::{
                 entity::Vehicle,
                 value_objects::{FuelType, Odometer, PlateNumber},
             },
         },
         ports::repositories::{
-            CreateServiceRecordParams, CreateVehicleParams, RepositoryError, RepositoryResult,
+            CreateFuelLogParams, CreateVehicleParams, RepositoryError, RepositoryResult,
             UpdateVehicleParams,
         },
     };
     use async_trait::async_trait;
     use chrono::Utc;
+    use rust_decimal::Decimal;
 
     struct FakeVehicleRepo {
         owner_id: Uuid,
@@ -103,47 +100,45 @@ mod tests {
         }
     }
 
-    struct FakeServiceRecordRepo {
-        records: Vec<ServiceRecord>,
+    struct FakeFuelLogRepo {
+        logs: Vec<FuelLog>,
     }
 
     #[async_trait]
-    impl ServiceRecordRepository for FakeServiceRecordRepo {
+    impl FuelLogRepository for FakeFuelLogRepo {
         async fn list_by_vehicle(
             &self,
             _vehicle_id: Uuid,
             _user_id: Uuid,
-        ) -> RepositoryResult<Vec<ServiceRecord>> {
-            Ok(self.records.clone())
+        ) -> RepositoryResult<Vec<FuelLog>> {
+            Ok(self.logs.clone())
         }
 
-        async fn insert(
-            &self,
-            _params: CreateServiceRecordParams,
-        ) -> RepositoryResult<ServiceRecord> {
+        async fn insert(&self, _params: CreateFuelLogParams) -> RepositoryResult<FuelLog> {
             Err(RepositoryError::NotFound)
         }
     }
 
     #[tokio::test]
-    async fn returns_records_for_owned_vehicle() {
+    async fn returns_logs_for_owned_vehicle() {
         let vehicle_id = Uuid::new_v4();
         let user_id = Uuid::new_v4();
 
-        let rec = ServiceRecord {
+        let log = FuelLog {
             id: Uuid::new_v4(),
             vehicle_id,
-            service_date: "2026-01-15".parse().unwrap(),
-            odometer: 5_000,
-            description: "Oil change".into(),
-            workshop: None,
-            cost: None,
-            notes: None,
+            log_date: "2026-01-20".parse().unwrap(),
+            odometer: 10_000,
+            liters: Decimal::new(400, 1),
+            price_per_liter: Decimal::new(100_000, 1),
+            total_cost: Decimal::new(4_000_000, 1),
+            station: Some("Shell".into()),
+            is_full_tank: true,
             created_at: Utc::now(),
         };
 
-        let uc = ListServiceRecordsUseCase {
-            repo: Arc::new(FakeServiceRecordRepo { records: vec![rec] }),
+        let uc = ListFuelLogsUseCase {
+            repo: Arc::new(FakeFuelLogRepo { logs: vec![log] }),
             vehicle_repo: Arc::new(FakeVehicleRepo {
                 owner_id: user_id,
                 vehicle_id,
@@ -161,8 +156,8 @@ mod tests {
         let owner_id = Uuid::new_v4();
         let intruder_id = Uuid::new_v4();
 
-        let uc = ListServiceRecordsUseCase {
-            repo: Arc::new(FakeServiceRecordRepo { records: vec![] }),
+        let uc = ListFuelLogsUseCase {
+            repo: Arc::new(FakeFuelLogRepo { logs: vec![] }),
             vehicle_repo: Arc::new(FakeVehicleRepo {
                 owner_id,
                 vehicle_id,

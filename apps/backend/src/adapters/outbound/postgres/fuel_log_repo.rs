@@ -3,30 +3,31 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::{
-    domain::service_record::entity::ServiceRecord,
+    domain::fuel_log::entity::FuelLog,
     ports::repositories::{
-        CreateServiceRecordParams, RepositoryError, RepositoryResult, ServiceRecordRepository,
+        CreateFuelLogParams, FuelLogRepository, RepositoryError, RepositoryResult,
     },
 };
 
-use super::models::ServiceRecordRow;
+use super::models::FuelLogRow;
 
-/// Column list for SELECT (no table prefix — used in single-table RETURNING).
+/// Column list for SELECT (no table prefix — used in single-table queries).
 const SELECT_COLS: &str =
-    "id, vehicle_id, service_date, odometer, description, workshop, cost, notes, created_at";
+    "id, vehicle_id, log_date, odometer, liters, price_per_liter, total_cost, \
+     station, is_full_tank, created_at";
 
-/// Column list with `sr.` prefix — used in JOINed queries where vehicles also
-/// has overlapping column names (e.g., `notes`).
+/// Column list with `fl.` prefix — used in JOINed queries where vehicles also
+/// has overlapping column names (e.g., `id`).
 const SELECT_COLS_PREFIXED: &str =
-    "sr.id, sr.vehicle_id, sr.service_date, sr.odometer, sr.description, \
-     sr.workshop, sr.cost, sr.notes, sr.created_at";
+    "fl.id, fl.vehicle_id, fl.log_date, fl.odometer, fl.liters, fl.price_per_liter, \
+     fl.total_cost, fl.station, fl.is_full_tank, fl.created_at";
 
-/// Postgres implementation of [`ServiceRecordRepository`].
-pub struct PgServiceRecordRepo {
+/// Postgres implementation of [`FuelLogRepository`].
+pub struct PgFuelLogRepo {
     pool: PgPool,
 }
 
-impl PgServiceRecordRepo {
+impl PgFuelLogRepo {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
@@ -38,71 +39,72 @@ fn map_pg_err(e: sqlx::Error) -> RepositoryError {
     RepositoryError::Database(e.to_string())
 }
 
-/// Maps a `ServiceRecordRow` (sqlx) to a domain `ServiceRecord`.
+/// Maps a `FuelLogRow` (sqlx) to a domain `FuelLog`.
 ///
 /// `odometer` is stored as `INTEGER` (i32) in Postgres but exposed as `u32`
 /// in the domain — cast is safe because we validate non-negative on write.
-fn row_to_entity(r: ServiceRecordRow) -> ServiceRecord {
-    ServiceRecord {
+fn row_to_fuel_log(r: FuelLogRow) -> FuelLog {
+    FuelLog {
         id: r.id,
         vehicle_id: r.vehicle_id,
-        service_date: r.service_date,
+        log_date: r.log_date,
         odometer: r.odometer as u32,
-        description: r.description,
-        workshop: r.workshop,
-        cost: r.cost,
-        notes: r.notes,
+        liters: r.liters,
+        price_per_liter: r.price_per_liter,
+        total_cost: r.total_cost,
+        station: r.station,
+        is_full_tank: r.is_full_tank,
         created_at: r.created_at,
     }
 }
 
 #[async_trait]
-impl ServiceRecordRepository for PgServiceRecordRepo {
-    /// Lists service records for a vehicle, scoped via a JOIN to ensure the
-    /// vehicle belongs to `user_id` — defence-in-depth even though the use
-    /// case already checks ownership.
+impl FuelLogRepository for PgFuelLogRepo {
+    /// Lists fuel logs for a vehicle, scoped via a JOIN to ensure the vehicle
+    /// belongs to `user_id` — defence-in-depth even though the use case already
+    /// checks ownership.
     async fn list_by_vehicle(
         &self,
         vehicle_id: Uuid,
         user_id: Uuid,
-    ) -> RepositoryResult<Vec<ServiceRecord>> {
+    ) -> RepositoryResult<Vec<FuelLog>> {
         let query = format!(
             "SELECT {SELECT_COLS_PREFIXED} \
-             FROM service_records sr \
-             JOIN vehicles v ON v.id = sr.vehicle_id \
-             WHERE sr.vehicle_id = $1 AND v.user_id = $2 \
-             ORDER BY sr.service_date DESC"
+             FROM fuel_logs fl \
+             JOIN vehicles v ON v.id = fl.vehicle_id \
+             WHERE fl.vehicle_id = $1 AND v.user_id = $2 \
+             ORDER BY fl.log_date DESC"
         );
-        let rows = sqlx::query_as::<_, ServiceRecordRow>(&query)
+        let rows = sqlx::query_as::<_, FuelLogRow>(&query)
             .bind(vehicle_id)
             .bind(user_id)
             .fetch_all(&self.pool)
             .await
             .map_err(map_pg_err)?;
 
-        Ok(rows.into_iter().map(row_to_entity).collect())
+        Ok(rows.into_iter().map(row_to_fuel_log).collect())
     }
 
-    async fn insert(&self, p: CreateServiceRecordParams) -> RepositoryResult<ServiceRecord> {
+    async fn insert(&self, p: CreateFuelLogParams) -> RepositoryResult<FuelLog> {
         let query = format!(
-            r#"INSERT INTO service_records
-               (vehicle_id, service_date, odometer, description, workshop, cost, notes)
+            r#"INSERT INTO fuel_logs
+               (vehicle_id, log_date, odometer, liters, price_per_liter, station, is_full_tank)
                VALUES ($1, $2, $3, $4, $5, $6, $7)
                RETURNING {SELECT_COLS}"#
         );
-        let row = sqlx::query_as::<_, ServiceRecordRow>(&query)
+        let row = sqlx::query_as::<_, FuelLogRow>(&query)
             .bind(p.vehicle_id)
-            .bind(p.service_date)
+            .bind(p.log_date)
             .bind(p.odometer as i32)
-            .bind(&p.description)
-            .bind(&p.workshop)
-            .bind(p.cost)
-            .bind(&p.notes)
+            .bind(p.liters)
+            .bind(p.price_per_liter)
+            .bind(&p.station)
+            .bind(p.is_full_tank)
             .fetch_one(&self.pool)
             .await
             .map_err(map_pg_err)?;
 
-        Ok(row_to_entity(row))
+        Ok(row_to_fuel_log(row))
     }
 }
 
@@ -163,15 +165,15 @@ mod tests {
         row.0
     }
 
-    fn make_params(vehicle_id: Uuid) -> CreateServiceRecordParams {
-        CreateServiceRecordParams {
+    fn make_params(vehicle_id: Uuid) -> CreateFuelLogParams {
+        CreateFuelLogParams {
             vehicle_id,
-            service_date: NaiveDate::from_ymd_opt(2026, 1, 15).unwrap(),
-            odometer: 5_000,
-            description: "Oil change".into(),
-            workshop: Some("Fast Lube".into()),
-            cost: Some(Decimal::new(15000, 2)),
-            notes: None,
+            log_date: NaiveDate::from_ymd_opt(2026, 1, 20).unwrap(),
+            odometer: 10_000,
+            liters: Decimal::new(400, 1),              // 40.0
+            price_per_liter: Decimal::new(100_000, 1), // 10000.0
+            station: Some("Shell".into()),
+            is_full_tank: true,
         }
     }
 
@@ -180,15 +182,21 @@ mod tests {
         let (pool, _container) = setup_pool().await;
         let user_id = insert_user(&pool).await;
         let vehicle_id = insert_vehicle(&pool, user_id).await;
-        let repo = PgServiceRecordRepo::new(pool);
+        let repo = PgFuelLogRepo::new(pool);
 
-        repo.insert(make_params(vehicle_id)).await.unwrap();
+        let log = repo.insert(make_params(vehicle_id)).await.unwrap();
 
-        let records = repo.list_by_vehicle(vehicle_id, user_id).await.unwrap();
-        assert_eq!(records.len(), 1);
-        assert_eq!(records[0].description, "Oil change");
-        assert_eq!(records[0].odometer, 5_000);
-        assert_eq!(records[0].workshop.as_deref(), Some("Fast Lube"));
+        // total_cost is GENERATED ALWAYS AS (liters * price_per_liter) STORED
+        assert_eq!(log.liters, Decimal::new(400, 1));
+        assert_eq!(log.price_per_liter, Decimal::new(100_000, 1));
+        // 40.0 * 10000.0 = 400000.00 — Postgres computes this
+        assert_eq!(log.total_cost.to_string(), "400000.00");
+
+        let logs = repo.list_by_vehicle(vehicle_id, user_id).await.unwrap();
+        assert_eq!(logs.len(), 1);
+        assert_eq!(logs[0].odometer, 10_000);
+        assert_eq!(logs[0].station.as_deref(), Some("Shell"));
+        assert!(logs[0].is_full_tank);
     }
 
     #[tokio::test]
@@ -197,13 +205,13 @@ mod tests {
         let owner_id = insert_user(&pool).await;
         let intruder_id = insert_user(&pool).await;
         let vehicle_id = insert_vehicle(&pool, owner_id).await;
-        let repo = PgServiceRecordRepo::new(pool);
+        let repo = PgFuelLogRepo::new(pool);
 
         repo.insert(make_params(vehicle_id)).await.unwrap();
 
         // Querying as a different user should return nothing (JOIN filters it out)
-        let records = repo.list_by_vehicle(vehicle_id, intruder_id).await.unwrap();
-        assert_eq!(records.len(), 0);
+        let logs = repo.list_by_vehicle(vehicle_id, intruder_id).await.unwrap();
+        assert_eq!(logs.len(), 0);
     }
 
     #[tokio::test]
@@ -211,57 +219,56 @@ mod tests {
         let (pool, _container) = setup_pool().await;
         let user_id = insert_user(&pool).await;
         let vehicle_id = insert_vehicle(&pool, user_id).await;
-        let repo = PgServiceRecordRepo::new(pool);
+        let repo = PgFuelLogRepo::new(pool);
 
-        let params = CreateServiceRecordParams {
+        let params = CreateFuelLogParams {
             vehicle_id,
-            service_date: NaiveDate::from_ymd_opt(2026, 6, 1).unwrap(),
-            odometer: 10_000,
-            description: "Brake pad replacement".into(),
-            workshop: None,
-            cost: None,
-            notes: Some("Both front pads".into()),
+            log_date: NaiveDate::from_ymd_opt(2026, 6, 1).unwrap(),
+            odometer: 15_000,
+            liters: Decimal::new(350, 1),             // 35.0
+            price_per_liter: Decimal::new(95_000, 1), // 9500.0
+            station: None,
+            is_full_tank: false,
         };
-        let record = repo.insert(params).await.unwrap();
+        let log = repo.insert(params).await.unwrap();
 
-        assert!(record.workshop.is_none());
-        assert!(record.cost.is_none());
-        assert_eq!(record.notes.as_deref(), Some("Both front pads"));
+        assert!(log.station.is_none());
+        assert!(!log.is_full_tank);
     }
 
     #[tokio::test]
-    async fn list_returns_multiple_records_ordered_by_date_desc() {
+    async fn list_returns_multiple_logs_ordered_by_date_desc() {
         let (pool, _container) = setup_pool().await;
         let user_id = insert_user(&pool).await;
         let vehicle_id = insert_vehicle(&pool, user_id).await;
-        let repo = PgServiceRecordRepo::new(pool);
+        let repo = PgFuelLogRepo::new(pool);
 
-        // Insert two records: older first, newer second
-        let older = CreateServiceRecordParams {
+        // Insert two logs: older first, newer second
+        let older = CreateFuelLogParams {
             vehicle_id,
-            service_date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
-            odometer: 3_000,
-            description: "Older service".into(),
-            workshop: None,
-            cost: None,
-            notes: None,
-        };
-        let newer = CreateServiceRecordParams {
-            vehicle_id,
-            service_date: NaiveDate::from_ymd_opt(2026, 1, 15).unwrap(),
+            log_date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
             odometer: 5_000,
-            description: "Newer service".into(),
-            workshop: None,
-            cost: None,
-            notes: None,
+            liters: Decimal::new(300, 1),
+            price_per_liter: Decimal::new(90_000, 1),
+            station: Some("Pertamina".into()),
+            is_full_tank: true,
+        };
+        let newer = CreateFuelLogParams {
+            vehicle_id,
+            log_date: NaiveDate::from_ymd_opt(2026, 1, 20).unwrap(),
+            odometer: 10_000,
+            liters: Decimal::new(400, 1),
+            price_per_liter: Decimal::new(100_000, 1),
+            station: Some("Shell".into()),
+            is_full_tank: false,
         };
         repo.insert(older).await.unwrap();
         repo.insert(newer).await.unwrap();
 
-        let records = repo.list_by_vehicle(vehicle_id, user_id).await.unwrap();
-        assert_eq!(records.len(), 2);
+        let logs = repo.list_by_vehicle(vehicle_id, user_id).await.unwrap();
+        assert_eq!(logs.len(), 2);
         // Most recent date first
-        assert_eq!(records[0].description, "Newer service");
-        assert_eq!(records[1].description, "Older service");
+        assert_eq!(logs[0].station.as_deref(), Some("Shell"));
+        assert_eq!(logs[1].station.as_deref(), Some("Pertamina"));
     }
 }
