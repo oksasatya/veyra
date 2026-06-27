@@ -2,6 +2,7 @@
 CLAUDE.md
 .claude/
 .impeccable/
+.design-sync/
 
 # Rust
 apps/backend/target/
