@@ -179,7 +179,7 @@ All configuration is read from environment variables. Defaults are shown where a
 | `DATABASE_URL` | required | PostgreSQL connection string |
 | `REDIS_URL` | required | Redis connection string (`redis://…`) |
 | `JWT_SECRET` | required, min 32 bytes | HMAC-SHA256 signing key for access JWTs |
-| `PORT` | `3000` | Port the HTTP server binds to |
+| `PORT` | `8080` | Port the HTTP server binds to (frontend dev server uses 3000) |
 | `ACCESS_TTL_SECS` | `900` | Access token lifetime in seconds (15 min) |
 | `REFRESH_TTL_SECS` | `604800` | Refresh token lifetime in seconds (7 days) |
 | `REFRESH_GRACE_SECS` | `10` | Grace window for in-flight refresh retries |

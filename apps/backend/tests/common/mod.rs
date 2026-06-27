@@ -38,7 +38,7 @@ fn test_config(refresh_grace_secs: u64) -> Config {
         database_url: String::new(),
         redis_url: String::new(),
         jwt_secret: "test-secret-at-least-32-chars-long!!".into(),
-        port: 3000,
+        port: 8080,
         access_ttl_secs: 900,
         refresh_ttl_secs: 604_800,
         refresh_grace_secs,
