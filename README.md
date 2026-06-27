@@ -31,22 +31,54 @@ framework-free and tested in isolation. A CI script enforces that `domain/`,
 
 ```mermaid
 flowchart LR
-  FE["veyra.dev — Vercel"] -->|"HttpOnly cookies + X-CSRF-Token"| H
+  FE["Frontend · Vercel<br/>veyra.dev"]:::ext
 
-  subgraph API["api.veyra.dev — Railway"]
-    H["adapters/inbound/http\nhandlers · auth+csrf middleware · cookies"] --> A["application\nuse cases"]
-    A --> P["ports\nasync traits"]
-    P --> PG["adapters/outbound/postgres\nsqlx repositories"]
-    P --> RS["adapters/outbound/redis\nsession store — refresh families"]
-    P -. "decorates (transparent cache)" .-> CD["adapters/outbound/redis\ncached repositories"]
-    H --> TK["adapters/outbound/token\nJWT — sign + verify"]
-    BS["bootstrap\nAppState · Config · wiring"] --- H
+  subgraph RW["Backend · Railway — api.veyra.dev"]
+    direction TB
+
+    subgraph IN["Inbound (driving) adapter"]
+      H["adapters/inbound/http<br/>handlers · auth + CSRF middleware<br/>cookies · DTOs"]:::adapter
+    end
+
+    A["application<br/>use cases"]:::app
+    P["ports<br/>repository · auth · session traits"]:::port
+    D["domain<br/>entities · value objects<br/>pure — no I/O"]:::core
+
+    subgraph OUT["Outbound (driven) adapters"]
+      PGA["postgres<br/>sqlx repositories"]:::adapter
+      RSA["redis<br/>session store · cache decorators"]:::adapter
+      TKA["token<br/>JWT sign / verify"]:::adapter
+    end
+
+    BS["bootstrap<br/>Config · AppState · DI wiring"]:::boot
   end
 
-  PG --> DB[("Postgres\nmanaged by Railway")]
-  RS --> RD[("Redis\nmanaged by Railway")]
-  CD --> RD
+  PG[("PostgreSQL")]:::infra
+  RD[("Redis")]:::infra
+
+  FE -->|"HttpOnly cookies + X-CSRF-Token"| H
+  H --> A
+  A --> P
+  A --> D
+  P --> D
+  PGA -. implements .-> P
+  RSA -. implements .-> P
+  TKA -. implements .-> P
+  PGA --> PG
+  RSA --> RD
+  BS -. wires .-> IN
+  BS -. wires .-> OUT
+
+  classDef ext fill:#e0e7ff,stroke:#6366f1,color:#1e1b4b;
+  classDef adapter fill:#fef3c7,stroke:#d97706,color:#78350f;
+  classDef app fill:#dcfce7,stroke:#16a34a,color:#14532d;
+  classDef port fill:#f1f5f9,stroke:#475569,color:#0f172a;
+  classDef core fill:#fee2e2,stroke:#dc2626,color:#7f1d1d;
+  classDef infra fill:#e2e8f0,stroke:#475569,color:#0f172a;
+  classDef boot fill:#ede9fe,stroke:#7c3aed,color:#4c1d95;
 ```
+
+Dependency rule (CI-enforced): arrows point **inward** — inbound HTTP → application → ports → domain; outbound adapters *implement* ports. The `domain` core imports nothing outward; `bootstrap` is the only layer that wires concretes together.
 
 ### Hexagonal layer boundaries (CI-enforced)
 
