@@ -106,6 +106,24 @@ mod tests {
         fn verify_token(&self, _token: &str) -> Result<Uuid, crate::ports::auth::AuthError> {
             Ok(Uuid::new_v4())
         }
+        fn sign_access(
+            &self,
+            _user_id: Uuid,
+            _sid: Uuid,
+            _jti: Uuid,
+        ) -> Result<String, crate::ports::auth::AuthError> {
+            Ok("mock.access.token".into())
+        }
+        fn verify_access(
+            &self,
+            _token: &str,
+        ) -> Result<crate::ports::auth::AccessClaims, crate::ports::auth::AuthError> {
+            Ok(crate::ports::auth::AccessClaims {
+                user_id: Uuid::new_v4(),
+                sid: Uuid::new_v4(),
+                jti: Uuid::new_v4(),
+            })
+        }
     }
 
     fn make_hash(password: &str) -> String {

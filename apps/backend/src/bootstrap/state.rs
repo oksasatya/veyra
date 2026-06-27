@@ -3,10 +3,14 @@ use std::sync::Arc;
 use sqlx::PgPool;
 
 use crate::{
-    adapters::outbound::postgres::{
-        document_repo::PgDocumentRepo, expense_repo::PgExpenseRepo, fuel_log_repo::PgFuelLogRepo,
-        jwt_auth::JwtAuth, reminder_repo::PgReminderRepo, service_record_repo::PgServiceRecordRepo,
-        summary_repo::PgSummaryRepo, user_repo::PgUserRepo, vehicle_repo::PgVehicleRepo,
+    adapters::outbound::{
+        postgres::{
+            document_repo::PgDocumentRepo, expense_repo::PgExpenseRepo,
+            fuel_log_repo::PgFuelLogRepo, reminder_repo::PgReminderRepo,
+            service_record_repo::PgServiceRecordRepo, summary_repo::PgSummaryRepo,
+            user_repo::PgUserRepo, vehicle_repo::PgVehicleRepo,
+        },
+        token::jwt_auth::JwtAuth,
     },
     ports::{
         auth::AuthPort,
@@ -41,7 +45,7 @@ impl AppState {
         let reminder_repo = Arc::new(PgReminderRepo::new(pool.clone()));
         let document_repo = Arc::new(PgDocumentRepo::new(pool.clone()));
         let summary_repo = Arc::new(PgSummaryRepo::new(pool.clone()));
-        let auth = Arc::new(JwtAuth::new(jwt_secret));
+        let auth = Arc::new(JwtAuth::new(jwt_secret, 900));
         Self {
             pool,
             user_repo,
