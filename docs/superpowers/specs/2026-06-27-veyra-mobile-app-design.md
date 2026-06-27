@@ -253,7 +253,9 @@ Material 3, **dark-first**, driven by the Veyra brand (logo: orange V-monogram +
 
 - `ColorScheme.dark` seeded from accent `#F26A21` (logo orange), surfaces on graphite `#0D1119`,
   surface `#151A23`, text `#E6EAF0`, secondary text `#9BA6B5`.
-- Display/wordmark font = geometric sans (matching the logo); body = Inter.
+- Display/wordmark font = **Sora** (geometric, matches the logo); body = **IBM Plex Sans**; data/hex
+  (odometer, money, plate) = **IBM Plex Mono**. (Chosen over Inter for a more distinctive, technical
+  register; see `design-system/tokens.json`.)
 - Logo asset used on splash + app icon (iOS + Android via `flutter_launcher_icons`).
 - Light theme is a stretch goal (the same accent works on a light surface); dark ships first.
 

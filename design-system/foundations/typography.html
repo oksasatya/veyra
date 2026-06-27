@@ -1,0 +1,42 @@
+<!-- @dsCard group="Foundations" name="Typography" subtitle="Sora display · IBM Plex Sans body · IBM Plex Mono data" width="920" height="680" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Veyra · Typography</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg:#0D1119; --surface:#151A23; --border:#232B36; --text:#E6EAF0; --text-muted:#9BA6B5; --accent:#F26A21; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:40px; background:var(--bg); color:var(--text);
+    font-family:"IBM Plex Sans", system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
+  .eyebrow { font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--text-muted); margin:0 0 6px; }
+  h1 { font-family:Sora, sans-serif; font-weight:600; font-size:28px; margin:0 0 28px; letter-spacing:-.01em; }
+  .row { display:flex; align-items:baseline; gap:20px; padding:14px 0; border-bottom:1px solid var(--border); }
+  .label { width:150px; flex:none; font-family:"IBM Plex Mono", monospace; font-size:12px; color:var(--text-muted); }
+  .display { font-family:Sora, sans-serif; letter-spacing:-.02em; }
+  .body { font-family:"IBM Plex Sans", sans-serif; }
+  .mono { font-family:"IBM Plex Mono", monospace; }
+  .d1 { font-size:48px; font-weight:700; }
+  .d2 { font-size:34px; font-weight:600; }
+  .h  { font-size:22px; font-weight:600; }
+  .b  { font-size:16px; font-weight:400; line-height:1.55; max-width:48ch; }
+  .cap{ font-size:13px; color:var(--text-muted); }
+  .data { font-size:18px; font-weight:500; }
+  .data b { color:var(--accent); font-weight:500; }
+</style>
+</head>
+<body>
+  <p class="eyebrow">Foundations</p>
+  <h1>Typography</h1>
+  <div class="row"><div class="label">Sora 700 / 48</div><div class="display d1">veyra</div></div>
+  <div class="row"><div class="label">Sora 600 / 34</div><div class="display d2">Track every kilometre</div></div>
+  <div class="row"><div class="label">Sora 600 / 22</div><div class="display h">Vehicle overview</div></div>
+  <div class="row"><div class="label">Plex Sans 400 / 16</div><div class="body b">Log services, fuel, and expenses, then watch the running totals and upcoming reminders on one screen.</div></div>
+  <div class="row"><div class="label">Plex Sans 400 / 13</div><div class="body cap">Caption and secondary metadata</div></div>
+  <div class="row"><div class="label">Plex Mono 500 / 18</div><div class="data mono">128,450 km · <b>Rp 1.250.000</b></div></div>
+</body>
+</html>

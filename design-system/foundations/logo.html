@@ -1,0 +1,66 @@
+<!-- @dsCard group="Foundations" name="Logo" subtitle="V monogram + wordmark, dark and light" width="920" height="560" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Veyra · Logo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg:#0D1119; --surface:#151A23; --border:#232B36; --text:#E6EAF0; --text-muted:#9BA6B5; --accent:#F26A21; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:40px; background:var(--bg); color:var(--text);
+    font-family:"IBM Plex Sans", system-ui, sans-serif; }
+  .eyebrow { font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--text-muted); margin:0 0 6px; }
+  h1 { font-family:Sora, sans-serif; font-weight:600; font-size:28px; margin:0 0 28px; letter-spacing:-.01em; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .tile { border:1px solid var(--border); border-radius:14px; padding:32px; display:flex; align-items:center; justify-content:center; min-height:150px; }
+  .dark { background:var(--bg); }
+  .light { background:#FAFAF8; }
+  .cap { font-size:12px; color:var(--text-muted); margin:10px 2px 0; }
+  .lockup { display:flex; align-items:center; gap:18px; }
+  .word { font-family:Sora, sans-serif; font-weight:600; font-size:46px; letter-spacing:-.03em; }
+  .word.on-dark { color:var(--text); }
+  .word.on-light { color:#0D1119; }
+  svg { display:block; }
+</style>
+</head>
+<body>
+  <p class="eyebrow">Foundations</p>
+  <h1>Logo</h1>
+  <div class="grid">
+    <div>
+      <div class="tile dark">
+        <div class="lockup">
+          <svg viewBox="0 0 120 120" width="64" height="64"><path d="M14 22 L41 22 L60 68 L79 22 L106 22 L60 106 Z" fill="#F26A21"/><path d="M41 22 L60 68 L60 106 Z" fill="#0D1119" opacity="0.16"/></svg>
+          <span class="word on-dark">veyra</span>
+        </div>
+      </div>
+      <p class="cap">Lockup on background</p>
+    </div>
+    <div>
+      <div class="tile light">
+        <div class="lockup">
+          <svg viewBox="0 0 120 120" width="64" height="64"><path d="M14 22 L41 22 L60 68 L79 22 L106 22 L60 106 Z" fill="#F26A21"/><path d="M41 22 L60 68 L60 106 Z" fill="#FAFAF8" opacity="0.22"/></svg>
+          <span class="word on-light">veyra</span>
+        </div>
+      </div>
+      <p class="cap">Lockup on light surface</p>
+    </div>
+    <div>
+      <div class="tile dark">
+        <svg viewBox="0 0 120 120" width="84" height="84"><path d="M14 22 L41 22 L60 68 L79 22 L106 22 L60 106 Z" fill="#F26A21"/><path d="M41 22 L60 68 L60 106 Z" fill="#0D1119" opacity="0.16"/></svg>
+      </div>
+      <p class="cap">Mark only · app icon, favicon</p>
+    </div>
+    <div>
+      <div class="tile dark">
+        <svg viewBox="0 0 120 120" width="84" height="84"><path d="M14 22 L41 22 L60 68 L79 22 L106 22 L60 106 Z" fill="#E6EAF0"/></svg>
+      </div>
+      <p class="cap">Monochrome · single-colour contexts</p>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,7 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Veyra mark">
+  <title>Veyra mark</title>
+  <!-- Layered V monogram: top notch dips to centre, tapering to a single bottom point. -->
+  <path d="M14 22 L41 22 L60 68 L79 22 L106 22 L60 106 Z" fill="#F26A21"/>
+  <!-- Subtle inner facet for the folded look. -->
+  <path d="M41 22 L60 68 L60 106 Z" fill="#0D1119" opacity="0.16"/>
+</svg>

@@ -1,0 +1,45 @@
+<!-- @dsCard group="Components" name="Text Field" subtitle="Default, focused, error, disabled" width="920" height="540" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Veyra · Text Field</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg:#0D1119; --surface:#151A23; --border:#232B36; --text:#E6EAF0; --text-muted:#9BA6B5; --accent:#F26A21; --danger:#F2555A; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:40px; background:var(--bg); color:var(--text); font-family:"IBM Plex Sans", system-ui, sans-serif; }
+  .eyebrow { font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--text-muted); margin:0 0 6px; }
+  h1 { font-family:Sora, sans-serif; font-weight:600; font-size:28px; margin:0 0 28px; letter-spacing:-.01em; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; max-width:760px; }
+  .field label { display:block; font-size:13px; font-weight:500; margin:0 0 8px; color:var(--text); }
+  .input { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:13px 15px; color:var(--text); font-family:"IBM Plex Sans", sans-serif; font-size:15px; }
+  .input::placeholder { color:#5A6472; }
+  .input.focused { border-color:var(--accent); box-shadow:0 0 0 3px rgba(242,106,33,.22); outline:none; }
+  .input.error { border-color:var(--danger); }
+  .input.disabled { background:#11151C; color:#5A6472; }
+  .hint { font-size:12px; margin:7px 2px 0; color:var(--text-muted); }
+  .hint.err { color:var(--danger); }
+  .state { font-family:"IBM Plex Mono", monospace; font-size:11px; color:var(--text-muted); margin:0 0 8px; }
+</style>
+</head>
+<body>
+  <p class="eyebrow">Components</p>
+  <h1>Text Field</h1>
+  <div class="grid">
+    <div class="field"><p class="state">default</p><label>Plate number</label>
+      <input class="input" placeholder="B 1234 XYZ" /></div>
+    <div class="field"><p class="state">focused</p><label>Plate number</label>
+      <input class="input focused" value="B 1234 XYZ" /></div>
+    <div class="field"><p class="state">error</p><label>Email</label>
+      <input class="input error" value="notanemail" />
+      <p class="hint err">Enter a valid email address.</p></div>
+    <div class="field"><p class="state">disabled</p><label>Odometer</label>
+      <input class="input disabled" value="128,450 km" disabled /></div>
+  </div>
+</body>
+</html>

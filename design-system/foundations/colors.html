@@ -1,0 +1,62 @@
+<!-- @dsCard group="Foundations" name="Colors" subtitle="Carbon + Signal Amber, dark-first tokens" width="920" height="640" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Veyra · Colors</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0D1119; --surface: #151A23; --border: #232B36;
+    --text: #E6EAF0; --text-muted: #9BA6B5;
+    --accent: #F26A21; --accent-hover: #FF8338; --info: #34D1C4;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 40px; background: var(--bg); color: var(--text);
+    font-family: "IBM Plex Sans", system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+  }
+  .eyebrow { font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 6px; }
+  h1 { font-family: Sora, system-ui, sans-serif; font-weight: 600; font-size: 28px; margin: 0 0 28px; letter-spacing: -.01em; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .swatch { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .chip { height: 96px; }
+  .meta { padding: 14px 16px; }
+  .role { font-weight: 600; font-size: 14px; margin: 0 0 4px; }
+  .hex { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px; color: var(--text); margin: 0; }
+  .oklch { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--text-muted); margin: 4px 0 0; }
+  .token { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--text-muted); margin: 2px 0 0; }
+  .note { margin-top: 26px; font-size: 13px; color: var(--text-muted); max-width: 60ch; line-height: 1.6; }
+  .note b { color: var(--accent); font-weight: 600; }
+</style>
+</head>
+<body>
+  <p class="eyebrow">Foundations</p>
+  <h1>Color · Carbon + Signal Amber</h1>
+  <div class="grid">
+    <div class="swatch"><div class="chip" style="background:#0D1119;border-bottom:1px solid #232B36"></div>
+      <div class="meta"><p class="role">Background</p><p class="hex">#0D1119</p><p class="oklch">oklch(16% .015 255)</p><p class="token">--bg</p></div></div>
+    <div class="swatch"><div class="chip" style="background:#151A23"></div>
+      <div class="meta"><p class="role">Surface</p><p class="hex">#151A23</p><p class="oklch">oklch(22% .015 250)</p><p class="token">--surface</p></div></div>
+    <div class="swatch"><div class="chip" style="background:#232B36"></div>
+      <div class="meta"><p class="role">Border</p><p class="hex">#232B36</p><p class="oklch">oklch(30% .020 250)</p><p class="token">--border</p></div></div>
+    <div class="swatch"><div class="chip" style="background:#F26A21"></div>
+      <div class="meta"><p class="role">Accent · signature</p><p class="hex">#F26A21</p><p class="oklch">oklch(68% .18 45)</p><p class="token">--accent</p></div></div>
+    <div class="swatch"><div class="chip" style="background:#FF8338"></div>
+      <div class="meta"><p class="role">Accent hover</p><p class="hex">#FF8338</p><p class="oklch">oklch(74% .17 48)</p><p class="token">--accent-hover</p></div></div>
+    <div class="swatch"><div class="chip" style="background:#34D1C4"></div>
+      <div class="meta"><p class="role">Info / data</p><p class="hex">#34D1C4</p><p class="oklch">oklch(78% .12 185)</p><p class="token">--info</p></div></div>
+    <div class="swatch"><div class="chip" style="background:#E6EAF0"></div>
+      <div class="meta"><p class="role">Text primary</p><p class="hex">#E6EAF0</p><p class="oklch">oklch(93% .008 250)</p><p class="token">--text</p></div></div>
+    <div class="swatch"><div class="chip" style="background:#9BA6B5"></div>
+      <div class="meta"><p class="role">Text secondary</p><p class="hex">#9BA6B5</p><p class="oklch">oklch(72% .020 250)</p><p class="token">--text-muted</p></div></div>
+  </div>
+  <p class="note">60·30·10 split: graphite dominant, slate surfaces, <b>amber accent near 10%</b>. Body text sets
+    <b>--text</b> on <b>--bg</b> at AA/AAA. Reserve <b>--accent</b> for actions, active links, and the logo mark;
+    avoid small text set in amber.</p>
+</body>
+</html>

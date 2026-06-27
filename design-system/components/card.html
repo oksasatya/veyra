@@ -1,0 +1,53 @@
+<!-- @dsCard group="Components" name="Vehicle Card" subtitle="Summary card with stats and reminder badge" width="920" height="560" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Veyra · Vehicle Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg:#0D1119; --surface:#151A23; --border:#232B36; --text:#E6EAF0; --text-muted:#9BA6B5; --accent:#F26A21; --info:#34D1C4; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:40px; background:var(--bg); color:var(--text); font-family:"IBM Plex Sans", system-ui, sans-serif; }
+  .eyebrow { font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--text-muted); margin:0 0 6px; }
+  h1 { font-family:Sora, sans-serif; font-weight:600; font-size:28px; margin:0 0 28px; letter-spacing:-.01em; }
+  .card { width:380px; background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:22px; }
+  .top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+  .name { font-family:Sora, sans-serif; font-weight:600; font-size:20px; margin:0; }
+  .plate { font-family:"IBM Plex Mono", monospace; font-size:12px; color:var(--text-muted); margin:6px 0 0; letter-spacing:.04em; }
+  .badge { flex:none; background:rgba(242,106,33,.14); color:var(--accent); font-size:12px; font-weight:600;
+    padding:6px 11px; border-radius:999px; border:1px solid rgba(242,106,33,.32); }
+  .odo { font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--text-muted); margin:18px 0 0; }
+  .stats { display:grid; grid-template-columns:1fr 1fr; gap:1px; margin-top:18px; background:var(--border);
+    border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .stat { background:var(--surface); padding:14px 16px; }
+  .stat .k { font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:var(--text-muted); margin:0; }
+  .stat .v { font-family:Sora, sans-serif; font-weight:600; font-size:18px; margin:6px 0 0; }
+  .stat .v.accent { color:var(--accent); }
+  .stat .v.info { color:var(--info); }
+</style>
+</head>
+<body>
+  <p class="eyebrow">Components</p>
+  <h1>Vehicle Card</h1>
+  <div class="card">
+    <div class="top">
+      <div>
+        <p class="name">Toyota Avanza</p>
+        <p class="plate">B 1234 XYZ · 2020 · Petrol</p>
+      </div>
+      <span class="badge">2 reminders</span>
+    </div>
+    <p class="odo">Odometer · 128,450 km</p>
+    <div class="stats">
+      <div class="stat"><p class="k">Services</p><p class="v">12</p></div>
+      <div class="stat"><p class="k">Service cost</p><p class="v accent">Rp 8.4M</p></div>
+      <div class="stat"><p class="k">Fuel logged</p><p class="v">340 L</p></div>
+      <div class="stat"><p class="k">Fuel cost</p><p class="v info">Rp 5.1M</p></div>
+    </div>
+  </div>
+</body>
+</html>
