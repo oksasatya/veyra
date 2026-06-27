@@ -5,6 +5,7 @@ use uuid::Uuid;
 use crate::{
     application::errors::AppError,
     domain::vehicle::entity::Vehicle,
+    domain::vehicle::value_objects::FuelType,
     ports::repositories::{UpdateVehicleParams, VehicleRepository},
 };
 
@@ -29,6 +30,10 @@ impl UpdateVehicleUseCase {
         user_id: Uuid,
         input: UpdateVehicleInput,
     ) -> Result<Vehicle, AppError> {
+        // Validate fuel_type before hitting the repo — mirrors CreateVehicleUseCase
+        FuelType::parse(&input.fuel_type)
+            .map_err(|_| AppError::Validation(format!("invalid fuel_type: {}", input.fuel_type)))?;
+
         let params = UpdateVehicleParams {
             brand: input.brand,
             model: input.model,
@@ -192,5 +197,47 @@ mod tests {
             .await;
 
         assert!(matches!(result, Err(AppError::NotFound)));
+    }
+
+    #[tokio::test]
+    async fn update_with_invalid_fuel_type_returns_error() {
+        let user_id = Uuid::new_v4();
+        let vehicle_id = Uuid::new_v4();
+        let vehicle = Vehicle {
+            id: vehicle_id,
+            user_id,
+            brand: "Honda".into(),
+            model: "Brio".into(),
+            year: 2021,
+            plate_number: PlateNumber::new("B 9999 AAA".to_string()).unwrap(),
+            color: None,
+            fuel_type: FuelType::Petrol,
+            current_odometer: Odometer::new(0),
+            notes: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let repo = Arc::new(FakeVehicleRepo {
+            vehicle: Some(vehicle),
+        });
+        let uc = UpdateVehicleUseCase { repo };
+
+        let result = uc
+            .execute(
+                vehicle_id,
+                user_id,
+                UpdateVehicleInput {
+                    brand: "Honda".into(),
+                    model: "Brio".into(),
+                    year: 2021,
+                    color: None,
+                    fuel_type: "ROCKET_FUEL".into(),
+                    current_odometer: 0,
+                    notes: None,
+                },
+            )
+            .await;
+
+        assert!(matches!(result, Err(AppError::Validation(_))));
     }
 }

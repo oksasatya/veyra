@@ -1,31 +1,10 @@
 mod common;
 use serde_json::json;
 
-async fn register_and_login(app: &common::TestApp, email: &str) -> String {
-    app.client
-        .post("/auth/register")
-        .json(&json!({
-            "email": email,
-            "password": "password123",
-            "name": "User"
-        }))
-        .await;
-    let resp = app
-        .client
-        .post("/auth/login")
-        .json(&json!({
-            "email": email,
-            "password": "password123"
-        }))
-        .await;
-    let body: serde_json::Value = resp.json();
-    body["token"].as_str().unwrap().to_string()
-}
-
 #[tokio::test]
 async fn create_vehicle_returns_201() {
     let app = common::spawn_app().await;
-    let token = register_and_login(&app, "car@example.com").await;
+    let token = common::register_and_login(&app, "car@example.com").await;
 
     let resp = app
         .client
@@ -49,8 +28,8 @@ async fn create_vehicle_returns_201() {
 #[tokio::test]
 async fn list_vehicles_returns_only_own_vehicles() {
     let app = common::spawn_app().await;
-    let token_a = register_and_login(&app, "alice@cars.com").await;
-    let token_b = register_and_login(&app, "bob@cars.com").await;
+    let token_a = common::register_and_login(&app, "alice@cars.com").await;
+    let token_b = common::register_and_login(&app, "bob@cars.com").await;
 
     // Alice creates a vehicle
     app.client
@@ -81,8 +60,8 @@ async fn list_vehicles_returns_only_own_vehicles() {
 #[tokio::test]
 async fn get_vehicle_not_owned_returns_404() {
     let app = common::spawn_app().await;
-    let token_a = register_and_login(&app, "owner@cars.com").await;
-    let token_b = register_and_login(&app, "intruder@cars.com").await;
+    let token_a = common::register_and_login(&app, "owner@cars.com").await;
+    let token_b = common::register_and_login(&app, "intruder@cars.com").await;
 
     let created = app
         .client
