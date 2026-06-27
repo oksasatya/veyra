@@ -14,8 +14,8 @@ use crate::{
                 user_repo::PgUserRepo, vehicle_repo::PgVehicleRepo,
             },
             redis::{
-                cache::RedisCache, cached_vehicle_repo::CachedVehicleRepo,
-                session_store::RedisSessionStore,
+                cache::RedisCache, cached_summary_repo::CachedSummaryRepo,
+                cached_vehicle_repo::CachedVehicleRepo, session_store::RedisSessionStore,
             },
             token::jwt_auth::JwtAuth,
         },
@@ -64,7 +64,10 @@ impl AppState {
         let expense_repo = Arc::new(PgExpenseRepo::new(pool.clone()));
         let reminder_repo = Arc::new(PgReminderRepo::new(pool.clone()));
         let document_repo = Arc::new(PgDocumentRepo::new(pool.clone()));
-        let summary_repo = Arc::new(PgSummaryRepo::new(pool.clone()));
+        let summary_repo: Arc<dyn SummaryRepository> = Arc::new(CachedSummaryRepo::new(
+            Arc::new(PgSummaryRepo::new(pool.clone())),
+            RedisCache::new(redis_pool.clone()),
+        ));
 
         let auth = Arc::new(JwtAuth::new(
             config.jwt_secret.clone(),
