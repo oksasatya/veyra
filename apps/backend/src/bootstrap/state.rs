@@ -4,13 +4,15 @@ use sqlx::PgPool;
 
 use crate::{
     adapters::outbound::postgres::{
-        fuel_log_repo::PgFuelLogRepo, jwt_auth::JwtAuth, service_record_repo::PgServiceRecordRepo,
-        user_repo::PgUserRepo, vehicle_repo::PgVehicleRepo,
+        expense_repo::PgExpenseRepo, fuel_log_repo::PgFuelLogRepo, jwt_auth::JwtAuth,
+        service_record_repo::PgServiceRecordRepo, user_repo::PgUserRepo,
+        vehicle_repo::PgVehicleRepo,
     },
     ports::{
         auth::AuthPort,
         repositories::{
-            FuelLogRepository, ServiceRecordRepository, UserRepository, VehicleRepository,
+            ExpenseRepository, FuelLogRepository, ServiceRecordRepository, UserRepository,
+            VehicleRepository,
         },
     },
 };
@@ -22,6 +24,7 @@ pub struct AppState {
     pub vehicle_repo: Arc<dyn VehicleRepository>,
     pub service_record_repo: Arc<dyn ServiceRecordRepository>,
     pub fuel_log_repo: Arc<dyn FuelLogRepository>,
+    pub expense_repo: Arc<dyn ExpenseRepository>,
     pub auth: Arc<dyn AuthPort>,
 }
 
@@ -31,6 +34,7 @@ impl AppState {
         let vehicle_repo = Arc::new(PgVehicleRepo::new(pool.clone()));
         let service_record_repo = Arc::new(PgServiceRecordRepo::new(pool.clone()));
         let fuel_log_repo = Arc::new(PgFuelLogRepo::new(pool.clone()));
+        let expense_repo = Arc::new(PgExpenseRepo::new(pool.clone()));
         let auth = Arc::new(JwtAuth::new(jwt_secret));
         Self {
             pool,
@@ -38,6 +42,7 @@ impl AppState {
             vehicle_repo,
             service_record_repo,
             fuel_log_repo,
+            expense_repo,
             auth,
         }
     }
