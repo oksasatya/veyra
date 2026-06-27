@@ -28,6 +28,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 figment = { version = "0.10", features = ["env", "toml"] }
 dotenvy = "0.15"
 rand_core = { version = "0.6", features = ["std"] }
+rust_decimal = { version = "1", features = ["db-postgres"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full", "test-util"] }
