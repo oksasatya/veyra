@@ -1,6 +1,7 @@
 use axum::http::{HeaderName, HeaderValue};
 use axum_test::TestServer;
 use cookie::CookieJar;
+use fred::clients::Pool as RedisPool;
 use serde_json::json;
 use sqlx::PgPool;
 use testcontainers_modules::postgres::Postgres;
@@ -13,6 +14,10 @@ use veyra::{adapters::inbound::http::router, bootstrap::state::AppState};
 
 pub struct TestApp {
     pub client: TestServer,
+    /// Raw Redis pool exposed so cache integration tests can run low-level
+    /// commands (e.g. `TTL`, `GET`) against the same Redis instance.
+    #[allow(dead_code)]
+    pub redis_pool: RedisPool,
 }
 
 /// An authenticated session captured after register+login. Holds the user's
@@ -116,7 +121,7 @@ pub async fn spawn_app_with_grace(refresh_grace_secs: u64) -> TestApp {
         .await
         .unwrap();
 
-    let state = AppState::new(pool, redis_pool, &test_config(refresh_grace_secs));
+    let state = AppState::new(pool, redis_pool.clone(), &test_config(refresh_grace_secs));
     let app = router::build(state);
     let client = TestServer::builder().save_cookies().build(app);
 
@@ -124,7 +129,7 @@ pub async fn spawn_app_with_grace(refresh_grace_secs: u64) -> TestApp {
     std::mem::forget(pg);
     std::mem::forget(redis);
 
-    TestApp { client }
+    TestApp { client, redis_pool }
 }
 
 /// Spins up a real Redis container and returns a `RedisSessionStore` (grace = 0)

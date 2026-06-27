@@ -13,7 +13,10 @@ use crate::{
                 service_record_repo::PgServiceRecordRepo, summary_repo::PgSummaryRepo,
                 user_repo::PgUserRepo, vehicle_repo::PgVehicleRepo,
             },
-            redis::session_store::RedisSessionStore,
+            redis::{
+                cache::RedisCache, cached_vehicle_repo::CachedVehicleRepo,
+                session_store::RedisSessionStore,
+            },
             token::jwt_auth::JwtAuth,
         },
     },
@@ -52,7 +55,10 @@ impl AppState {
     /// `config` so the same binary serves self-host and the prod subdomain split.
     pub fn new(pool: PgPool, redis_pool: RedisPool, config: &Config) -> Self {
         let user_repo = Arc::new(PgUserRepo::new(pool.clone()));
-        let vehicle_repo = Arc::new(PgVehicleRepo::new(pool.clone()));
+        let vehicle_repo: Arc<dyn VehicleRepository> = Arc::new(CachedVehicleRepo::new(
+            Arc::new(PgVehicleRepo::new(pool.clone())),
+            RedisCache::new(redis_pool.clone()),
+        ));
         let service_record_repo = Arc::new(PgServiceRecordRepo::new(pool.clone()));
         let fuel_log_repo = Arc::new(PgFuelLogRepo::new(pool.clone()));
         let expense_repo = Arc::new(PgExpenseRepo::new(pool.clone()));
