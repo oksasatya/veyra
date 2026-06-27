@@ -1,0 +1,104 @@
+<!-- @dsCard group="Screens" name="Add Fuel — Sheet" subtitle="Bottom-sheet form, 390x844" width="390" height="844" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Veyra · Add Fuel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg:#0D1119; --surface:#151A23; --surface-2:#1B212C; --border:#232B36;
+    --text:#E6EAF0; --muted:#9BA6B5; --accent:#F26A21; --accent-hover:#FF8338; --info:#34D1C4; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { width:390px; height:844px; }
+  body { background:var(--bg); color:var(--text); font-family:"IBM Plex Sans",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased; overflow:hidden; position:relative; }
+  .mono { font-family:"IBM Plex Mono",monospace; }
+  .backdrop { position:absolute; inset:0; background:rgba(5,7,11,.6); }
+  .dim { padding:60px 20px; filter:saturate(.6) brightness(.5); }
+  .dim h2 { font-family:Sora,sans-serif; font-size:24px; font-weight:700; }
+  .dim p { color:var(--muted); margin-top:8px; }
+  .sheet { position:absolute; left:0; right:0; bottom:0; height:710px; background:var(--surface);
+    border-top-left-radius:26px; border-top-right-radius:26px; border-top:1px solid var(--border);
+    box-shadow:0 -16px 40px rgba(0,0,0,.4); padding:0 22px 26px; }
+  .grab { width:40px; height:5px; border-radius:3px; background:#39424F; margin:12px auto 6px; }
+  .shead { display:flex; align-items:center; justify-content:space-between; padding:8px 0 18px; }
+  .shead h1 { font-family:Sora,sans-serif; font-size:21px; font-weight:600; }
+  .shead .x { width:34px; height:34px; border-radius:50%; background:var(--surface-2); border:1px solid var(--border);
+    display:grid; place-items:center; color:var(--muted); }
+  .lbl { font-size:13px; font-weight:500; color:var(--muted); margin:14px 0 7px; }
+  .inp { width:100%; height:52px; background:var(--bg); border:1px solid var(--border); border-radius:13px;
+    padding:0 15px; color:var(--text); font-family:inherit; font-size:16px; display:flex; align-items:center; }
+  .inp.focused { border-color:var(--accent); box-shadow:0 0 0 3px rgba(242,106,33,.20); }
+  .inp .unit { margin-left:auto; color:var(--muted); font-size:13px; }
+  .duo { display:flex; gap:12px; }
+  .duo > div { flex:1; }
+  .total { margin-top:18px; background:var(--surface-2); border:1px solid var(--border); border-radius:14px;
+    padding:15px 17px; display:flex; align-items:center; justify-content:space-between; }
+  .total .k { font-size:13px; color:var(--muted); }
+  .total .v { font-family:"IBM Plex Mono",monospace; font-size:22px; font-weight:500; color:var(--accent); }
+  .toggle { margin-top:18px; display:flex; align-items:center; justify-content:space-between; }
+  .toggle .t { font-size:15px; font-weight:500; }
+  .toggle .s { font-size:12px; color:var(--muted); margin-top:3px; }
+  .sw { width:50px; height:30px; border-radius:999px; background:var(--accent); position:relative; flex:none; }
+  .sw::after { content:""; position:absolute; top:3px; right:3px; width:24px; height:24px; border-radius:50%; background:#0D1119; }
+  .save { margin-top:24px; width:100%; height:54px; border:none; border-radius:14px; background:var(--accent);
+    color:#0D1119; font-family:inherit; font-weight:600; font-size:16px; }
+  .home-ind { position:absolute; bottom:9px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:rgba(230,234,240,.28); }
+</style>
+</head>
+<body>
+  <div class="dim">
+    <h2>Toyota Avanza</h2>
+    <p>B 1234 XYZ · 128,450 km</p>
+  </div>
+  <div class="backdrop"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <div class="shead">
+      <h1>Log fuel</h1>
+      <div class="x"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg></div>
+    </div>
+
+    <div class="duo">
+      <div>
+        <div class="lbl">Date</div>
+        <div class="inp mono">22 Jun 2026</div>
+      </div>
+      <div>
+        <div class="lbl">Odometer</div>
+        <div class="inp mono">128,450<span class="unit">km</span></div>
+      </div>
+    </div>
+
+    <div class="duo">
+      <div>
+        <div class="lbl">Liters</div>
+        <div class="inp focused mono">38.0<span class="unit">L</span></div>
+      </div>
+      <div>
+        <div class="lbl">Price / liter</div>
+        <div class="inp mono">14,000<span class="unit">Rp</span></div>
+      </div>
+    </div>
+
+    <div class="total">
+      <span class="k">Total cost</span>
+      <span class="v">Rp 532,000</span>
+    </div>
+
+    <div class="lbl">Station</div>
+    <div class="inp">Pertamina</div>
+
+    <div class="toggle">
+      <div><div class="t">Full tank</div><div class="s">Used to compute consumption</div></div>
+      <div class="sw"></div>
+    </div>
+
+    <button class="save">Save fuel log</button>
+  </div>
+  <div class="home-ind"></div>
+</body>
+</html>

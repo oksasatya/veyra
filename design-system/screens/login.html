@@ -1,0 +1,79 @@
+<!-- @dsCard group="Screens" name="Login" subtitle="Auth, phone 390x844, dark" width="390" height="844" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Veyra · Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:#0D1119; --surface:#151A23; --surface-2:#1B212C; --border:#232B36;
+    --text:#E6EAF0; --muted:#9BA6B5; --accent:#F26A21; --accent-hover:#FF8338;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { width:390px; height:844px; }
+  body {
+    background:var(--bg); color:var(--text); font-family:"IBM Plex Sans",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased; position:relative; overflow:hidden;
+  }
+  .glow { position:absolute; top:-120px; left:50%; transform:translateX(-50%);
+    width:360px; height:360px; border-radius:50%;
+    background:radial-gradient(circle, rgba(242,106,33,.22), rgba(242,106,33,0) 70%); pointer-events:none; }
+  .statusbar { display:flex; justify-content:space-between; align-items:center;
+    padding:14px 24px 0; font-size:13px; font-weight:600; letter-spacing:.02em; }
+  .statusbar .icons { display:flex; gap:6px; opacity:.9; }
+  .wrap { position:relative; padding:0 24px; height:100%; display:flex; flex-direction:column; }
+  .brand { display:flex; align-items:center; gap:12px; margin-top:72px; }
+  .brand .word { font-family:Sora,sans-serif; font-weight:600; font-size:30px; letter-spacing:-.03em; }
+  h1 { font-family:Sora,sans-serif; font-weight:600; font-size:26px; letter-spacing:-.01em; margin-top:40px; }
+  .sub { color:var(--muted); font-size:15px; margin-top:8px; line-height:1.5; }
+  form { margin-top:28px; display:flex; flex-direction:column; gap:14px; }
+  .field { background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    display:flex; align-items:center; gap:11px; padding:0 15px; height:54px; transition:border-color .15s, box-shadow .15s; }
+  .field:focus-within { border-color:var(--accent); box-shadow:0 0 0 3px rgba(242,106,33,.20); }
+  .field svg { flex:none; opacity:.8; }
+  .field input { flex:1; background:none; border:none; outline:none; color:var(--text);
+    font-family:inherit; font-size:16px; }
+  .field input::placeholder { color:#5A6472; }
+  .field .toggle { color:var(--muted); font-size:13px; font-weight:500; }
+  .forgot { align-self:flex-end; color:var(--muted); font-size:14px; margin-top:2px; }
+  .cta { margin-top:8px; height:54px; border:none; border-radius:14px; background:var(--accent);
+    color:#0D1119; font-family:inherit; font-weight:600; font-size:16px; cursor:pointer; transition:background .15s; }
+  .cta:active { background:var(--accent-hover); }
+  .foot { margin-top:auto; padding-bottom:30px; text-align:center; color:var(--muted); font-size:15px; }
+  .foot a { color:var(--accent); font-weight:600; text-decoration:none; }
+  .home-ind { position:absolute; bottom:9px; left:50%; transform:translateX(-50%);
+    width:134px; height:5px; border-radius:3px; background:rgba(230,234,240,.28); }
+</style>
+</head>
+<body>
+  <div class="glow"></div>
+  <div class="statusbar"><span>9:41</span><span class="icons">●●● ▮▮ 􀛨</span></div>
+  <div class="wrap">
+    <div class="brand">
+      <svg viewBox="0 0 120 120" width="40" height="40"><path d="M14 22 L41 22 L60 68 L79 22 L106 22 L60 106 Z" fill="#F26A21"/><path d="M41 22 L60 68 L60 106 Z" fill="#0D1119" opacity=".16"/></svg>
+      <span class="word">veyra</span>
+    </div>
+    <h1>Welcome back</h1>
+    <p class="sub">Sign in to track your vehicles, fuel, and services.</p>
+    <form onsubmit="return false">
+      <div class="field">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9BA6B5" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+        <input type="email" placeholder="Email" value="oksa@veyra.dev" />
+      </div>
+      <div class="field">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9BA6B5" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        <input type="password" placeholder="Password" value="········" />
+        <span class="toggle">Show</span>
+      </div>
+      <a class="forgot" href="#">Forgot password?</a>
+      <button class="cta">Log in</button>
+    </form>
+    <p class="foot">New to Veyra? <a href="#">Create account</a></p>
+    <div class="home-ind"></div>
+  </div>
+</body>
+</html>
