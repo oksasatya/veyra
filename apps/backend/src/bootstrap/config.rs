@@ -70,7 +70,7 @@ impl FromStr for SameSiteCfg {
 }
 
 fn default_port() -> u16 {
-    3000
+    8080
 }
 fn default_access_ttl() -> u64 {
     900

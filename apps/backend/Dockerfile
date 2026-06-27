@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y ca-certificates libssl3 && rm -rf /var/
 WORKDIR /app
 COPY --from=builder /app/target/release/veyra /app/veyra
 COPY --from=builder /app/migrations /app/migrations
-ENV PORT=3000
-EXPOSE 3000
+ENV PORT=8080
+EXPOSE 8080
 USER 1000
 CMD ["/app/veyra"]
