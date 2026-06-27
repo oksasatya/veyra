@@ -66,8 +66,7 @@ flowchart LR
   TKA -. implements .-> P
   PGA --> PG
   RSA --> RD
-  BS -. wires .-> IN
-  BS -. wires .-> OUT
+  BS -. assembles .-> H
 
   classDef ext fill:#e0e7ff,stroke:#6366f1,color:#1e1b4b;
   classDef adapter fill:#fef3c7,stroke:#d97706,color:#78350f;
@@ -76,6 +75,10 @@ flowchart LR
   classDef core fill:#fee2e2,stroke:#dc2626,color:#7f1d1d;
   classDef infra fill:#e2e8f0,stroke:#475569,color:#0f172a;
   classDef boot fill:#ede9fe,stroke:#7c3aed,color:#4c1d95;
+
+  style RW fill:#ffffff,stroke:#cbd5e1,color:#334155
+  style IN fill:#f8fafc,stroke:#e2e8f0,color:#475569
+  style OUT fill:#f8fafc,stroke:#e2e8f0,color:#475569
 ```
 
 Dependency rule (CI-enforced): arrows point **inward** — inbound HTTP → application → ports → domain; outbound adapters *implement* ports. The `domain` core imports nothing outward; `bootstrap` is the only layer that wires concretes together.
