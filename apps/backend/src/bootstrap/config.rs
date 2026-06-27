@@ -85,6 +85,19 @@ fn default_cookie_secure() -> bool {
     true
 }
 
+/// Validates that a `SameSite=None` cookie is only configured alongside `Secure=true`.
+///
+/// Browsers reject `SameSite=None` cookies that lack the `Secure` attribute; this
+/// guard surfaces the misconfiguration at startup instead of silently producing
+/// cookies that every browser will drop.
+pub fn validate_cookie_combo(samesite: SameSiteCfg, secure: bool) -> Result<()> {
+    anyhow::ensure!(
+        !matches!(samesite, SameSiteCfg::None) || secure,
+        "COOKIE_SAMESITE=none requires COOKIE_SECURE=true (browsers reject SameSite=None without Secure)"
+    );
+    Ok(())
+}
+
 impl Config {
     pub fn load() -> Result<Self> {
         dotenvy::dotenv().ok();
@@ -95,6 +108,7 @@ impl Config {
             config.jwt_secret.len()
         );
         anyhow::ensure!(!config.redis_url.is_empty(), "REDIS_URL must be set");
+        validate_cookie_combo(config.cookie_samesite, config.cookie_secure)?;
         Ok(config)
     }
 }
@@ -140,5 +154,39 @@ mod tests {
     fn cors_csv_drops_blank_entries() {
         let result = split_csv(Some("https://a.dev,,  ,https://b.dev".to_owned()));
         assert_eq!(result, vec!["https://a.dev", "https://b.dev"]);
+    }
+
+    // Fix 2: validate_cookie_combo unit tests
+    #[test]
+    fn samesite_none_without_secure_is_err() {
+        let result = validate_cookie_combo(SameSiteCfg::None, false);
+        assert!(
+            result.is_err(),
+            "SameSite=None without Secure must be rejected"
+        );
+    }
+
+    #[test]
+    fn samesite_none_with_secure_is_ok() {
+        let result = validate_cookie_combo(SameSiteCfg::None, true);
+        assert!(result.is_ok(), "SameSite=None with Secure must be accepted");
+    }
+
+    #[test]
+    fn samesite_strict_without_secure_is_ok() {
+        let result = validate_cookie_combo(SameSiteCfg::Strict, false);
+        assert!(
+            result.is_ok(),
+            "SameSite=Strict without Secure must be accepted"
+        );
+    }
+
+    #[test]
+    fn samesite_lax_without_secure_is_ok() {
+        let result = validate_cookie_combo(SameSiteCfg::Lax, false);
+        assert!(
+            result.is_ok(),
+            "SameSite=Lax without Secure must be accepted"
+        );
     }
 }
