@@ -21,6 +21,12 @@ pub const ACCESS_BASE: &str = "veyra_access";
 pub const REFRESH_BASE: &str = "veyra_refresh";
 pub const CSRF_BASE: &str = "veyra_csrf";
 
+/// The double-submit CSRF request header name. Single source of truth shared by
+/// the CSRF middleware (the header it checks), the router (the CORS allowed
+/// header), and the integration tests — so the allowed header can never drift
+/// from the checked one.
+pub const X_CSRF_TOKEN: &str = "x-csrf-token";
+
 // ── Prefix constants (never duplicate these string literals) ──────────────────
 
 const PREFIX_HOST: &str = "__Host-";

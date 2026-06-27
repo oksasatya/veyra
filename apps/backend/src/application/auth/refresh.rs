@@ -180,14 +180,6 @@ mod tests {
     struct FakeAuthPort;
 
     impl AuthPort for FakeAuthPort {
-        fn sign_token(&self, _user_id: Uuid) -> Result<String, AuthError> {
-            Ok("legacy.jwt".into())
-        }
-
-        fn verify_token(&self, _token: &str) -> Result<Uuid, AuthError> {
-            Ok(Uuid::new_v4())
-        }
-
         fn sign_access(&self, _user_id: Uuid, _sid: Uuid, _jti: Uuid) -> Result<String, AuthError> {
             Ok("mock.jwt".into())
         }

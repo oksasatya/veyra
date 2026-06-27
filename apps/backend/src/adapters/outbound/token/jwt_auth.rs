@@ -7,14 +7,7 @@ use crate::ports::auth::{AccessClaims, AuthError, AuthPort};
 
 // ── Serde claim structs live in the adapter — never in ports/ ────────────────
 
-/// Claims for the legacy 7-day tokens (removed in Task 6).
-#[derive(Debug, Serialize, Deserialize)]
-struct LegacyClaims {
-    sub: String,
-    exp: i64,
-}
-
-/// Claims for the new short-lived access tokens.
+/// Claims for the short-lived access tokens.
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {
     sub: String,
@@ -28,9 +21,7 @@ struct Claims {
 
 /// JWT implementation of [`AuthPort`].
 ///
-/// Signs HS256 tokens. `access_ttl_secs` governs the lifetime of tokens
-/// created via [`sign_access`]. The legacy [`sign_token`] keeps its fixed 7-day
-/// TTL until it is removed in Task 6.
+/// Signs HS256 access tokens; `access_ttl_secs` governs their lifetime.
 #[derive(Clone)]
 pub struct JwtAuth {
     secret: String,
@@ -47,37 +38,6 @@ impl JwtAuth {
 }
 
 impl AuthPort for JwtAuth {
-    // ── Legacy (removed in Task 6) ────────────────────────────────────────────
-    fn sign_token(&self, user_id: Uuid) -> Result<String, AuthError> {
-        let exp = (Utc::now() + Duration::days(7)).timestamp();
-        let claims = LegacyClaims {
-            sub: user_id.to_string(),
-            exp,
-        };
-        encode(
-            &Header::default(),
-            &claims,
-            &EncodingKey::from_secret(self.secret.as_bytes()),
-        )
-        .map_err(|e| AuthError::SigningFailed(e.to_string()))
-    }
-
-    fn verify_token(&self, token: &str) -> Result<Uuid, AuthError> {
-        let token_data = decode::<LegacyClaims>(
-            token,
-            &DecodingKey::from_secret(self.secret.as_bytes()),
-            &Validation::new(Algorithm::HS256),
-        )
-        .map_err(|_| AuthError::InvalidToken)?;
-
-        token_data
-            .claims
-            .sub
-            .parse::<Uuid>()
-            .map_err(|_| AuthError::InvalidToken)
-    }
-
-    // ── New access-token methods ──────────────────────────────────────────────
     fn sign_access(&self, user_id: Uuid, sid: Uuid, jti: Uuid) -> Result<String, AuthError> {
         let now = Utc::now();
         let iat = now.timestamp();
@@ -169,34 +129,6 @@ mod tests {
         .expect("encode ok");
         let jwt = JwtAuth::new(SECRET.into(), 900);
         let result = jwt.verify_access(&token);
-        assert!(matches!(result, Err(AuthError::InvalidToken)));
-    }
-
-    // ── Legacy tests preserved from postgres/jwt_auth.rs ─────────────────────
-
-    #[test]
-    fn sign_and_verify_roundtrip() {
-        let jwt = JwtAuth::new(SECRET.into(), 900);
-        let user_id = Uuid::new_v4();
-        let token = jwt.sign_token(user_id).unwrap();
-        let parsed = jwt.verify_token(&token).unwrap();
-        assert_eq!(parsed, user_id);
-    }
-
-    #[test]
-    fn verify_invalid_token_returns_error() {
-        let jwt = JwtAuth::new(SECRET.into(), 900);
-        let result = jwt.verify_token("not.a.valid.jwt");
-        assert!(matches!(result, Err(AuthError::InvalidToken)));
-    }
-
-    #[test]
-    fn verify_token_signed_with_different_secret_fails() {
-        let jwt_a = JwtAuth::new("secret-a-32chars-at-minimum--!!".into(), 900);
-        let jwt_b = JwtAuth::new("secret-b-32chars-at-minimum--!!".into(), 900);
-        let user_id = Uuid::new_v4();
-        let token = jwt_a.sign_token(user_id).unwrap();
-        let result = jwt_b.verify_token(&token);
         assert!(matches!(result, Err(AuthError::InvalidToken)));
     }
 }

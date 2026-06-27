@@ -1,13 +1,16 @@
 mod common;
+use common::Session;
 use serde_json::json;
 
-/// Helper: register+login, create a vehicle, return (token, vehicle_id).
-async fn setup(app: &common::TestApp, email: &str, plate: &str) -> (String, String) {
-    let token = common::register_and_login(app, email).await;
+/// Helper: register+login, create a vehicle, return (session, vehicle_id).
+async fn setup(app: &common::TestApp, email: &str, plate: &str) -> (Session, String) {
+    let s = common::register_and_login(app, email).await;
+    let (cn, cv) = common::csrf_header(&s.csrf);
     let v: serde_json::Value = app
         .client
         .post("/vehicles")
-        .authorization_bearer(&token)
+        .add_cookies(s.cookies.clone())
+        .add_header(cn, cv)
         .json(&json!({
             "brand": "Toyota", "model": "Avanza", "year": 2021,
             "plate_number": plate,
@@ -17,7 +20,7 @@ async fn setup(app: &common::TestApp, email: &str, plate: &str) -> (String, Stri
         .await
         .json();
     let vid = v["id"].as_str().unwrap().to_string();
-    (token, vid)
+    (s, vid)
 }
 
 /// Seed:
@@ -30,12 +33,14 @@ async fn setup(app: &common::TestApp, email: &str, plate: &str) -> (String, Stri
 #[tokio::test]
 async fn summary_aggregates_correctly() {
     let app = common::spawn_app().await;
-    let (token, vid) = setup(&app, "summary@example.com", "B 0001 SUM").await;
+    let (s, vid) = setup(&app, "summary@example.com", "B 0001 SUM").await;
+    let (cn, cv) = common::csrf_header(&s.csrf);
 
     // Service record 1 — cost 100
     app.client
         .post(&format!("/vehicles/{vid}/services"))
-        .authorization_bearer(&token)
+        .add_cookies(s.cookies.clone())
+        .add_header(cn.clone(), cv.clone())
         .json(&json!({
             "service_date": "2026-01-10",
             "odometer": 10500,
@@ -49,7 +54,8 @@ async fn summary_aggregates_correctly() {
     // Service record 2 — cost 200
     app.client
         .post(&format!("/vehicles/{vid}/services"))
-        .authorization_bearer(&token)
+        .add_cookies(s.cookies.clone())
+        .add_header(cn.clone(), cv.clone())
         .json(&json!({
             "service_date": "2026-02-15",
             "odometer": 11000,
@@ -63,7 +69,8 @@ async fn summary_aggregates_correctly() {
     // Fuel log — 40 liters × 10.00 = 400.00 total_cost (GENERATED column)
     app.client
         .post(&format!("/vehicles/{vid}/fuel-logs"))
-        .authorization_bearer(&token)
+        .add_cookies(s.cookies.clone())
+        .add_header(cn.clone(), cv.clone())
         .json(&json!({
             "log_date": "2026-03-01",
             "odometer": 11500,
@@ -77,7 +84,8 @@ async fn summary_aggregates_correctly() {
     // Expense — 500.00
     app.client
         .post(&format!("/vehicles/{vid}/expenses"))
-        .authorization_bearer(&token)
+        .add_cookies(s.cookies.clone())
+        .add_header(cn.clone(), cv.clone())
         .json(&json!({
             "expense_date": "2026-04-01",
             "category": "tire",
@@ -93,7 +101,8 @@ async fn summary_aggregates_correctly() {
         .to_string();
     app.client
         .post(&format!("/vehicles/{vid}/reminders"))
-        .authorization_bearer(&token)
+        .add_cookies(s.cookies.clone())
+        .add_header(cn.clone(), cv.clone())
         .json(&json!({
             "title": "Tyre rotation",
             "reminder_type": "date",
@@ -106,7 +115,7 @@ async fn summary_aggregates_correctly() {
     let resp = app
         .client
         .get(&format!("/vehicles/{vid}/summary"))
-        .authorization_bearer(&token)
+        .add_cookies(s.cookies.clone())
         .await;
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
@@ -140,7 +149,8 @@ async fn summary_aggregates_correctly() {
 #[tokio::test]
 async fn completed_reminder_not_counted() {
     let app = common::spawn_app().await;
-    let (token, vid) = setup(&app, "summary_completed@example.com", "B 0002 SUM").await;
+    let (s, vid) = setup(&app, "summary_completed@example.com", "B 0002 SUM").await;
+    let (cn, cv) = common::csrf_header(&s.csrf);
 
     let due_date = (chrono::Utc::now() + chrono::Duration::days(5))
         .format("%Y-%m-%d")
@@ -148,7 +158,8 @@ async fn completed_reminder_not_counted() {
     let created: serde_json::Value = app
         .client
         .post(&format!("/vehicles/{vid}/reminders"))
-        .authorization_bearer(&token)
+        .add_cookies(s.cookies.clone())
+        .add_header(cn.clone(), cv.clone())
         .json(&json!({
             "title": "Done reminder",
             "reminder_type": "date",
@@ -161,7 +172,8 @@ async fn completed_reminder_not_counted() {
     // Mark it complete
     app.client
         .patch(&format!("/vehicles/{vid}/reminders/{rid}"))
-        .authorization_bearer(&token)
+        .add_cookies(s.cookies.clone())
+        .add_header(cn, cv)
         .json(&json!({ "is_completed": true }))
         .await
         .assert_status_ok();
@@ -169,7 +181,7 @@ async fn completed_reminder_not_counted() {
     let resp = app
         .client
         .get(&format!("/vehicles/{vid}/summary"))
-        .authorization_bearer(&token)
+        .add_cookies(s.cookies.clone())
         .await;
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
@@ -184,16 +196,16 @@ async fn completed_reminder_not_counted() {
 #[tokio::test]
 async fn summary_for_other_users_vehicle_returns_404() {
     let app = common::spawn_app().await;
-    let (token_a, vid) = setup(&app, "summary_owner@example.com", "B 0003 SUM").await;
-    let token_b = common::register_and_login(&app, "summary_intruder@example.com").await;
+    let (a, vid) = setup(&app, "summary_owner@example.com", "B 0003 SUM").await;
+    let b = common::register_and_login(&app, "summary_intruder@example.com").await;
 
-    // Silence the unused-variable warning from the owner token
-    let _ = token_a;
+    // Silence the unused-variable warning from the owner session
+    let _ = a;
 
     let resp = app
         .client
         .get(&format!("/vehicles/{vid}/summary"))
-        .authorization_bearer(&token_b)
+        .add_cookies(b.cookies.clone())
         .await;
     resp.assert_status(axum::http::StatusCode::NOT_FOUND);
 }
@@ -202,12 +214,12 @@ async fn summary_for_other_users_vehicle_returns_404() {
 #[tokio::test]
 async fn summary_empty_vehicle_returns_zeroes() {
     let app = common::spawn_app().await;
-    let (token, vid) = setup(&app, "summary_empty@example.com", "B 0004 SUM").await;
+    let (s, vid) = setup(&app, "summary_empty@example.com", "B 0004 SUM").await;
 
     let resp = app
         .client
         .get(&format!("/vehicles/{vid}/summary"))
-        .authorization_bearer(&token)
+        .add_cookies(s.cookies.clone())
         .await;
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();

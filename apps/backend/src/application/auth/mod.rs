@@ -5,6 +5,8 @@ pub mod register;
 
 use uuid::Uuid;
 
+use crate::domain::user::entity::User;
+
 /// Produced by register/login (Task 6) after a session is created and an
 /// access token is signed.
 ///
@@ -15,4 +17,12 @@ pub struct AuthSession {
     pub family_id: Uuid,
     pub raw_secret: String,
     pub sid: Uuid,
+}
+
+/// Result of register/login: the authenticated [`User`] plus the freshly-issued
+/// [`AuthSession`]. The handler builds both the cookie jar (from the session)
+/// and the response body (from the user) without a second database read.
+pub struct AuthOutcome {
+    pub user: User,
+    pub session: AuthSession,
 }

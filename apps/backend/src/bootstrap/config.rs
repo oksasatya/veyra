@@ -98,6 +98,21 @@ pub fn validate_cookie_combo(samesite: SameSiteCfg, secure: bool) -> Result<()> 
     Ok(())
 }
 
+/// Rejects a wildcard (`"*"`) CORS origin.
+///
+/// The API sends credentialed CORS (`allow_credentials(true)`), which is
+/// incompatible with a wildcard origin — browsers refuse it, and accepting it
+/// would invite credential leakage to any site. The allowlist must be explicit;
+/// surface the misconfiguration at startup rather than silently emitting a
+/// header browsers will reject.
+pub fn validate_cors_origins(origins: &[String]) -> Result<()> {
+    anyhow::ensure!(
+        !origins.iter().any(|o| o.trim() == "*"),
+        "CORS_ALLOWED_ORIGINS must not contain '*' (wildcard is illegal with credentialed CORS — use an explicit allowlist)"
+    );
+    Ok(())
+}
+
 impl Config {
     pub fn load() -> Result<Self> {
         dotenvy::dotenv().ok();
@@ -109,6 +124,7 @@ impl Config {
         );
         anyhow::ensure!(!config.redis_url.is_empty(), "REDIS_URL must be set");
         validate_cookie_combo(config.cookie_samesite, config.cookie_secure)?;
+        validate_cors_origins(&config.cors_allowed_origins)?;
         Ok(config)
     }
 }
@@ -188,5 +204,39 @@ mod tests {
             result.is_ok(),
             "SameSite=Lax without Secure must be accepted"
         );
+    }
+
+    // Fix 3: wildcard CORS origin must be rejected (illegal with credentials).
+    #[test]
+    fn cors_wildcard_origin_is_rejected() {
+        let result = validate_cors_origins(&["*".to_owned()]);
+        assert!(
+            result.is_err(),
+            "wildcard '*' CORS origin must be rejected (illegal with allow_credentials)"
+        );
+    }
+
+    #[test]
+    fn cors_wildcard_among_valid_origins_is_rejected() {
+        let result = validate_cors_origins(&["https://veyra.dev".to_owned(), "*".to_owned()]);
+        assert!(
+            result.is_err(),
+            "a wildcard anywhere in the allowlist must be rejected"
+        );
+    }
+
+    #[test]
+    fn cors_explicit_origins_are_accepted() {
+        let result = validate_cors_origins(&[
+            "https://veyra.dev".to_owned(),
+            "https://app.veyra.dev".to_owned(),
+        ]);
+        assert!(result.is_ok(), "explicit origins must be accepted");
+    }
+
+    #[test]
+    fn cors_empty_allowlist_is_accepted() {
+        let result = validate_cors_origins(&[]);
+        assert!(result.is_ok(), "an empty allowlist (same-origin) is valid");
     }
 }

@@ -3,6 +3,7 @@ use sqlx::postgres::PgPoolOptions;
 use std::net::SocketAddr;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use veyra::adapters::inbound::http::router;
+use veyra::adapters::outbound::redis::client::build_pool;
 use veyra::bootstrap::{config::Config, state::AppState};
 
 #[tokio::main]
@@ -24,7 +25,9 @@ async fn main() -> Result<()> {
 
     sqlx::migrate!("./migrations").run(&pool).await?;
 
-    let state = AppState::new(pool, config.jwt_secret);
+    let redis_pool = build_pool(&config.redis_url).await?;
+
+    let state = AppState::new(pool, redis_pool, &config);
     let app = router::build(state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], config.port));

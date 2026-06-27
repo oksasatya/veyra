@@ -1,23 +1,30 @@
 use std::sync::Arc;
 
+use fred::clients::Pool as RedisPool;
 use sqlx::PgPool;
 
 use crate::{
-    adapters::outbound::{
-        postgres::{
-            document_repo::PgDocumentRepo, expense_repo::PgExpenseRepo,
-            fuel_log_repo::PgFuelLogRepo, reminder_repo::PgReminderRepo,
-            service_record_repo::PgServiceRecordRepo, summary_repo::PgSummaryRepo,
-            user_repo::PgUserRepo, vehicle_repo::PgVehicleRepo,
+    adapters::{
+        inbound::http::cookies::CookiePolicy,
+        outbound::{
+            postgres::{
+                document_repo::PgDocumentRepo, expense_repo::PgExpenseRepo,
+                fuel_log_repo::PgFuelLogRepo, reminder_repo::PgReminderRepo,
+                service_record_repo::PgServiceRecordRepo, summary_repo::PgSummaryRepo,
+                user_repo::PgUserRepo, vehicle_repo::PgVehicleRepo,
+            },
+            redis::session_store::RedisSessionStore,
+            token::jwt_auth::JwtAuth,
         },
-        token::jwt_auth::JwtAuth,
     },
+    bootstrap::config::Config,
     ports::{
         auth::AuthPort,
         repositories::{
             DocumentRepository, ExpenseRepository, FuelLogRepository, ReminderRepository,
             ServiceRecordRepository, SummaryRepository, UserRepository, VehicleRepository,
         },
+        session::SessionStore,
     },
 };
 
@@ -33,10 +40,17 @@ pub struct AppState {
     pub document_repo: Arc<dyn DocumentRepository>,
     pub summary_repo: Arc<dyn SummaryRepository>,
     pub auth: Arc<dyn AuthPort>,
+    pub sessions: Arc<dyn SessionStore>,
+    pub cookie_policy: CookiePolicy,
+    pub access_ttl_secs: u64,
+    pub cors_allowed_origins: Vec<String>,
 }
 
 impl AppState {
-    pub fn new(pool: PgPool, jwt_secret: String) -> Self {
+    /// Compose the application state from the database pool, the Redis pool, and
+    /// the loaded configuration. Cookie/session policy is derived entirely from
+    /// `config` so the same binary serves self-host and the prod subdomain split.
+    pub fn new(pool: PgPool, redis_pool: RedisPool, config: &Config) -> Self {
         let user_repo = Arc::new(PgUserRepo::new(pool.clone()));
         let vehicle_repo = Arc::new(PgVehicleRepo::new(pool.clone()));
         let service_record_repo = Arc::new(PgServiceRecordRepo::new(pool.clone()));
@@ -45,7 +59,25 @@ impl AppState {
         let reminder_repo = Arc::new(PgReminderRepo::new(pool.clone()));
         let document_repo = Arc::new(PgDocumentRepo::new(pool.clone()));
         let summary_repo = Arc::new(PgSummaryRepo::new(pool.clone()));
-        let auth = Arc::new(JwtAuth::new(jwt_secret, 900));
+
+        let auth = Arc::new(JwtAuth::new(
+            config.jwt_secret.clone(),
+            config.access_ttl_secs,
+        ));
+        let sessions = Arc::new(RedisSessionStore::new(
+            redis_pool,
+            config.refresh_ttl_secs,
+            config.access_ttl_secs,
+            config.refresh_grace_secs,
+        ));
+        let cookie_policy = CookiePolicy {
+            secure: config.cookie_secure,
+            samesite: config.cookie_samesite,
+            domain: config.cookie_domain.clone(),
+            access_ttl_secs: config.access_ttl_secs,
+            refresh_ttl_secs: config.refresh_ttl_secs,
+        };
+
         Self {
             pool,
             user_repo,
@@ -57,6 +89,10 @@ impl AppState {
             document_repo,
             summary_repo,
             auth,
+            sessions,
+            cookie_policy,
+            access_ttl_secs: config.access_ttl_secs,
+            cors_allowed_origins: config.cors_allowed_origins.clone(),
         }
     }
 }

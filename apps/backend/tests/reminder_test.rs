@@ -1,12 +1,15 @@
 mod common;
+use common::Session;
 use serde_json::json;
 
-/// Helper: create a vehicle and return its id string.
-async fn create_vehicle(app: &common::TestApp, token: &str, plate: &str) -> String {
+/// Helper: create a vehicle for `session` and return its id string.
+async fn create_vehicle(app: &common::TestApp, session: &Session, plate: &str) -> String {
+    let (cn, cv) = common::csrf_header(&session.csrf);
     let v: serde_json::Value = app
         .client
         .post("/vehicles")
-        .authorization_bearer(token)
+        .add_cookies(session.cookies.clone())
+        .add_header(cn, cv)
         .json(&json!({
             "brand": "Toyota", "model": "Avanza", "year": 2021,
             "plate_number": plate, "fuel_type": "petrol", "current_odometer": 0
@@ -19,13 +22,15 @@ async fn create_vehicle(app: &common::TestApp, token: &str, plate: &str) -> Stri
 #[tokio::test]
 async fn create_and_list_reminders() {
     let app = common::spawn_app().await;
-    let token = common::register_and_login(&app, "reminder_list@example.com").await;
-    let vid = create_vehicle(&app, &token, "B 0001 REM").await;
+    let s = common::register_and_login(&app, "reminder_list@example.com").await;
+    let vid = create_vehicle(&app, &s, "B 0001 REM").await;
+    let (cn, cv) = common::csrf_header(&s.csrf);
 
     let resp = app
         .client
         .post(&format!("/vehicles/{vid}/reminders"))
-        .authorization_bearer(&token)
+        .add_cookies(s.cookies.clone())
+        .add_header(cn, cv)
         .json(&json!({
             "title": "Oil change",
             "reminder_type": "date",
@@ -41,7 +46,7 @@ async fn create_and_list_reminders() {
     let list: serde_json::Value = app
         .client
         .get(&format!("/vehicles/{vid}/reminders"))
-        .authorization_bearer(&token)
+        .add_cookies(s.cookies.clone())
         .await
         .json();
     assert_eq!(list["reminders"].as_array().unwrap().len(), 1);
@@ -54,14 +59,16 @@ async fn create_and_list_reminders() {
 #[tokio::test]
 async fn mark_reminder_complete() {
     let app = common::spawn_app().await;
-    let token = common::register_and_login(&app, "reminder_patch@example.com").await;
-    let vid = create_vehicle(&app, &token, "B 0002 REM").await;
+    let s = common::register_and_login(&app, "reminder_patch@example.com").await;
+    let vid = create_vehicle(&app, &s, "B 0002 REM").await;
+    let (cn, cv) = common::csrf_header(&s.csrf);
 
     // Create a reminder
     let created: serde_json::Value = app
         .client
         .post(&format!("/vehicles/{vid}/reminders"))
-        .authorization_bearer(&token)
+        .add_cookies(s.cookies.clone())
+        .add_header(cn.clone(), cv.clone())
         .json(&json!({
             "title": "Tire rotation",
             "reminder_type": "odometer",
@@ -75,7 +82,8 @@ async fn mark_reminder_complete() {
     let resp = app
         .client
         .patch(&format!("/vehicles/{vid}/reminders/{rid}"))
-        .authorization_bearer(&token)
+        .add_cookies(s.cookies.clone())
+        .add_header(cn, cv)
         .json(&json!({ "is_completed": true }))
         .await;
     resp.assert_status(axum::http::StatusCode::OK);
@@ -86,7 +94,7 @@ async fn mark_reminder_complete() {
     let list: serde_json::Value = app
         .client
         .get(&format!("/vehicles/{vid}/reminders"))
-        .authorization_bearer(&token)
+        .add_cookies(s.cookies.clone())
         .await
         .json();
     assert!(list["reminders"][0]["is_completed"].as_bool().unwrap());
@@ -95,13 +103,15 @@ async fn mark_reminder_complete() {
 #[tokio::test]
 async fn date_reminder_without_due_date_returns_422() {
     let app = common::spawn_app().await;
-    let token = common::register_and_login(&app, "reminder_422@example.com").await;
-    let vid = create_vehicle(&app, &token, "B 0003 REM").await;
+    let s = common::register_and_login(&app, "reminder_422@example.com").await;
+    let vid = create_vehicle(&app, &s, "B 0003 REM").await;
+    let (cn, cv) = common::csrf_header(&s.csrf);
 
     let resp = app
         .client
         .post(&format!("/vehicles/{vid}/reminders"))
-        .authorization_bearer(&token)
+        .add_cookies(s.cookies.clone())
+        .add_header(cn, cv)
         .json(&json!({
             "title": "Missing due_date",
             "reminder_type": "date"
@@ -114,13 +124,15 @@ async fn date_reminder_without_due_date_returns_422() {
 #[tokio::test]
 async fn odometer_reminder_without_due_odometer_returns_422() {
     let app = common::spawn_app().await;
-    let token = common::register_and_login(&app, "reminder_422b@example.com").await;
-    let vid = create_vehicle(&app, &token, "B 0004 REM").await;
+    let s = common::register_and_login(&app, "reminder_422b@example.com").await;
+    let vid = create_vehicle(&app, &s, "B 0004 REM").await;
+    let (cn, cv) = common::csrf_header(&s.csrf);
 
     let resp = app
         .client
         .post(&format!("/vehicles/{vid}/reminders"))
-        .authorization_bearer(&token)
+        .add_cookies(s.cookies.clone())
+        .add_header(cn, cv)
         .json(&json!({
             "title": "Missing odometer",
             "reminder_type": "odometer"
@@ -133,13 +145,15 @@ async fn odometer_reminder_without_due_odometer_returns_422() {
 #[tokio::test]
 async fn invalid_reminder_type_returns_422() {
     let app = common::spawn_app().await;
-    let token = common::register_and_login(&app, "reminder_invalid_type@example.com").await;
-    let vid = create_vehicle(&app, &token, "B 0005 REM").await;
+    let s = common::register_and_login(&app, "reminder_invalid_type@example.com").await;
+    let vid = create_vehicle(&app, &s, "B 0005 REM").await;
+    let (cn, cv) = common::csrf_header(&s.csrf);
 
     let resp = app
         .client
         .post(&format!("/vehicles/{vid}/reminders"))
-        .authorization_bearer(&token)
+        .add_cookies(s.cookies.clone())
+        .add_header(cn, cv)
         .json(&json!({
             "title": "Bad type",
             "reminder_type": "invalid_type",
@@ -152,15 +166,17 @@ async fn invalid_reminder_type_returns_422() {
 #[tokio::test]
 async fn reminder_for_other_users_vehicle_returns_404() {
     let app = common::spawn_app().await;
-    let token_a = common::register_and_login(&app, "reminder_owner@example.com").await;
-    let token_b = common::register_and_login(&app, "reminder_intruder@example.com").await;
+    let a = common::register_and_login(&app, "reminder_owner@example.com").await;
+    let b = common::register_and_login(&app, "reminder_intruder@example.com").await;
 
-    let vid = create_vehicle(&app, &token_a, "B 0006 REM").await;
+    let vid = create_vehicle(&app, &a, "B 0006 REM").await;
+    let (b_cn, b_cv) = common::csrf_header(&b.csrf);
 
     let resp = app
         .client
         .post(&format!("/vehicles/{vid}/reminders"))
-        .authorization_bearer(&token_b)
+        .add_cookies(b.cookies.clone())
+        .add_header(b_cn, b_cv)
         .json(&json!({
             "title": "Unauthorised reminder",
             "reminder_type": "date",
@@ -173,14 +189,16 @@ async fn reminder_for_other_users_vehicle_returns_404() {
 #[tokio::test]
 async fn patch_both_type_reminder_preserves_existing_due_date() {
     let app = common::spawn_app().await;
-    let token = common::register_and_login(&app, "reminder_both_patch@example.com").await;
-    let vid = create_vehicle(&app, &token, "B 0007 REM").await;
+    let s = common::register_and_login(&app, "reminder_both_patch@example.com").await;
+    let vid = create_vehicle(&app, &s, "B 0007 REM").await;
+    let (cn, cv) = common::csrf_header(&s.csrf);
 
     // Create a both-type reminder with both triggers
     let created: serde_json::Value = app
         .client
         .post(&format!("/vehicles/{vid}/reminders"))
-        .authorization_bearer(&token)
+        .add_cookies(s.cookies.clone())
+        .add_header(cn.clone(), cv.clone())
         .json(&json!({
             "title": "Full service",
             "reminder_type": "both",
@@ -195,7 +213,8 @@ async fn patch_both_type_reminder_preserves_existing_due_date() {
     let resp = app
         .client
         .patch(&format!("/vehicles/{vid}/reminders/{rid}"))
-        .authorization_bearer(&token)
+        .add_cookies(s.cookies.clone())
+        .add_header(cn, cv)
         .json(&json!({ "is_completed": true }))
         .await;
     resp.assert_status(axum::http::StatusCode::OK);

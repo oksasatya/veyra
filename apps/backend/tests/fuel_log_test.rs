@@ -4,14 +4,14 @@ use serde_json::json;
 #[tokio::test]
 async fn create_and_list_fuel_logs() {
     let app = common::spawn_app().await;
-    let token = common::register_and_login(&app, "fuel@example.com").await;
-    let auth_h: axum::http::HeaderValue = format!("Bearer {token}").parse().unwrap();
-    let auth_n: axum::http::HeaderName = "Authorization".parse().unwrap();
+    let s = common::register_and_login(&app, "fuel@example.com").await;
+    let (cn, cv) = common::csrf_header(&s.csrf);
 
     let v: serde_json::Value = app
         .client
         .post("/vehicles")
-        .add_header(auth_n.clone(), auth_h.clone())
+        .add_cookies(s.cookies.clone())
+        .add_header(cn.clone(), cv.clone())
         .json(&json!({
             "brand": "Honda", "model": "Brio", "year": 2022,
             "plate_number": "B 0001 FUL", "fuel_type": "petrol", "current_odometer": 0
@@ -23,7 +23,8 @@ async fn create_and_list_fuel_logs() {
     let resp = app
         .client
         .post(&format!("/vehicles/{vid}/fuel-logs"))
-        .add_header(auth_n.clone(), auth_h.clone())
+        .add_cookies(s.cookies.clone())
+        .add_header(cn.clone(), cv.clone())
         .json(&json!({
             "log_date": "2026-01-20",
             "odometer": 10000,
@@ -40,7 +41,7 @@ async fn create_and_list_fuel_logs() {
     let list: serde_json::Value = app
         .client
         .get(&format!("/vehicles/{vid}/fuel-logs"))
-        .add_header(auth_n, auth_h)
+        .add_cookies(s.cookies.clone())
         .await
         .json();
     assert_eq!(list["logs"].as_array().unwrap().len(), 1);
@@ -49,13 +50,16 @@ async fn create_and_list_fuel_logs() {
 #[tokio::test]
 async fn fuel_log_for_other_users_vehicle_returns_404() {
     let app = common::spawn_app().await;
-    let token_a = common::register_and_login(&app, "owner@fuel.com").await;
-    let token_b = common::register_and_login(&app, "intruder@fuel.com").await;
+    let a = common::register_and_login(&app, "owner@fuel.com").await;
+    let b = common::register_and_login(&app, "intruder@fuel.com").await;
+    let (a_cn, a_cv) = common::csrf_header(&a.csrf);
+    let (b_cn, b_cv) = common::csrf_header(&b.csrf);
 
     let v: serde_json::Value = app
         .client
         .post("/vehicles")
-        .authorization_bearer(&token_a)
+        .add_cookies(a.cookies.clone())
+        .add_header(a_cn, a_cv)
         .json(&json!({
             "brand": "Honda", "model": "Brio", "year": 2022,
             "plate_number": "B 0002 FUL", "fuel_type": "petrol", "current_odometer": 0
@@ -67,7 +71,8 @@ async fn fuel_log_for_other_users_vehicle_returns_404() {
     let resp = app
         .client
         .post(&format!("/vehicles/{vid}/fuel-logs"))
-        .authorization_bearer(&token_b)
+        .add_cookies(b.cookies.clone())
+        .add_header(b_cn, b_cv)
         .json(&json!({
             "log_date": "2026-01-20",
             "odometer": 5000,

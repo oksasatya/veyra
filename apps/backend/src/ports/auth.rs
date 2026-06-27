@@ -20,11 +20,8 @@ pub struct AccessClaims {
 }
 
 pub trait AuthPort: Send + Sync {
-    // ── Legacy methods (removed in Task 6 once no callers remain) ────────────
-    fn sign_token(&self, user_id: Uuid) -> Result<String, AuthError>;
-    fn verify_token(&self, token: &str) -> Result<Uuid, AuthError>;
-
-    // ── New access-token methods ─────────────────────────────────────────────
+    /// Sign a short-lived access token carrying `{ sub, sid, jti, iat, exp }`.
     fn sign_access(&self, user_id: Uuid, sid: Uuid, jti: Uuid) -> Result<String, AuthError>;
+    /// Verify an access token and return its claims.
     fn verify_access(&self, token: &str) -> Result<AccessClaims, AuthError>;
 }

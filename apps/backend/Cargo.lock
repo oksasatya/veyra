@@ -3961,6 +3961,7 @@ dependencies = [
  "axum-test",
  "base64",
  "chrono",
+ "cookie",
  "dotenvy",
  "figment",
  "fred",
