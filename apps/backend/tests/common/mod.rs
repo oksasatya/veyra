@@ -2,7 +2,9 @@ use axum_test::TestServer;
 use serde_json::json;
 use sqlx::PgPool;
 use testcontainers_modules::postgres::Postgres;
+use testcontainers_modules::redis::Redis;
 use testcontainers_modules::testcontainers::{runners::AsyncRunner, ImageExt};
+use veyra::adapters::outbound::redis::{client::build_pool, session_store::RedisSessionStore};
 use veyra::{adapters::inbound::http::router, bootstrap::state::AppState};
 
 pub struct TestApp {
@@ -38,6 +40,7 @@ pub async fn register_and_login(app: &TestApp, email: &str) -> String {
 /// Spins up a real Postgres container, runs migrations, and returns a TestApp
 /// backed by the full axum router. The container is leaked intentionally so it
 /// outlives the test — process exit cleans it up.
+#[allow(dead_code)] // only some test binaries call this
 pub async fn spawn_app() -> TestApp {
     let container = Postgres::default()
         .with_tag("16-alpine")
@@ -57,4 +60,22 @@ pub async fn spawn_app() -> TestApp {
     std::mem::forget(container);
 
     TestApp { client }
+}
+
+/// Spins up a real Redis container and returns a `RedisSessionStore` (grace = 0)
+/// along with the container handle. Drop the handle to stop the container.
+#[allow(dead_code)]
+pub async fn redis_store() -> (RedisSessionStore, impl Sized) {
+    redis_store_with_grace(0).await
+}
+
+/// Like [`redis_store`] but with a configurable grace window in seconds.
+#[allow(dead_code)]
+pub async fn redis_store_with_grace(grace: u64) -> (RedisSessionStore, impl Sized) {
+    let container = Redis::default().start().await.unwrap();
+    let port = container.get_host_port_ipv4(6379).await.unwrap();
+    let pool = build_pool(&format!("redis://127.0.0.1:{port}"))
+        .await
+        .unwrap();
+    (RedisSessionStore::new(pool, 604_800, 900, grace), container)
 }
