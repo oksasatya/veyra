@@ -1,4 +1,4 @@
-use axum::http::{HeaderName, HeaderValue};
+use axum::http::{header::AUTHORIZATION, HeaderName, HeaderValue};
 use axum_test::TestServer;
 use cookie::CookieJar;
 use fred::clients::Pool as RedisPool;
@@ -89,6 +89,45 @@ pub fn csrf_header(token: &str) -> (HeaderName, HeaderValue) {
     let name = HeaderName::from_static(X_CSRF_TOKEN);
     let value = HeaderValue::from_str(token).expect("valid csrf header value");
     (name, value)
+}
+
+/// The `X-Auth-Mode: bearer` header pair — opts a request into bearer delivery.
+#[allow(dead_code)]
+pub fn auth_mode_header() -> (HeaderName, HeaderValue) {
+    (
+        HeaderName::from_static("x-auth-mode"),
+        HeaderValue::from_static("bearer"),
+    )
+}
+
+/// The `Authorization: Bearer <access>` header pair for protected requests.
+#[allow(dead_code)]
+pub fn bearer_header(access: &str) -> (HeaderName, HeaderValue) {
+    let value =
+        HeaderValue::from_str(&format!("Bearer {access}")).expect("valid bearer header value");
+    (AUTHORIZATION, value)
+}
+
+/// Register + login a user in BEARER mode; returns `(access_token, refresh_token)`
+/// read from the JSON body. No cookies are set in bearer mode.
+#[allow(dead_code)]
+pub async fn register_and_login_bearer(app: &TestApp, email: &str) -> (String, String) {
+    let (n, v) = auth_mode_header();
+    app.client
+        .post("/auth/register")
+        .add_header(n.clone(), v.clone())
+        .json(&json!({ "email": email, "password": "password123", "name": "User" }))
+        .await;
+    let resp = app
+        .client
+        .post("/auth/login")
+        .add_header(n, v)
+        .json(&json!({ "email": email, "password": "password123" }))
+        .await;
+    let body: serde_json::Value = resp.json();
+    let access = body["tokens"]["access_token"].as_str().unwrap().to_string();
+    let refresh = body["tokens"]["refresh_token"].as_str().unwrap().to_string();
+    (access, refresh)
 }
 
 /// Spins up real Postgres AND Redis containers, runs migrations, builds the

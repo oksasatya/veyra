@@ -1,6 +1,6 @@
 use axum::{
     extract::{Request, State},
-    http::StatusCode,
+    http::{header::AUTHORIZATION, HeaderMap},
     middleware::Next,
     response::{IntoResponse, Response},
 };
@@ -8,32 +8,44 @@ use axum_extra::extract::cookie::CookieJar;
 
 use crate::{
     adapters::inbound::http::cookies::{access_name, clear, CookieKind, CookiePolicy},
+    application::errors::AppError,
     bootstrap::state::AppState,
 };
 
 /// Build an `UNAUTHORIZED` response that also clears the access, refresh, and
-/// csrf cookies. Used on every auth-rejection path so a stale or invalid
+/// csrf cookies. Used on every cookie-path auth-rejection so a stale or invalid
 /// session never lingers in the browser jar.
 pub fn unauthorized_clearing(policy: &CookiePolicy) -> Response {
     let jar = CookieJar::new()
         .add(clear(policy, CookieKind::Access))
         .add(clear(policy, CookieKind::Refresh))
         .add(clear(policy, CookieKind::Csrf));
-    (StatusCode::UNAUTHORIZED, jar).into_response()
+    (axum::http::StatusCode::UNAUTHORIZED, jar).into_response()
 }
 
-/// Axum middleware that authenticates the request via the HttpOnly access
-/// cookie.
-///
-/// 1. Read the access cookie (`access_name(policy)`); absent → 401 + clear.
-/// 2. `verify_access` the JWT; invalid/expired → 401 + clear.
-/// 3. `is_session_revoked(sid)` — **fail-open**: `Ok(true)` → reject (401 +
-///    clear); `Ok(false)` → allow; `Err(_)` → log a warning and allow (the read
-///    path tolerates a Redis blip rather than locking everyone out).
-/// 4. Inject `user_id` into the request extensions for downstream handlers.
-pub async fn require_auth(State(state): State<AppState>, mut req: Request, next: Next) -> Response {
-    let jar = CookieJar::from_headers(req.headers());
+/// Extract the token from an `Authorization: Bearer <token>` header, if present.
+fn bearer_token(headers: &HeaderMap) -> Option<String> {
+    headers
+        .get(AUTHORIZATION)?
+        .to_str()
+        .ok()?
+        .strip_prefix("Bearer ")
+        .map(str::to_owned)
+}
 
+/// Axum middleware that authenticates the request.
+///
+/// 1. **Bearer path (native mobile):** if an `Authorization: Bearer <jwt>` header
+///    is present, verify it, check sid-revocation (fail-open), inject `user_id`.
+///    401s carry NO cookies.
+/// 2. **Cookie path (web, unchanged):** otherwise read the HttpOnly access
+///    cookie, verify it, check revocation, inject `user_id`. 401s clear cookies.
+pub async fn require_auth(State(state): State<AppState>, mut req: Request, next: Next) -> Response {
+    if let Some(token) = bearer_token(req.headers()) {
+        return authenticate_bearer(&state, &token, req, next).await;
+    }
+
+    let jar = CookieJar::from_headers(req.headers());
     let Some(cookie) = jar.get(&access_name(&state.cookie_policy)) else {
         return unauthorized_clearing(&state.cookie_policy);
     };
@@ -47,9 +59,31 @@ pub async fn require_auth(State(state): State<AppState>, mut req: Request, next:
         Ok(true) => return unauthorized_clearing(&state.cookie_policy),
         Ok(false) => {}
         Err(e) => {
-            // Fail-open: a session-store blip on the READ path must not lock out
-            // every user. Log and allow; the write paths (refresh/logout) remain
-            // fail-closed.
+            tracing::warn!(error = %e, "session revocation check failed; allowing request (fail-open)");
+        }
+    }
+
+    req.extensions_mut().insert(claims.user_id);
+    next.run(req).await
+}
+
+/// Bearer-path authentication: identical session logic to the cookie path, just
+/// a different token source and bare (no-cookie) 401s.
+async fn authenticate_bearer(
+    state: &AppState,
+    token: &str,
+    mut req: Request,
+    next: Next,
+) -> Response {
+    let claims = match state.auth.verify_access(token) {
+        Ok(claims) => claims,
+        Err(_) => return AppError::Unauthorized.into_response(),
+    };
+
+    match state.sessions.is_session_revoked(claims.sid).await {
+        Ok(true) => return AppError::Unauthorized.into_response(),
+        Ok(false) => {}
+        Err(e) => {
             tracing::warn!(error = %e, "session revocation check failed; allowing request (fail-open)");
         }
     }

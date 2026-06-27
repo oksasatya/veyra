@@ -1,13 +1,16 @@
 use axum::{
     extract::{Request, State},
-    http::{Method, StatusCode},
+    http::{header::AUTHORIZATION, Method, StatusCode},
     middleware::Next,
     response::{IntoResponse, Response},
 };
 use axum_extra::extract::cookie::CookieJar;
 
 use crate::{
-    adapters::inbound::http::cookies::{csrf_name, X_CSRF_TOKEN},
+    adapters::inbound::http::{
+        auth_mode::wants_bearer,
+        cookies::{csrf_name, X_CSRF_TOKEN},
+    },
     bootstrap::state::AppState,
 };
 
@@ -26,6 +29,14 @@ use crate::{
 /// yet at that point.
 pub async fn require_csrf(State(state): State<AppState>, req: Request, next: Next) -> Response {
     if matches!(*req.method(), Method::GET | Method::HEAD | Method::OPTIONS) {
+        return next.run(req).await;
+    }
+
+    // Bearer / native requests are not cookie-authenticated → no CSRF surface.
+    // `/auth/refresh` + `/auth/logout` in bearer mode carry no Authorization
+    // header (the access token has expired), so `X-Auth-Mode: bearer` is the
+    // discriminator they rely on — an Authorization-only bypass would 403 them.
+    if req.headers().contains_key(AUTHORIZATION) || wants_bearer(req.headers()) {
         return next.run(req).await;
     }
 

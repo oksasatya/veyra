@@ -337,3 +337,147 @@ async fn logout_with_expired_access_still_revokes_session() {
         .await;
     r.assert_status_unauthorized();
 }
+
+// ── Bearer mode (native mobile, ADR-0007) ────────────────────────────────────
+
+#[tokio::test]
+async fn bearer_login_returns_tokens_and_no_cookies() {
+    let app = common::spawn_app().await;
+    let (n, v) = common::auth_mode_header();
+    app.client
+        .post("/auth/register")
+        .add_header(n.clone(), v.clone())
+        .json(&json!({ "email": "b@e.com", "password": "password123", "name": "B" }))
+        .await;
+    let resp = app
+        .client
+        .post("/auth/login")
+        .add_header(n, v)
+        .json(&json!({ "email": "b@e.com", "password": "password123" }))
+        .await;
+
+    resp.assert_status_ok();
+    let body: serde_json::Value = resp.json();
+    assert!(body["tokens"]["access_token"].is_string());
+    assert!(body["tokens"]["refresh_token"].is_string());
+    // Security invariant: bearer mode sets NO cookies.
+    assert!(
+        resp.maybe_cookie(ACCESS_COOKIE).is_none(),
+        "bearer mode must not set the access cookie"
+    );
+    assert!(resp.maybe_cookie(REFRESH_COOKIE).is_none());
+}
+
+#[tokio::test]
+async fn bearer_me_succeeds_with_authorization_header() {
+    let app = common::spawn_app().await;
+    let (access, _refresh) = common::register_and_login_bearer(&app, "bm@e.com").await;
+    let (n, v) = common::bearer_header(&access);
+
+    let resp = app.client.get("/me").add_header(n, v).await;
+
+    resp.assert_status_ok();
+    let body: serde_json::Value = resp.json();
+    assert_eq!(body["email"].as_str().unwrap(), "bm@e.com");
+}
+
+#[tokio::test]
+async fn bearer_mutation_needs_no_csrf_header() {
+    let app = common::spawn_app().await;
+    let (access, _refresh) = common::register_and_login_bearer(&app, "bmut@e.com").await;
+    let (n, v) = common::bearer_header(&access);
+
+    // POST a vehicle with Bearer auth and NO X-CSRF-Token header → CSRF bypassed.
+    let resp = app
+        .client
+        .post("/vehicles")
+        .add_header(n, v)
+        .json(&json!({
+            "brand": "Toyota", "model": "Avanza", "year": 2020,
+            "plate_number": "B 1 ABC", "fuel_type": "petrol", "current_odometer": 1000
+        }))
+        .await;
+
+    assert!(
+        resp.status_code().is_success(),
+        "bearer mutation should pass the CSRF bypass, got {}",
+        resp.status_code()
+    );
+}
+
+#[tokio::test]
+async fn bearer_invalid_token_is_unauthorized_without_cookies() {
+    let app = common::spawn_app().await;
+    let (n, v) = common::bearer_header("not.a.real.jwt");
+
+    let resp = app.client.get("/me").add_header(n, v).await;
+
+    resp.assert_status_unauthorized();
+    assert!(resp.maybe_cookie(ACCESS_COOKIE).is_none());
+}
+
+#[tokio::test]
+async fn bearer_refresh_rotates_and_returns_tokens() {
+    let app = common::spawn_app().await;
+    let (_access, refresh) = common::register_and_login_bearer(&app, "br@e.com").await;
+    let (n, v) = common::auth_mode_header();
+
+    let resp = app
+        .client
+        .post("/auth/refresh")
+        .add_header(n, v)
+        .json(&json!({ "refresh_token": refresh }))
+        .await;
+
+    resp.assert_status_ok();
+    let body: serde_json::Value = resp.json();
+    assert!(body["tokens"]["access_token"].is_string());
+    assert!(body["tokens"]["refresh_token"].is_string());
+}
+
+#[tokio::test]
+async fn bearer_refresh_reuse_is_rejected() {
+    // grace = 0 → the old refresh secret is invalid the instant it rotates.
+    let app = common::spawn_app_with_grace(0).await;
+    let (_access, refresh) = common::register_and_login_bearer(&app, "brr@e.com").await;
+    let (n, v) = common::auth_mode_header();
+
+    app.client
+        .post("/auth/refresh")
+        .add_header(n.clone(), v.clone())
+        .json(&json!({ "refresh_token": refresh.clone() }))
+        .await
+        .assert_status_ok();
+
+    let resp = app
+        .client
+        .post("/auth/refresh")
+        .add_header(n, v)
+        .json(&json!({ "refresh_token": refresh }))
+        .await;
+
+    resp.assert_status_unauthorized();
+}
+
+#[tokio::test]
+async fn bearer_logout_then_refresh_is_unauthorized() {
+    let app = common::spawn_app().await;
+    let (_access, refresh) = common::register_and_login_bearer(&app, "bl@e.com").await;
+    let (n, v) = common::auth_mode_header();
+
+    app.client
+        .post("/auth/logout")
+        .add_header(n.clone(), v.clone())
+        .json(&json!({ "refresh_token": refresh.clone() }))
+        .await
+        .assert_status(axum::http::StatusCode::NO_CONTENT);
+
+    let resp = app
+        .client
+        .post("/auth/refresh")
+        .add_header(n, v)
+        .json(&json!({ "refresh_token": refresh }))
+        .await;
+
+    resp.assert_status_unauthorized();
+}

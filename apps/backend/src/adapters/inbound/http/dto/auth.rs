@@ -28,3 +28,31 @@ pub struct MeResponse {
     pub email: String,
     pub name: String,
 }
+
+/// Access + refresh pair returned only in bearer mode. `refresh_token` is the
+/// opaque `{family_id}.{raw_secret}` string the client stores and replays.
+#[derive(Debug, Serialize)]
+pub struct AuthTokens {
+    pub access_token: String,
+    pub refresh_token: String,
+}
+
+/// Bearer-mode register/login body. Cookie mode keeps returning bare
+/// [`UserResponse`].
+#[derive(Debug, Serialize)]
+pub struct AuthResponse {
+    pub user: UserResponse,
+    pub tokens: AuthTokens,
+}
+
+/// Bearer-mode refresh body.
+#[derive(Debug, Serialize)]
+pub struct RefreshResponse {
+    pub tokens: AuthTokens,
+}
+
+/// Bearer-mode request body carrying the refresh token (refresh + logout).
+#[derive(Debug, Deserialize)]
+pub struct BearerRefreshRequest {
+    pub refresh_token: String,
+}
