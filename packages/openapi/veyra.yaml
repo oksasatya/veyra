@@ -1,0 +1,27 @@
+openapi: 3.1.0
+info:
+  title: Veyra API
+  version: 0.1.0
+  description: Open-source vehicle management API
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:3000
+    description: Local development
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  version:
+                    type: string
+# Full spec to be completed in v0.9
