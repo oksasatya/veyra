@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  boundary-check:
+    name: Hexagonal boundary guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check layer boundaries
+        run: bash .github/scripts/check-boundaries.sh
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: veyra
+          POSTGRES_PASSWORD: veyra
+          POSTGRES_DB: veyra
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/backend
+      - name: fmt
+        run: cd apps/backend && cargo fmt --check
+      - name: clippy
+        run: cd apps/backend && cargo clippy --all-targets --all-features -- -D warnings
+      - name: Install nextest
+        uses: taiki-e/install-action@nextest
+      - name: test
+        env:
+          DATABASE_URL: postgres://veyra:veyra@localhost:5432/veyra
+          JWT_SECRET: ci-test-secret-that-is-at-least-32-chars
+        run: cd apps/backend && cargo nextest run --all-features
+      - name: audit
+        run: |
+          cargo install cargo-audit --quiet
+          cd apps/backend && cargo audit
