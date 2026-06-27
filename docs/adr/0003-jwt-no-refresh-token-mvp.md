@@ -1,8 +1,13 @@
 # ADR-0003: JWT Authentication, No Refresh Token in MVP
 
 **Date:** 2026-06-27
-**Status:** Accepted
+**Status:** Superseded by ADR-0006 (2026-06-27)
 **Deciders:** Oksa Satya
+
+> **Superseded.** The "Future action" anticipated at the bottom of this ADR has been triggered.
+> Veyra now uses short-lived access tokens + rotating refresh tokens + a Redis session store +
+> read caching. See ADR-0006 and `docs/superpowers/specs/2026-06-27-redis-auth-cache-design.md`.
+> The decision below is retained for historical context.
 
 ---
 

@@ -27,7 +27,7 @@ The project is intentionally built as a portfolio-quality public repository that
 - File storage / document upload (URL tracking only in MVP)
 - Real-time notifications or push alerts
 - OBD-II / telematics hardware integration
-- Refresh token rotation (JWT 7-day expiry is sufficient for MVP)
+- ~~Refresh token rotation (JWT 7-day expiry is sufficient for MVP)~~ — **superseded:** refresh tokens, Redis session store, and read caching are now in scope. See ADR-0006 and `2026-06-27-redis-auth-cache-design.md`.
 
 ---
 
@@ -343,6 +343,11 @@ Status code mapping in `ApiError::into_response`:
 ---
 
 ## Authentication
+
+> **Superseded by ADR-0006 / `2026-06-27-redis-auth-cache-design.md`.** The single 7-day JWT below was
+> the original MVP design. Authentication now uses short-lived access tokens + rotating refresh tokens
+> delivered as HttpOnly cookies, backed by a Redis session store, with double-submit CSRF and session-id
+> revocation. The section below is retained for historical context (Argon2id password hashing is unchanged).
 
 - **Algorithm:** JWT, HS256 (jsonwebtoken crate)
 - **Payload:** `{ "sub": "<user_uuid>", "exp": <unix_ts> }`
