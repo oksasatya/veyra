@@ -4,22 +4,31 @@
 
 **Goal:** Replace the single long-lived JWT with short-lived access + rotating refresh tokens delivered as HttpOnly cookies, backed by a Redis session store, with session-id revocation, double-submit CSRF, and a transparent read cache.
 
-**Architecture:** Hexagonal DDD single crate. New ports (`SessionStore`, extended `AuthPort`) stay domain-only; Redis lives entirely in `adapters/outbound/redis/` and a relocated `adapters/outbound/token/`. Caching is a transparent repository decorator in the adapter layer (no cache port — keeps `serde` out of `ports/`). Cookie policy is environment-configurable so the same binary serves self-host (SameSite=Strict, `__Host-`) and the prod subdomain split (SameSite=Lax, `Domain`, `__Secure-`).
+**Architecture:** Hexagonal DDD single crate. New ports (`SessionStore`, extended `AuthPort`) stay domain-only; Redis lives in `adapters/outbound/redis/` and a relocated `adapters/outbound/token/`. Caching is a transparent repository decorator in the adapter layer (no cache port — keeps `serde` out of `ports/`). Cookie policy is environment-configurable so the same binary serves self-host (SameSite=Strict, `__Host-`) and the prod subdomain split (SameSite=Lax, `Domain`, `__Secure-`).
 
-**Tech Stack:** Rust 2021, axum 0.8, sqlx 0.8 (PostgreSQL), `fred` 10 (Redis, feature `i-scripts`), `axum-extra` 0.10 (feature `cookie`), `sha2`, `rand`, `jsonwebtoken` 9, `argon2`. Tests: `testcontainers-modules` (features `postgres`, `redis`) + `axum-test`.
+**Tech Stack:** Rust 2021, axum 0.8, sqlx 0.8 (PostgreSQL), `fred` 10 (Redis, feature `i-scripts`), `axum-extra` 0.10 (feature `cookie`), `sha2`, `rand`, `hex`, `base64`, `jsonwebtoken` 9, `argon2`. Tests: `testcontainers-modules` (features `postgres`, `redis`) + `axum-test`.
 
 **Spec:** `docs/superpowers/specs/2026-06-27-redis-auth-cache-design.md` · **ADR:** `docs/adr/0006-refresh-tokens-redis-sessions-cache.md`
 
+> **Decomposition principle (read first):** this plan uses **expand-contract**. Breaking changes to the
+> `AuthPort` contract are made by ADDING the new methods alongside the old ones (Task 4), building
+> everything on the new methods, then REMOVING the old methods inside the single atomic HTTP-swap task
+> (Task 6) once no caller remains. Every task ends GREEN: `cargo build` + `cargo clippy -- -D warnings` +
+> `cargo nextest run` all pass. Task 6 is intentionally the one large atomic task — the auth contract
+> (bearer-token-in-body → cookies) cannot change in smaller slices without leaving integration tests red;
+> everything separable has been pulled into the green additive tasks before it.
+
 ## Global Constraints
 
-- **Hexagonal boundaries (CI-enforced, `.github/scripts/check-boundaries.sh`):** `domain/` may import only stdlib/`thiserror`/`uuid`/`chrono`/`rust_decimal` — never `axum`/`sqlx`/`serde`/`tokio`. `application/` may import `domain`+`ports` — never `axum`/`sqlx`. `ports/` may import `domain` only — never `axum`/`sqlx`/`serde`. Redis/cookie code lives in `adapters/`. **`serde` must NOT appear in `ports/`** — the cache abstraction is adapter-internal for this reason.
+- **Hexagonal boundaries (CI-enforced, `.github/scripts/check-boundaries.sh`):** `domain/` may import only stdlib/`thiserror`/`uuid`/`chrono`/`rust_decimal`. `application/` may import `domain`+`ports` — never `axum`/`sqlx`. `ports/` may import `domain` only — never `axum`/`sqlx`/**`serde`**. Redis/cookie code lives in `adapters/`.
 - **No `CachePort` in `ports/`.** Caching is transparent via decorators in `adapters/outbound/redis/`.
-- **Token model:** access JWT HS256 `{ sub, sid, jti, iat, exp }` ~15 min; refresh opaque `{family_id}.{raw_secret}` ~7 days, Redis stores **SHA-256 hash** of `raw_secret` (never raw); CSRF random, readable cookie, double-submit on all mutating protected routes.
+- **Token model:** access JWT HS256 `{ sub, sid, jti, iat, exp }` ~15 min; refresh opaque `{family_id}.{raw_secret}` ~7 days, Redis stores **SHA-256 hash** (never raw); CSRF random readable cookie, double-submit on all mutating protected routes. **Invariant: `sid == family_id`** (the access token's `sid` IS the refresh family id).
 - **Fail modes:** read path (access revocation check) fails **open**; write path (logout, refresh) fails **closed**.
 - **`sid` revocation:** one `revoke:{sid}` key invalidates all access tokens of a session. No per-`jti` denylist.
-- **Cookie prefix derived from config:** `COOKIE_DOMAIN` unset + `COOKIE_SECURE=true` → `__Host-`; `COOKIE_DOMAIN` set → `__Secure-`; `COOKIE_SECURE=false` → no prefix. Refresh cookie is always `Path=/auth` → never `__Host-` (uses `__Secure-`/none).
-- **CORS:** explicit allowlist + `Allow-Credentials: true`. Never wildcard `"*"` (project rule; also illegal with credentials).
-- **No `println!`** in production code — `tracing::{debug,info,warn,error}!`.
+- **Cookie prefix derived from config:** `COOKIE_DOMAIN` unset + `COOKIE_SECURE=true` → `__Host-`; `COOKIE_DOMAIN` set → `__Secure-`; `COOKIE_SECURE=false` → no prefix. Refresh cookie is always `Path=/auth` → never `__Host-`.
+- **CORS:** explicit allowlist from config + `Allow-Credentials: true`. Never wildcard `"*"`.
+- **No `println!`** — `tracing::{debug,info,warn,error}!`.
+- **Shared-file discipline:** `state.rs`, `redis/mod.rs`, `tests/common/mod.rs`, `Cargo.toml`, `application/auth/mod.rs` are edited by several tasks. Before editing one, READ its current content and PRESERVE prior tasks' additions — never blind-overwrite.
 
 ### Rust quality gate — write compliant from the first commit (NO Sonar; clippy is the gate)
 
@@ -31,9 +40,9 @@
 - Duplicated string literal ≥3× → a module-level `const` (Redis key prefixes, cookie names, error strings).
 - `#![forbid(unsafe_code)]` crate-wide.
 - Errors: thiserror enums in domain/ports/application; map at the existing single ApiError IntoResponse point.
-  Never `let _ = fallible();` (swallowed Result) — handle or `?`.
+  Never `let _ = fallible();` (swallowed Result) unless the swallow is intentional and commented.
 - Async: never hold a std::sync::Mutex across `.await`; never block the runtime; bound fan-out.
-- Redis (fred): all keys via module consts; Lua for compare-and-swap (atomicity); never format untrusted into Lua.
+- Redis (fred): all keys via module consts; Lua `eval` for compare-and-swap (atomicity); never format untrusted into Lua.
 - Verify before "done": cargo fmt --check → cargo clippy --all-targets --all-features -- -D warnings →
   cargo nextest run → cargo audit.
 ```
@@ -42,54 +51,32 @@ When fixing one instance of a rule, scan sibling files for the same shape and fi
 
 ### Existing interfaces (read before starting)
 
-- `AuthPort` (`src/ports/auth.rs`): `sign_token(user_id) -> Result<String, AuthError>`, `verify_token(&str) -> Result<Uuid, AuthError>`; `AuthError::{InvalidToken, SigningFailed(String)}`.
+- `AuthPort` (`src/ports/auth.rs`): `sign_token(user_id) -> Result<String, AuthError>`, `verify_token(&str) -> Result<Uuid, AuthError>`; `AuthError::{InvalidToken, SigningFailed(String)}`. Current impl: `adapters/outbound/postgres/jwt_auth.rs`.
 - `AppState` (`src/bootstrap/state.rs`): `new(pool: PgPool, jwt_secret: String)`; fields `pool`, `*_repo: Arc<dyn …>`, `auth: Arc<dyn AuthPort>`.
-- `Config` (`src/bootstrap/config.rs`): `{ database_url, jwt_secret, port }`, `load() -> Result<Self>` (figment `Env::raw()` + `JWT_SECRET ≥ 32` guard).
-- `VehicleRepository` (`src/ports/repositories.rs`): `list_by_user(uid) `, `find_by_id(id, uid)`, `insert(CreateVehicleParams)`, `update(id, uid, UpdateVehicleParams)`, `delete(id, uid)`.
-- `SummaryRepository`: `get_summary(vehicle_id, user_id) -> RepositoryResult<Summary>`.
-- Test helper `spawn_app()` (`tests/common/mod.rs`) builds Postgres testcontainer + `AppState` + `axum-test` `TestServer`. `register_and_login(app, email) -> String` (currently returns bearer token).
+- `Config` (`src/bootstrap/config.rs`): `{ database_url, jwt_secret, port }`, `load()` (figment `Env::raw()` + `JWT_SECRET ≥ 32` guard).
+- `LoginUseCase`/`RegisterUseCase` (`src/application/auth/`): currently return `String` (the JWT). Callers: `handlers/auth.rs` (`register`, `login` return `Json(TokenResponse { token })`).
+- `VehicleRepository`/`SummaryRepository` (`src/ports/repositories.rs`): methods take `user_id`.
+- Test helper `spawn_app()` (`tests/common/mod.rs`): Postgres testcontainer + `AppState` + `axum-test` `TestServer`. `register_and_login(app, email) -> String` returns the bearer token; tests send `Authorization: Bearer`.
 
 ---
 
-## Task 1: Dependencies, config, Redis pool, compose
+## Task 1: Dependencies, audit triage, config, Redis pool, compose
 
-**Files:**
-- Modify: `apps/backend/Cargo.toml`
-- Modify: `apps/backend/src/bootstrap/config.rs`
-- Create: `apps/backend/src/adapters/outbound/redis/mod.rs`
-- Create: `apps/backend/src/adapters/outbound/redis/client.rs`
-- Modify: `apps/backend/src/adapters/outbound/mod.rs` (add `pub mod redis;`)
-- Modify: `apps/backend/.env.example`
-- Modify: `docker-compose.yml`
-- Test: unit tests inside `config.rs`
+**Files:** Modify `apps/backend/Cargo.toml`, `src/bootstrap/config.rs`, `src/adapters/outbound/mod.rs`, `apps/backend/.env.example`, `docker-compose.yml`, `apps/backend/.cargo/audit.toml`. Create `src/adapters/outbound/redis/{mod.rs,client.rs}`. Test: unit in `config.rs`.
 
-**Interfaces — Produces:**
-- `Config` gains: `redis_url: String`, `access_ttl_secs: u64` (900), `refresh_ttl_secs: u64` (604800), `refresh_grace_secs: u64` (10), `cookie_secure: bool` (true), `cookie_samesite: SameSiteCfg` (`Strict|Lax|None`, default `Strict`), `cookie_domain: Option<String>`.
-- `redis::client::build_pool(redis_url: &str) -> anyhow::Result<fred::clients::Pool>`.
+**Interfaces — Produces:** `Config` gains `redis_url: String`, `access_ttl_secs: u64`(900), `refresh_ttl_secs: u64`(604800), `refresh_grace_secs: u64`(10), `cookie_secure: bool`(true), `cookie_samesite: SameSiteCfg`(Strict), `cookie_domain: Option<String>`, `cors_allowed_origins: Vec<String>`(default empty). `redis::client::build_pool(&str) -> anyhow::Result<fred::clients::Pool>`. `pub enum SameSiteCfg { Strict, Lax, None }` with `FromStr`.
 
-**TDD: yes** — config defaults + `SameSiteCfg` parse + `REDIS_URL`-required validation have a clear input→output contract. Big O: n/a.
+**TDD: yes** — config defaults + `SameSiteCfg` parse + required-`REDIS_URL` validation. Big O: n/a.
 
-- [ ] **Step 1: Add dependencies.** In `apps/backend/Cargo.toml` `[dependencies]` add:
-```toml
-fred = { version = "10", features = ["i-scripts"] }
-axum-extra = { version = "0.10", features = ["cookie"] }
-sha2 = "0.10"
-rand = "0.8"
-hex = "0.4"
-base64 = "0.22"
-```
-and in `[dev-dependencies]` change the testcontainers line to:
-```toml
-testcontainers-modules = { version = "0.15", features = ["postgres", "redis"] }
-```
-Run `cargo build` to fetch. (If a pinned patch fails to resolve, run `cargo add fred --features i-scripts` etc. and keep the resolved version.)
+- [ ] **Step 1 — deps.** Add to `[dependencies]`: `fred = { version = "10", features = ["i-scripts"] }`, `axum-extra = { version = "0.10", features = ["cookie"] }`, `sha2 = "0.10"`, `rand = "0.8"`, `hex = "0.4"`, `base64 = "0.22"`. Change dev `testcontainers-modules` to `features = ["postgres", "redis"]`. Run `cargo build`. (Use `cargo add` if a pin fails to resolve; keep the resolved version.)
 
-- [ ] **Step 2: Write failing config tests.** Append to `src/bootstrap/config.rs`:
+- [ ] **Step 2 — audit triage.** Run `cargo audit`. For any NEW advisory from `fred`/`base64`/`hex`/their transitive deps, investigate with `cargo tree -i <crate>`. Only add an `ignore = ["RUSTSEC-XXXX-XXXX"]` entry to `apps/backend/.cargo/audit.toml` with a one-line justification comment if the crate is not actually compiled/exploitable; otherwise upgrade. Leave the existing `RUSTSEC-2023-0071` ignore intact.
+
+- [ ] **Step 3 — failing config test.** Append to `config.rs`:
 ```rust
 #[cfg(test)]
 mod tests {
     use super::*;
-
     #[test]
     fn samesite_parses_case_insensitive() {
         assert_eq!("strict".parse::<SameSiteCfg>().unwrap(), SameSiteCfg::Strict);
@@ -99,9 +86,9 @@ mod tests {
     }
 }
 ```
-Run: `cargo test --lib bootstrap::config -v` → FAIL (`SameSiteCfg` not defined).
+Run `cargo test --lib bootstrap::config -v` → FAIL.
 
-- [ ] **Step 3: Implement config additions.** Replace `src/bootstrap/config.rs` body:
+- [ ] **Step 4 — implement config.** Replace `config.rs` body:
 ```rust
 use anyhow::Result;
 use figment::{providers::Env, Figment};
@@ -127,16 +114,13 @@ pub struct Config {
     pub cookie_samesite: SameSiteCfg,
     #[serde(default)]
     pub cookie_domain: Option<String>,
+    #[serde(default)]
+    pub cors_allowed_origins: Vec<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
-pub enum SameSiteCfg {
-    #[default]
-    Strict,
-    Lax,
-    None,
-}
+pub enum SameSiteCfg { #[default] Strict, Lax, None }
 
 impl FromStr for SameSiteCfg {
     type Err = String;
@@ -160,247 +144,51 @@ impl Config {
     pub fn load() -> Result<Self> {
         dotenvy::dotenv().ok();
         let config: Self = Figment::new().merge(Env::raw()).extract()?;
-        anyhow::ensure!(
-            config.jwt_secret.len() >= 32,
-            "JWT_SECRET must be at least 32 bytes (got {})",
-            config.jwt_secret.len()
-        );
+        anyhow::ensure!(config.jwt_secret.len() >= 32,
+            "JWT_SECRET must be at least 32 bytes (got {})", config.jwt_secret.len());
         anyhow::ensure!(!config.redis_url.is_empty(), "REDIS_URL must be set");
         Ok(config)
     }
 }
 ```
-Run: `cargo test --lib bootstrap::config -v` → PASS.
+**Note:** figment parses `COOKIE_SAMESITE=lax` to the enum via `Deserialize`; `cors_allowed_origins` from a comma-or-JSON env is figment-dependent — accept a comma-separated `CORS_ALLOWED_ORIGINS` by a `#[serde(deserialize_with)]` splitter if needed, or document JSON-array form. Run `cargo test --lib bootstrap::config -v` → PASS.
 
-- [ ] **Step 4: Implement Redis pool builder.** `src/adapters/outbound/redis/mod.rs`:
-```rust
-pub mod client;
-```
-`src/adapters/outbound/redis/client.rs`:
+- [ ] **Step 5 — Redis pool.** `redis/mod.rs`: `pub mod client;`. `redis/client.rs`:
 ```rust
 use anyhow::Context;
 use fred::clients::Pool;
 use fred::prelude::*;
 
 /// Builds and initializes a fred connection pool from a `redis://` URL.
-/// The returned pool is cheap to clone and shared across the app via `AppState`.
 pub async fn build_pool(redis_url: &str) -> anyhow::Result<Pool> {
     let config = Config::from_url(redis_url).context("invalid REDIS_URL")?;
-    let pool = Builder::from_config(config)
-        .build_pool(8)
-        .context("failed to build Redis pool")?;
+    let pool = Builder::from_config(config).build_pool(8).context("failed to build Redis pool")?;
     pool.init().await.context("failed to connect to Redis")?;
     Ok(pool)
 }
 ```
-Add `pub mod redis;` to `src/adapters/outbound/mod.rs`. Run: `cargo build` → OK.
+Add `pub mod redis;` to `adapters/outbound/mod.rs`. `cargo build` → OK.
 
-- [ ] **Step 5: Update `.env.example` and compose.** Append to `apps/backend/.env.example`:
-```
-REDIS_URL=redis://localhost:6379
-ACCESS_TTL_SECS=900
-REFRESH_TTL_SECS=604800
-REFRESH_GRACE_SECS=10
-COOKIE_SECURE=false
-COOKIE_SAMESITE=strict
-# COOKIE_DOMAIN=veyra.dev   # set in prod subdomain split only
-```
-In `docker-compose.yml` add a `redis` service and wire it into `backend`:
-```yaml
-  redis:
-    image: redis:7-alpine
-    command: ["redis-server", "--appendonly", "yes"]
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-```
-Under `backend.environment` add `REDIS_URL: redis://redis:6379`; under `backend.depends_on` add `redis: { condition: service_healthy }`. Add `redis_data:` under `volumes:`. (No published `ports:` for redis — internal network only.)
+- [ ] **Step 6 — env + compose.** Append to `.env.example`: `REDIS_URL=redis://localhost:6379`, `ACCESS_TTL_SECS=900`, `REFRESH_TTL_SECS=604800`, `REFRESH_GRACE_SECS=10`, `COOKIE_SECURE=false`, `COOKIE_SAMESITE=strict`, `# COOKIE_DOMAIN=veyra.dev`, `# CORS_ALLOWED_ORIGINS=https://veyra.dev`. In `docker-compose.yml` add a `redis` service (`redis:7-alpine`, `command: ["redis-server","--appendonly","yes"]`, `redis_data:/data` volume, `redis-cli ping` healthcheck, NO published `ports:`); add `REDIS_URL: redis://redis:6379` + `depends_on: redis: {condition: service_healthy}` to `backend`; add `redis_data:` volume.
 
-- [ ] **Step 6: Commit.**
+- [ ] **Step 7 — gate + commit.** `cargo fmt && cargo clippy --all-targets --all-features -- -D warnings && cargo nextest run --lib`.
 ```bash
-git add apps/backend/Cargo.toml apps/backend/Cargo.lock apps/backend/src/bootstrap/config.rs apps/backend/src/adapters/outbound/redis apps/backend/src/adapters/outbound/mod.rs apps/backend/.env.example docker-compose.yml
-git commit -m "feat(redis): add fred pool, cookie/ttl config, compose redis service"
+git add apps/backend/Cargo.toml apps/backend/Cargo.lock apps/backend/.cargo/audit.toml apps/backend/src/bootstrap/config.rs apps/backend/src/adapters/outbound apps/backend/.env.example docker-compose.yml
+git commit -m "feat(redis): fred pool, cookie/ttl/cors config, compose redis service"
 ```
 
 ---
 
-## Task 2: Extend AuthPort (access claims with sid+jti); move JwtAuth to token/
+## Task 2: SessionStore port + RedisSessionStore (atomic rotate, revoke); test helper
 
-**Files:**
-- Modify: `apps/backend/src/ports/auth.rs`
-- Create: `apps/backend/src/adapters/outbound/token/mod.rs`
-- Create: `apps/backend/src/adapters/outbound/token/jwt_auth.rs` (moved + extended from `postgres/jwt_auth.rs`)
-- Delete: `apps/backend/src/adapters/outbound/postgres/jwt_auth.rs`
-- Modify: `apps/backend/src/adapters/outbound/postgres/mod.rs` (remove `pub mod jwt_auth;`)
-- Modify: `apps/backend/src/adapters/outbound/mod.rs` (add `pub mod token;`)
-- Modify: `apps/backend/src/bootstrap/state.rs` (import path `token::jwt_auth::JwtAuth`)
-- Test: unit tests inside `token/jwt_auth.rs`
-
-**Interfaces — Produces:**
-- `ports::auth::AccessClaims { user_id: Uuid, sid: Uuid, jti: Uuid }`
-- `AuthPort::sign_access(&self, user_id: Uuid, sid: Uuid, jti: Uuid) -> Result<String, AuthError>`
-- `AuthPort::verify_access(&self, token: &str) -> Result<AccessClaims, AuthError>`
-- `JwtAuth::new(secret: String, access_ttl_secs: u64) -> Self`
-
-**TDD: yes** — sign/verify roundtrip must preserve `sub`/`sid`/`jti`; expired/wrong-secret must reject. Big O: n/a.
-
-- [ ] **Step 1: Replace `AuthPort`.** `src/ports/auth.rs`:
-```rust
-use uuid::Uuid;
-
-#[derive(Debug, thiserror::Error)]
-pub enum AuthError {
-    #[error("invalid or expired token")]
-    InvalidToken,
-    #[error("token generation failed: {0}")]
-    SigningFailed(String),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct AccessClaims {
-    pub user_id: Uuid,
-    pub sid: Uuid,
-    pub jti: Uuid,
-}
-
-pub trait AuthPort: Send + Sync {
-    fn sign_access(&self, user_id: Uuid, sid: Uuid, jti: Uuid) -> Result<String, AuthError>;
-    fn verify_access(&self, token: &str) -> Result<AccessClaims, AuthError>;
-}
-```
-
-- [ ] **Step 2: Write failing tests in new location.** Create `src/adapters/outbound/token/mod.rs` with `pub mod jwt_auth;`, and `src/adapters/outbound/token/jwt_auth.rs` with the test module:
-```rust
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use uuid::Uuid;
-
-    #[test]
-    fn sign_and_verify_preserves_claims() {
-        let jwt = JwtAuth::new("test-secret-32chars-at-minimum!!".into(), 900);
-        let (uid, sid, jti) = (Uuid::new_v4(), Uuid::new_v4(), Uuid::new_v4());
-        let token = jwt.sign_access(uid, sid, jti).unwrap();
-        let claims = jwt.verify_access(&token).unwrap();
-        assert_eq!(claims.user_id, uid);
-        assert_eq!(claims.sid, sid);
-        assert_eq!(claims.jti, jti);
-    }
-
-    #[test]
-    fn verify_rejects_wrong_secret() {
-        let a = JwtAuth::new("secret-a-32chars-at-minimum--!!".into(), 900);
-        let b = JwtAuth::new("secret-b-32chars-at-minimum--!!".into(), 900);
-        let token = a.sign_access(Uuid::new_v4(), Uuid::new_v4(), Uuid::new_v4()).unwrap();
-        assert!(matches!(b.verify_access(&token), Err(AuthError::InvalidToken)));
-    }
-
-    #[test]
-    fn verify_rejects_expired() {
-        let jwt = JwtAuth::new("test-secret-32chars-at-minimum!!".into(), 0); // exp = now
-        let token = jwt.sign_access(Uuid::new_v4(), Uuid::new_v4(), Uuid::new_v4()).unwrap();
-        std::thread::sleep(std::time::Duration::from_secs(1));
-        assert!(matches!(jwt.verify_access(&token), Err(AuthError::InvalidToken)));
-    }
-}
-```
-Add `pub mod token;` to `src/adapters/outbound/mod.rs`. Run: `cargo test --lib token::jwt_auth -v` → FAIL (no `JwtAuth`).
-
-- [ ] **Step 3: Implement `JwtAuth`.** Prepend to `src/adapters/outbound/token/jwt_auth.rs`:
-```rust
-use chrono::{Duration, Utc};
-use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-
-use crate::ports::auth::{AccessClaims, AuthError, AuthPort};
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Claims {
-    sub: String,
-    sid: String,
-    jti: String,
-    iat: i64,
-    exp: i64,
-}
-
-/// HS256 access-token signer/verifier. `access_ttl_secs` controls `exp`.
-#[derive(Clone)]
-pub struct JwtAuth {
-    secret: String,
-    access_ttl_secs: u64,
-}
-
-impl JwtAuth {
-    pub fn new(secret: String, access_ttl_secs: u64) -> Self {
-        Self { secret, access_ttl_secs }
-    }
-}
-
-impl AuthPort for JwtAuth {
-    fn sign_access(&self, user_id: Uuid, sid: Uuid, jti: Uuid) -> Result<String, AuthError> {
-        let now = Utc::now();
-        let claims = Claims {
-            sub: user_id.to_string(),
-            sid: sid.to_string(),
-            jti: jti.to_string(),
-            iat: now.timestamp(),
-            exp: (now + Duration::seconds(self.access_ttl_secs as i64)).timestamp(),
-        };
-        encode(&Header::default(), &claims, &EncodingKey::from_secret(self.secret.as_bytes()))
-            .map_err(|e| AuthError::SigningFailed(e.to_string()))
-    }
-
-    fn verify_access(&self, token: &str) -> Result<AccessClaims, AuthError> {
-        let data = decode::<Claims>(
-            token,
-            &DecodingKey::from_secret(self.secret.as_bytes()),
-            &Validation::new(Algorithm::HS256),
-        )
-        .map_err(|_| AuthError::InvalidToken)?;
-        Ok(AccessClaims {
-            user_id: data.claims.sub.parse().map_err(|_| AuthError::InvalidToken)?,
-            sid: data.claims.sid.parse().map_err(|_| AuthError::InvalidToken)?,
-            jti: data.claims.jti.parse().map_err(|_| AuthError::InvalidToken)?,
-        })
-    }
-}
-```
-
-- [ ] **Step 4: Delete old file + fix wiring.** `rm src/adapters/outbound/postgres/jwt_auth.rs`; remove `pub mod jwt_auth;` from `postgres/mod.rs`. In `state.rs` change the import to `crate::adapters::outbound::token::jwt_auth::JwtAuth` and update construction to `JwtAuth::new(jwt_secret, access_ttl_secs)` — temporarily hardcode `900`; Task 7 threads the real config. Run: `cargo test --lib token::jwt_auth -v` → PASS; `cargo build` → OK.
-
-- [ ] **Step 5: Commit.**
-```bash
-git add -A apps/backend/src
-git commit -m "feat(auth): access-token claims with sid+jti; move JwtAuth to token adapter"
-```
-
----
-
-## Task 3: SessionStore port + RedisSessionStore (atomic rotate, revoke); redis in spawn_app
-
-**Files:**
-- Create: `apps/backend/src/ports/session.rs`
-- Modify: `apps/backend/src/ports/mod.rs` (add `pub mod session;`)
-- Create: `apps/backend/src/adapters/outbound/redis/session_store.rs`
-- Modify: `apps/backend/src/adapters/outbound/redis/mod.rs` (add `pub mod session_store;`)
-- Modify: `apps/backend/tests/common/mod.rs` (start a Redis testcontainer in `spawn_app`)
-- Test: `apps/backend/tests/session_store_test.rs` (integration, testcontainers Redis)
+**Files:** Create `src/ports/session.rs`, `src/adapters/outbound/redis/session_store.rs`. Modify `src/ports/mod.rs`, `redis/mod.rs`, `tests/common/mod.rs`. Test: `tests/session_store_test.rs` (integration, Redis container).
 
 **Interfaces — Produces:**
 ```rust
-// ports/session.rs
+// ports/session.rs — NOTE: sid == family_id by definition (the access sid IS the refresh family id).
 pub struct NewSession { pub family_id: Uuid, pub raw_secret: String }
 #[derive(Debug)]
-pub enum RotateOutcome {
-    Rotated { user_id: Uuid, new_raw_secret: String },
-    Reused,
-    NotFound,
-}
+pub enum RotateOutcome { Rotated { user_id: Uuid, new_raw_secret: String }, Reused, NotFound }
 #[derive(Debug, thiserror::Error)]
 pub enum SessionError { #[error("session store unavailable: {0}")] Unavailable(String) }
 pub type SessionResult<T> = Result<T, SessionError>;
@@ -410,72 +198,60 @@ pub trait SessionStore: Send + Sync {
     async fn create(&self, user_id: Uuid) -> SessionResult<NewSession>;
     async fn rotate(&self, family_id: Uuid, presented_secret: &str) -> SessionResult<RotateOutcome>;
     async fn revoke(&self, family_id: Uuid) -> SessionResult<()>;
-    /// Writes `revoke:{sid}` with a TTL = access-token lifetime; invalidates all access tokens of the session.
+    /// Writes `revoke:{sid}` with TTL = access-token lifetime; invalidates all access tokens of the session.
     async fn revoke_session(&self, sid: Uuid, ttl_secs: u64) -> SessionResult<()>;
     async fn is_session_revoked(&self, sid: Uuid) -> SessionResult<bool>;
 }
 ```
+This task is **purely additive** (new port + new adapter + a standalone test helper) — nothing existing imports it yet, so the crate stays green.
 
-**TDD: yes (integration)** — the atomic rotate / grace / reuse-revoke is the security-critical core; test against a real Redis. **Big O:** all ops O(1) Redis round-trips (single key by `family_id`/`sid`); the Lua script does constant field reads/writes. State in Bahasa Indonesia in the dispatch: setiap operasi O(1) — satu key per family, gak ada scan.
+**TDD: yes (integration).** **Big O:** every op is O(1) — one key per family/sid, no scans; the Lua script does constant field reads/writes. (Dispatch note in Bahasa Indonesia: tiap operasi O(1), satu key per family, gak ada scan.)
 
-- [ ] **Step 1: Create the port.** Write `src/ports/session.rs` with the block above; add `pub mod session;` to `ports/mod.rs`.
+- [ ] **Step 1 — port.** Write `ports/session.rs` (block above); add `pub mod session;` to `ports/mod.rs`.
 
-- [ ] **Step 2: Write failing integration test.** `apps/backend/tests/session_store_test.rs`:
+- [ ] **Step 2 — failing integration test.** `tests/session_store_test.rs`:
 ```rust
 mod common;
-use common::redis_store; // helper added in Step 4
+use common::{redis_store, redis_store_with_grace};
 use uuid::Uuid;
 use veyra::ports::session::{RotateOutcome, SessionStore};
 
 #[tokio::test]
-async fn rotate_happy_path_then_old_secret_reused() {
-    let (store, _guard) = redis_store().await;
+async fn rotate_then_old_secret_after_grace_is_reused_and_revokes() {
+    let (store, _g) = redis_store().await; // grace = 0
     let uid = Uuid::new_v4();
     let s = store.create(uid).await.unwrap();
-
-    // current secret rotates
-    let r1 = store.rotate(s.family_id, &s.raw_secret).await.unwrap();
-    let new1 = match r1 { RotateOutcome::Rotated { new_raw_secret, user_id } => { assert_eq!(user_id, uid); new_raw_secret }, o => panic!("expected Rotated, got {o:?}") };
-
-    // presenting the ORIGINAL secret again, AFTER it fell out of grace, is reuse → revoke
-    // (grace defaults to 10s in prod; the test store is built with grace=0 — see Step 4)
-    let r2 = store.rotate(s.family_id, &s.raw_secret).await.unwrap();
-    assert!(matches!(r2, RotateOutcome::Reused));
-
-    // family revoked → subsequent rotate with the latest secret is NotFound
-    let r3 = store.rotate(s.family_id, &new1).await.unwrap();
-    assert!(matches!(r3, RotateOutcome::NotFound));
+    let new1 = match store.rotate(s.family_id, &s.raw_secret).await.unwrap() {
+        RotateOutcome::Rotated { new_raw_secret, user_id } => { assert_eq!(user_id, uid); new_raw_secret }
+        o => panic!("expected Rotated, got {o:?}"),
+    };
+    assert!(matches!(store.rotate(s.family_id, &s.raw_secret).await.unwrap(), RotateOutcome::Reused));
+    assert!(matches!(store.rotate(s.family_id, &new1).await.unwrap(), RotateOutcome::NotFound));
 }
 
 #[tokio::test]
 async fn in_grace_previous_secret_still_rotates() {
-    let (store, _guard) = redis_store_with_grace(5).await; // helper variant, grace=5s
-    let uid = Uuid::new_v4();
-    let s = store.create(uid).await.unwrap();
-    let new1 = match store.rotate(s.family_id, &s.raw_secret).await.unwrap() {
-        RotateOutcome::Rotated { new_raw_secret, .. } => new_raw_secret, o => panic!("{o:?}"),
-    };
-    // immediately presenting the previous (in grace) secret → still Rotated, family NOT revoked
-    let r = store.rotate(s.family_id, &s.raw_secret).await.unwrap();
-    assert!(matches!(r, RotateOutcome::Rotated { .. }));
-    // the just-issued new1 is now the previous; still in grace → also rotates
-    assert!(matches!(store.rotate(s.family_id, &new1).await.unwrap(), RotateOutcome::Rotated { .. }));
+    let (store, _g) = redis_store_with_grace(5).await;
+    let s = store.create(Uuid::new_v4()).await.unwrap();
+    let _ = store.rotate(s.family_id, &s.raw_secret).await.unwrap();
+    assert!(matches!(store.rotate(s.family_id, &s.raw_secret).await.unwrap(), RotateOutcome::Rotated { .. }));
 }
 
 #[tokio::test]
-async fn revoke_then_is_revoked_true() {
-    let (store, _guard) = redis_store().await;
+async fn revoke_session_then_is_revoked_true() {
+    let (store, _g) = redis_store().await;
     let sid = Uuid::new_v4();
-    store.revoke(sid).await.unwrap();
+    store.revoke_session(sid, 900).await.unwrap();
     assert!(store.is_session_revoked(sid).await.unwrap());
     assert!(!store.is_session_revoked(Uuid::new_v4()).await.unwrap());
 }
 ```
-Run: `cargo nextest run --test session_store_test` → FAIL (no `redis_store`, no impl).
+Run `cargo nextest run --test session_store_test` → FAIL.
 
-- [ ] **Step 3: Implement `RedisSessionStore`.** `src/adapters/outbound/redis/session_store.rs`:
+- [ ] **Step 3 — implement `RedisSessionStore`.** `redis/session_store.rs`:
 ```rust
 use async_trait::async_trait;
+use base64::Engine;
 use fred::clients::Pool;
 use fred::prelude::*;
 use rand::RngCore;
@@ -487,55 +263,37 @@ use crate::ports::session::{NewSession, RotateOutcome, SessionError, SessionResu
 const SESSION_PREFIX: &str = "session:";
 const REVOKE_PREFIX: &str = "revoke:";
 
-/// Atomic rotate: KEYS[1]=session key, ARGV = [presented_hash, new_hash, grace_secs, refresh_ttl_secs, now].
-/// Hash fields: user_id, current, prev, prev_until.
-/// Returns: {status, user_id?} as a flat array. status: "ROTATED" | "REUSED" | "NOTFOUND".
+/// Atomic rotate. KEYS[1]=session key; ARGV=[presented_hash,new_hash,grace_secs,refresh_ttl,now].
+/// Returns {status, user_id?}. status: ROTATED | REUSED | NOTFOUND.
 const ROTATE_LUA: &str = r#"
-local key = KEYS[1]
-if redis.call('EXISTS', key) == 0 then return {'NOTFOUND'} end
-local cur  = redis.call('HGET', key, 'current')
-local prev = redis.call('HGET', key, 'prev')
-local pu   = tonumber(redis.call('HGET', key, 'prev_until') or '0')
-local uid  = redis.call('HGET', key, 'user_id')
-local presented = ARGV[1]
-local now = tonumber(ARGV[5])
-local in_grace_prev = (prev ~= false and prev == presented and now < pu)
-if presented == cur or in_grace_prev then
-  redis.call('HSET', key, 'prev', cur, 'prev_until', now + tonumber(ARGV[3]), 'current', ARGV[2])
-  redis.call('EXPIRE', key, tonumber(ARGV[4]))
-  return {'ROTATED', uid}
+local key=KEYS[1]
+if redis.call('EXISTS',key)==0 then return {'NOTFOUND'} end
+local cur=redis.call('HGET',key,'current')
+local prev=redis.call('HGET',key,'prev')
+local pu=tonumber(redis.call('HGET',key,'prev_until') or '0')
+local uid=redis.call('HGET',key,'user_id')
+local presented=ARGV[1]
+local now=tonumber(ARGV[5])
+local in_grace=(prev~=false and prev==presented and now<pu)
+if presented==cur or in_grace then
+  redis.call('HSET',key,'prev',cur,'prev_until',now+tonumber(ARGV[3]),'current',ARGV[2])
+  redis.call('EXPIRE',key,tonumber(ARGV[4]))
+  return {'ROTATED',uid}
 end
 return {'REUSED'}
 "#;
 
 #[derive(Clone)]
-pub struct RedisSessionStore {
-    pool: Pool,
-    refresh_ttl_secs: u64,
-    grace_secs: u64,
-}
+pub struct RedisSessionStore { pool: Pool, refresh_ttl_secs: u64, grace_secs: u64 }
 
-fn hash_secret(raw: &str) -> String {
-    let mut h = Sha256::new();
-    h.update(raw.as_bytes());
-    hex::encode(h.finalize())
-}
-
-fn random_secret() -> String {
-    let mut bytes = [0u8; 32];
-    rand::thread_rng().fill_bytes(&mut bytes);
-    use base64::Engine;
-    base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(bytes)
-}
-
+fn hash_secret(raw: &str) -> String { let mut h = Sha256::new(); h.update(raw.as_bytes()); hex::encode(h.finalize()) }
+fn random_secret() -> String { let mut b=[0u8;32]; rand::thread_rng().fill_bytes(&mut b); base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(b) }
 fn map_err(e: Error) -> SessionError { SessionError::Unavailable(e.to_string()) }
 
 impl RedisSessionStore {
-    pub fn new(pool: Pool, refresh_ttl_secs: u64, grace_secs: u64) -> Self {
-        Self { pool, refresh_ttl_secs, grace_secs }
-    }
-    fn skey(family: Uuid) -> String { format!("{SESSION_PREFIX}{family}") }
-    fn rkey(sid: Uuid) -> String { format!("{REVOKE_PREFIX}{sid}") }
+    pub fn new(pool: Pool, refresh_ttl_secs: u64, grace_secs: u64) -> Self { Self { pool, refresh_ttl_secs, grace_secs } }
+    fn skey(f: Uuid) -> String { format!("{SESSION_PREFIX}{f}") }
+    fn rkey(s: Uuid) -> String { format!("{REVOKE_PREFIX}{s}") }
 }
 
 #[async_trait]
@@ -545,37 +303,20 @@ impl SessionStore for RedisSessionStore {
         let raw_secret = random_secret();
         let key = Self::skey(family_id);
         let fields = vec![
-            ("user_id", user_id.to_string()),
-            ("current", hash_secret(&raw_secret)),
-            ("prev", String::new()),
-            ("prev_until", "0".to_string()),
+            ("user_id", user_id.to_string()), ("current", hash_secret(&raw_secret)),
+            ("prev", String::new()), ("prev_until", "0".to_string()),
         ];
         let _: () = self.pool.hset(&key, fields).await.map_err(map_err)?;
-        let _: () = self.pool
-            .expire(&key, self.refresh_ttl_secs as i64, None)
-            .await
-            .map_err(map_err)?;
+        let _: () = self.pool.expire(&key, self.refresh_ttl_secs as i64, None).await.map_err(map_err)?;
         Ok(NewSession { family_id, raw_secret })
     }
-
     async fn rotate(&self, family_id: Uuid, presented_secret: &str) -> SessionResult<RotateOutcome> {
         let new_secret = random_secret();
         let now = chrono::Utc::now().timestamp();
-        // `eval` sends the script body each call (no separate load/evalsha round-trip to manage).
-        let out: Vec<String> = self.pool
-            .eval(
-                ROTATE_LUA,
-                vec![Self::skey(family_id)],
-                vec![
-                    hash_secret(presented_secret),
-                    hash_secret(&new_secret),
-                    self.grace_secs.to_string(),
-                    self.refresh_ttl_secs.to_string(),
-                    now.to_string(),
-                ],
-            )
-            .await
-            .map_err(map_err)?;
+        let out: Vec<String> = self.pool.eval(ROTATE_LUA, vec![Self::skey(family_id)], vec![
+            hash_secret(presented_secret), hash_secret(&new_secret),
+            self.grace_secs.to_string(), self.refresh_ttl_secs.to_string(), now.to_string(),
+        ]).await.map_err(map_err)?;
         match out.first().map(String::as_str) {
             Some("ROTATED") => {
                 let user_id = out.get(1).and_then(|s| s.parse().ok())
@@ -586,37 +327,26 @@ impl SessionStore for RedisSessionStore {
             _ => Ok(RotateOutcome::NotFound),
         }
     }
-
     async fn revoke(&self, family_id: Uuid) -> SessionResult<()> {
-        let _: () = self.pool.del(Self::skey(family_id)).await.map_err(map_err)?;
-        Ok(())
+        let _: () = self.pool.del(Self::skey(family_id)).await.map_err(map_err)?; Ok(())
     }
-
     async fn revoke_session(&self, sid: Uuid, ttl_secs: u64) -> SessionResult<()> {
-        let _: () = self.pool
-            .set(Self::rkey(sid), "1", Some(Expiration::EX(ttl_secs as i64)), None, false)
-            .await
-            .map_err(map_err)?;
-        Ok(())
+        let _: () = self.pool.set(Self::rkey(sid), "1", Some(Expiration::EX(ttl_secs as i64)), None, false)
+            .await.map_err(map_err)?; Ok(())
     }
-
     async fn is_session_revoked(&self, sid: Uuid) -> SessionResult<bool> {
-        let exists: bool = self.pool.exists(Self::rkey(sid)).await.map_err(map_err)?;
-        Ok(exists)
+        let exists: bool = self.pool.exists(Self::rkey(sid)).await.map_err(map_err)?; Ok(exists)
     }
 }
 ```
-Add `pub mod session_store;` to `redis/mod.rs` (`hex`/`base64` were added to `Cargo.toml` in Task 1).
+Add `pub mod session_store;` to `redis/mod.rs`.
 
-- [ ] **Step 4: Add Redis to test harness.** In `tests/common/mod.rs` add (keeping the existing Postgres logic):
+- [ ] **Step 4 — test helper.** In `tests/common/mod.rs` (READ current content first, preserve existing Postgres helpers), add:
 ```rust
 use testcontainers_modules::redis::Redis;
 use veyra::adapters::outbound::redis::{client::build_pool, session_store::RedisSessionStore};
 
-/// Returns a RedisSessionStore (grace=0 so "previous" is immediately reusable→revoke in tests)
-/// plus the container guard that must stay alive for the test's duration.
 pub async fn redis_store() -> (RedisSessionStore, impl Sized) { redis_store_with_grace(0).await }
-
 pub async fn redis_store_with_grace(grace: u64) -> (RedisSessionStore, impl Sized) {
     let container = Redis::default().start().await.unwrap();
     let port = container.get_host_port_ipv4(6379).await.unwrap();
@@ -624,388 +354,197 @@ pub async fn redis_store_with_grace(grace: u64) -> (RedisSessionStore, impl Size
     (RedisSessionStore::new(pool, 604_800, grace), container)
 }
 ```
-Run: `cargo nextest run --test session_store_test` → PASS (Docker required).
+Run `cargo nextest run --test session_store_test` → PASS (Docker required).
 
-- [ ] **Step 5: Commit.**
-```bash
-git add -A apps/backend
-git commit -m "feat(session): Redis session store with atomic Lua rotation + sid revocation"
-```
+- [ ] **Step 5 — gate + commit.** Full gate, then `git add -A apps/backend && git commit -m "feat(session): Redis session store with atomic Lua rotation + sid revocation"`.
 
 ---
 
-## Task 4: RefreshUseCase + LogoutUseCase (application policy)
+## Task 3: Cookie builder (pure, additive)
 
-**Files:**
-- Create: `apps/backend/src/application/auth/refresh.rs`
-- Create: `apps/backend/src/application/auth/logout.rs`
-- Modify: `apps/backend/src/application/auth/mod.rs` (add `pub mod refresh; pub mod logout;`)
-- Test: unit tests inside each file (fake `SessionStore` + fake `AuthPort`)
-
-**Interfaces — Consumes:** `SessionStore`, `RotateOutcome`, `AuthPort` (Task 2/3). **Produces:**
-```rust
-pub struct RefreshOutput { pub access_token: String, pub family_id: Uuid, pub raw_secret: String }
-pub enum RefreshError { Invalid, Unavailable }   // Invalid → 401; Unavailable → 503
-RefreshUseCase::execute(&self, family_id: Uuid, presented_secret: &str) -> Result<RefreshOutput, RefreshError>
-LogoutUseCase::execute(&self, family_id: Uuid, sid: Uuid) -> Result<(), LogoutError> // LogoutError::Unavailable → 503 (fail-closed)
-```
-
-**TDD: yes** — outcome→action mapping and fail-closed behavior are pure policy; test with fakes. Big O: O(1).
-
-- [ ] **Step 1: Write failing tests.** In `refresh.rs` test module: a fake `SessionStore` whose `rotate` returns a configured `RotateOutcome`; assert:
-  - `Rotated` → `Ok(RefreshOutput)` with a freshly signed access token and the new secret.
-  - `Reused` → `Err(RefreshError::Invalid)` **and** the fake records that `revoke` + `revoke_session` were called (theft response).
-  - `NotFound` → `Err(RefreshError::Invalid)`.
-  - store returns `Err(SessionError::Unavailable)` → `Err(RefreshError::Unavailable)`.
-  In `logout.rs` test module: `revoke` + `revoke_session` succeed → `Ok(())`; either returns `Unavailable` → `Err(LogoutError::Unavailable)` (fail-closed).
-  Run: `cargo test --lib application::auth -v` → FAIL.
-
-- [ ] **Step 2: Implement.** `refresh.rs`:
-```rust
-use std::sync::Arc;
-use uuid::Uuid;
-use crate::ports::{auth::AuthPort, session::{RotateOutcome, SessionStore}};
-
-pub struct RefreshUseCase {
-    pub sessions: Arc<dyn SessionStore>,
-    pub auth: Arc<dyn AuthPort>,
-    pub access_ttl_secs: u64,
-}
-pub struct RefreshOutput { pub access_token: String, pub family_id: Uuid, pub raw_secret: String }
-#[derive(Debug)]
-pub enum RefreshError { Invalid, Unavailable }
-
-impl RefreshUseCase {
-    pub async fn execute(&self, family_id: Uuid, presented_secret: &str) -> Result<RefreshOutput, RefreshError> {
-        match self.sessions.rotate(family_id, presented_secret).await {
-            Ok(RotateOutcome::Rotated { user_id, new_raw_secret }) => {
-                let access = self.auth
-                    .sign_access(user_id, family_id, Uuid::new_v4())
-                    .map_err(|_| RefreshError::Unavailable)?;
-                Ok(RefreshOutput { access_token: access, family_id, raw_secret: new_raw_secret })
-            }
-            Ok(RotateOutcome::Reused) => {
-                // theft response: kill the family + block its access tokens
-                let _ = self.sessions.revoke(family_id).await;
-                let _ = self.sessions.revoke_session(family_id, self.access_ttl_secs).await;
-                Err(RefreshError::Invalid)
-            }
-            Ok(RotateOutcome::NotFound) => Err(RefreshError::Invalid),
-            Err(_) => Err(RefreshError::Unavailable),
-        }
-    }
-}
-```
-`logout.rs`:
-```rust
-use std::sync::Arc;
-use uuid::Uuid;
-use crate::ports::session::SessionStore;
-
-pub struct LogoutUseCase { pub sessions: Arc<dyn SessionStore>, pub access_ttl_secs: u64 }
-#[derive(Debug)]
-pub enum LogoutError { Unavailable }
-
-impl LogoutUseCase {
-    /// Fail-closed: a logout that cannot reach Redis returns Unavailable (caller → 503),
-    /// never a silent success that leaves the session live.
-    pub async fn execute(&self, family_id: Uuid, sid: Uuid) -> Result<(), LogoutError> {
-        self.sessions.revoke(family_id).await.map_err(|_| LogoutError::Unavailable)?;
-        self.sessions.revoke_session(sid, self.access_ttl_secs).await.map_err(|_| LogoutError::Unavailable)?;
-        Ok(())
-    }
-}
-```
-Run: `cargo test --lib application::auth -v` → PASS.
-
-- [ ] **Step 3: Commit.**
-```bash
-git add apps/backend/src/application/auth
-git commit -m "feat(auth): refresh (rotation + theft response) and logout (fail-closed) use cases"
-```
-
----
-
-## Task 5: register/login create a session
-
-**Files:**
-- Modify: `apps/backend/src/application/auth/register.rs`
-- Modify: `apps/backend/src/application/auth/login.rs`
-- Test: update unit tests in both files
-
-**Interfaces — Produces:** both use cases return
-```rust
-pub struct AuthSession { pub access_token: String, pub family_id: Uuid, pub raw_secret: String, pub sid: Uuid }
-RegisterUseCase::execute(email, password, name) -> Result<AuthSession, AppError>
-LoginUseCase::execute(email, password) -> Result<AuthSession, AppError>
-```
-(`sid == family_id`.) Both now also hold `sessions: Arc<dyn SessionStore>` and `access_ttl_secs`.
-
-**TDD: yes** — credential/validation paths already tested; extend to assert a session is created and an access token returned. Big O: O(1).
-
-- [ ] **Step 1: Update failing tests.** In both test modules add a fake `SessionStore` (only `create` needed; others `unimplemented!()` is fine in a test fake but per the gate use `Err(SessionError::Unavailable(...))` to avoid panics). Assert `execute` returns `AuthSession` whose `access_token == "mock.jwt.token"` (the fake `AuthPort::sign_access` returns it) and `family_id == sid`. Update the existing `MockAuth` to impl the new `AuthPort` (`sign_access`/`verify_access`). Run: `cargo test --lib application::auth -v` → FAIL.
-
-- [ ] **Step 2: Implement.** In `login.rs`, after Argon2 verification succeeds, replace the `sign_token` tail with:
-```rust
-let session = self.sessions.create(user.id).await.map_err(|_| AppError::Internal("session store".into()))?;
-let access = self.auth
-    .sign_access(user.id, session.family_id, Uuid::new_v4())
-    .map_err(|e| AppError::Internal(e.to_string()))?;
-Ok(AuthSession { access_token: access, family_id: session.family_id, raw_secret: session.raw_secret, sid: session.family_id })
-```
-Add fields `sessions: Arc<dyn SessionStore>` and `access_ttl_secs: u64` to `LoginUseCase` (and `RegisterUseCase`). Apply the equivalent change to `register.rs` after the user insert. Define `AuthSession` in `application/auth/mod.rs` and re-export. Run: `cargo test --lib application::auth -v` → PASS.
-
-- [ ] **Step 3: Commit.**
-```bash
-git add apps/backend/src/application/auth
-git commit -m "feat(auth): register/login create a Redis session and return access material"
-```
-
----
-
-## Task 6: Cookie builder + CSRF middleware
-
-**Files:**
-- Create: `apps/backend/src/adapters/inbound/http/cookies.rs`
-- Create: `apps/backend/src/adapters/inbound/http/middleware/csrf.rs`
-- Modify: `apps/backend/src/adapters/inbound/http/mod.rs` (add `pub mod cookies;`)
-- Modify: `apps/backend/src/adapters/inbound/http/middleware/mod.rs` (add `pub mod csrf;`)
-- Test: unit tests inside `cookies.rs`
+**Files:** Create `src/adapters/inbound/http/cookies.rs`. Modify `src/adapters/inbound/http/mod.rs` (`pub mod cookies;`). Test: unit in `cookies.rs`. Purely additive — green.
 
 **Interfaces — Produces:**
 ```rust
-// cookies.rs
 pub struct CookiePolicy { pub secure: bool, pub samesite: SameSiteCfg, pub domain: Option<String>,
     pub access_ttl_secs: u64, pub refresh_ttl_secs: u64 }
-pub fn access_cookie(policy: &CookiePolicy, value: &str) -> Cookie<'static>;
-pub fn refresh_cookie(policy: &CookiePolicy, value: &str) -> Cookie<'static>; // Path=/auth
-pub fn csrf_cookie(policy: &CookiePolicy, value: &str) -> Cookie<'static>;    // not HttpOnly
-pub fn clear(policy: &CookiePolicy, which: CookieKind) -> Cookie<'static>;
 pub const ACCESS_BASE: &str = "veyra_access";
 pub const REFRESH_BASE: &str = "veyra_refresh";
 pub const CSRF_BASE: &str = "veyra_csrf";
-pub fn access_name(policy) -> String; // applies __Host-/__Secure-/none prefix
-pub fn refresh_name(policy) -> String; // never __Host- (Path=/auth) → __Secure-/none
-pub fn csrf_name(policy) -> String;
+pub fn access_name(p: &CookiePolicy) -> String;   // __Host-/__Secure-/none
+pub fn refresh_name(p: &CookiePolicy) -> String;   // never __Host- (Path=/auth)
+pub fn csrf_name(p: &CookiePolicy) -> String;
+pub fn access_cookie(p: &CookiePolicy, value: &str) -> Cookie<'static>;   // HttpOnly, Path=/
+pub fn refresh_cookie(p: &CookiePolicy, value: &str) -> Cookie<'static>;  // HttpOnly, Path=/auth
+pub fn csrf_cookie(p: &CookiePolicy, value: &str) -> Cookie<'static>;     // readable, Path=/
+pub enum CookieKind { Access, Refresh, Csrf }
+pub fn clear(p: &CookiePolicy, kind: CookieKind) -> Cookie<'static>;      // Max-Age=0, matching attrs
+pub fn random_token() -> String;  // 32B base64url; used for CSRF token generation in handlers
 ```
 
-**TDD: yes** — prefix derivation + attribute matrix is pure logic with exact expected outputs. Big O: n/a.
+**TDD: yes** — prefix derivation + attribute matrix is pure logic. Big O: n/a.
 
-- [ ] **Step 1: Write failing tests.** In `cookies.rs`:
+- [ ] **Step 1 — failing tests.** In `cookies.rs`:
 ```rust
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::bootstrap::config::SameSiteCfg;
-
     fn policy(secure: bool, domain: Option<&str>) -> CookiePolicy {
-        CookiePolicy { secure, samesite: SameSiteCfg::Strict, domain: domain.map(String::from),
-            access_ttl_secs: 900, refresh_ttl_secs: 604_800 }
+        CookiePolicy { secure, samesite: SameSiteCfg::Strict, domain: domain.map(String::from), access_ttl_secs: 900, refresh_ttl_secs: 604_800 }
     }
-
-    #[test]
-    fn host_prefix_when_secure_and_no_domain() {
+    #[test] fn host_prefix_when_secure_no_domain() {
         let p = policy(true, None);
         assert_eq!(access_name(&p), "__Host-veyra_access");
-        assert_eq!(refresh_name(&p), "__Secure-veyra_refresh"); // Path=/auth forbids __Host-
+        assert_eq!(refresh_name(&p), "__Secure-veyra_refresh");
     }
-    #[test]
-    fn secure_prefix_when_domain_set() {
-        let p = policy(true, Some("veyra.dev"));
-        assert_eq!(access_name(&p), "__Secure-veyra_access");
+    #[test] fn secure_prefix_when_domain_set() {
+        assert_eq!(access_name(&policy(true, Some("veyra.dev"))), "__Secure-veyra_access");
     }
-    #[test]
-    fn no_prefix_when_insecure_dev() {
-        let p = policy(false, None);
-        assert_eq!(access_name(&p), "veyra_access");
-    }
-    #[test]
-    fn refresh_cookie_is_scoped_to_auth_path() {
+    #[test] fn no_prefix_when_insecure() { assert_eq!(access_name(&policy(false, None)), "veyra_access"); }
+    #[test] fn refresh_scoped_to_auth_path() {
         let c = refresh_cookie(&policy(true, None), "fam.secret");
-        assert_eq!(c.path(), Some("/auth"));
-        assert!(c.http_only().unwrap());
+        assert_eq!(c.path(), Some("/auth")); assert_eq!(c.http_only(), Some(true));
     }
-    #[test]
-    fn csrf_cookie_is_readable() {
-        let c = csrf_cookie(&policy(true, None), "tok");
-        assert_ne!(c.http_only(), Some(true)); // JS must read it
-    }
+    #[test] fn csrf_is_readable() { assert_ne!(csrf_cookie(&policy(true, None), "t").http_only(), Some(true)); }
 }
 ```
-Run: `cargo test --lib http::cookies -v` → FAIL.
+Run `cargo test --lib http::cookies -v` → FAIL.
 
-- [ ] **Step 2: Implement `cookies.rs`.** Use `axum_extra::extract::cookie::{Cookie, SameSite}` and `cookie::time::Duration`. Map `SameSiteCfg` → `SameSite`. Prefix rule: `secure && domain.is_none()` → `__Host-` (access/csrf) but refresh always `__Secure-`; `domain.is_some() && secure` → `__Secure-`; `!secure` → no prefix. Each builder sets `http_only` (access/refresh true, csrf false), `secure`, `same_site`, `path` (`/` for access/csrf, `/auth` for refresh), `max_age` from the matching TTL, and `domain` if set (NOT for `__Host-`). `clear(...)` returns a cookie with the same name/path/domain and `max_age(Duration::ZERO)`. Run: `cargo test --lib http::cookies -v` → PASS.
+- [ ] **Step 2 — implement.** Use `axum_extra::extract::cookie::{Cookie, SameSite}`, `cookie::time::Duration`, `base64`+`rand` for `random_token`. Prefix rule per Global Constraints. Builders set `http_only`(access/refresh true, csrf false), `secure`, `same_site` (map `SameSiteCfg`), `path` (`/` access/csrf, `/auth` refresh), `max_age` (from matching TTL), `domain` if set (NOT under `__Host-`). `clear` returns same name/path/domain with `max_age(Duration::ZERO)`. Run `cargo test --lib http::cookies -v` → PASS.
 
-- [ ] **Step 3: Implement CSRF middleware.** `middleware/csrf.rs`:
-```rust
-use axum::{extract::{Request, State}, http::{Method, StatusCode}, middleware::Next, response::Response};
-use axum_extra::extract::CookieJar;
-use crate::adapters::inbound::http::cookies::csrf_name;
-use crate::bootstrap::state::AppState;
-
-const CSRF_HEADER: &str = "x-csrf-token";
-
-/// Double-submit CSRF guard for mutating methods. Compares the `X-CSRF-Token`
-/// header to the csrf cookie. Read methods pass through untouched.
-pub async fn require_csrf(State(state): State<AppState>, req: Request, next: Next) -> Result<Response, StatusCode> {
-    if matches!(req.method(), &Method::GET | &Method::HEAD | &Method::OPTIONS) {
-        return Ok(next.run(req).await);
-    }
-    let jar = CookieJar::from_headers(req.headers());
-    let cookie_val = jar.get(&csrf_name(&state.cookie_policy)).map(|c| c.value().to_string());
-    let header_val = req.headers().get(CSRF_HEADER).and_then(|v| v.to_str().ok()).map(str::to_string);
-    match (cookie_val, header_val) {
-        (Some(c), Some(h)) if !c.is_empty() && c == h => Ok(next.run(req).await),
-        _ => Err(StatusCode::FORBIDDEN),
-    }
-}
-```
-(`state.cookie_policy: CookiePolicy` is added to `AppState` in Task 7.) Add module decls. Run: `cargo build` → expect it to fail only on the not-yet-added `state.cookie_policy`; that lands in Task 7, so build at the end of Task 7. For now `cargo build -p veyra --lib 2>&1 | head` to confirm `cookies.rs` itself compiles (comment the `csrf.rs` body's `state.cookie_policy` reference temporarily is NOT allowed — instead land Task 6's commit with `csrf.rs` and accept that the crate builds only after Task 7 wires `cookie_policy`). **Sequencing note:** commit Task 6 even though the crate does not fully build yet; Task 7 completes the wiring. The reviewer reviews Tasks 6+7 together if needed.
-
-- [ ] **Step 4: Commit.**
-```bash
-git add apps/backend/src/adapters/inbound/http/cookies.rs apps/backend/src/adapters/inbound/http/middleware/csrf.rs apps/backend/src/adapters/inbound/http/mod.rs apps/backend/src/adapters/inbound/http/middleware/mod.rs
-git commit -m "feat(http): env-driven cookie builder (prefix derivation) + double-submit CSRF middleware"
-```
-
-> **Controller note:** Tasks 6 and 7 form one buildable unit (Task 6 references `state.cookie_policy` that Task 7 adds). Dispatch them back-to-back; run the build/clippy gate at the end of Task 7.
+- [ ] **Step 3 — gate + commit.** `git commit -m "feat(http): env-driven cookie builder with prefix derivation"`.
 
 ---
 
-## Task 7: Cookie auth middleware + handlers (register/login/refresh/logout) + router + wiring + migrate tests
+## Task 4: AuthPort EXPAND — add access methods alongside legacy; move JwtAuth to token/
 
-**Files:**
-- Modify: `apps/backend/src/adapters/inbound/http/middleware/auth.rs`
-- Modify: `apps/backend/src/adapters/inbound/http/handlers/auth.rs`
-- Modify: `apps/backend/src/adapters/inbound/http/router.rs`
-- Modify: `apps/backend/src/bootstrap/state.rs` (add `sessions`, `cookie_policy`, thread `config`)
-- Modify: `apps/backend/src/bootstrap/config.rs` (no change if Task 1 complete)
-- Modify: `apps/backend/src/main.rs` (build redis pool, pass config to `AppState::new`)
-- Modify: `apps/backend/tests/common/mod.rs` (`spawn_app` wires sessions + cookie jar + csrf helper)
-- Modify: ALL existing integration tests under `apps/backend/tests/` (cookie-based auth)
-- Test: `apps/backend/tests/auth_test.rs` (extend: refresh, logout, csrf)
+**Files:** Modify `src/ports/auth.rs` (ADD methods, keep old). Create `src/adapters/outbound/token/{mod.rs,jwt_auth.rs}` (moved + extended). Delete `postgres/jwt_auth.rs`; update `postgres/mod.rs`, `adapters/outbound/mod.rs`, `state.rs` import + construction. Update `MockAuth` in `application/auth/login.rs` tests. Test: unit in `token/jwt_auth.rs`.
 
-**Interfaces — Consumes:** Tasks 2–6. **Produces:** `AppState { …, sessions: Arc<dyn SessionStore>, cookie_policy: CookiePolicy }`; `AppState::new(pool, redis_pool, config: &Config)`.
+> **Expand-contract step 1 (expand):** `AuthPort` KEEPS `sign_token`/`verify_token` AND gains
+> `sign_access`/`verify_access`/`AccessClaims`. All existing callers (login/register use cases, middleware,
+> MockAuth) keep compiling against the legacy methods. The crate stays GREEN. The legacy methods are
+> removed in Task 6 once no caller remains.
 
-**TDD: integration** (the cookie/refresh/logout/csrf flow is end-to-end; unit-level pieces already covered in Tasks 2–6). Big O: middleware does O(1) verify + one O(1) Redis `EXISTS`.
+**Interfaces — Produces:** `AccessClaims { user_id, sid, jti }`; `sign_access(user_id, sid, jti) -> Result<String, AuthError>`; `verify_access(&str) -> Result<AccessClaims, AuthError>`; `JwtAuth::new(secret, access_ttl_secs)`.
 
-- [ ] **Step 1: Rewrite `require_auth` (cookie + sid revocation, fail-open).**
-```rust
-use axum::{extract::{Request, State}, http::StatusCode, middleware::Next, response::Response};
-use axum_extra::extract::CookieJar;
-use crate::adapters::inbound::http::cookies::access_name;
-use crate::bootstrap::state::AppState;
+**TDD: yes** — sign/verify roundtrip preserves sub/sid/jti; wrong-secret + expired reject. Big O: n/a.
 
-pub async fn require_auth(State(state): State<AppState>, mut req: Request, next: Next) -> Result<Response, StatusCode> {
-    let jar = CookieJar::from_headers(req.headers());
-    let token = jar.get(&access_name(&state.cookie_policy)).map(|c| c.value().to_string())
-        .ok_or(StatusCode::UNAUTHORIZED)?;
-    let claims = state.auth.verify_access(&token).map_err(|_| StatusCode::UNAUTHORIZED)?;
+- [ ] **Step 1 — expand `AuthPort`.** `ports/auth.rs`: keep `AuthError`; add `#[derive(Debug, Clone, PartialEq, Eq)] pub struct AccessClaims { pub user_id: Uuid, pub sid: Uuid, pub jti: Uuid }`; extend the trait to declare BOTH the legacy `sign_token`/`verify_token` AND `sign_access`/`verify_access`.
 
-    // sid revocation check — FAIL-OPEN: a Redis outage must not lock everyone out.
-    match state.sessions.is_session_revoked(claims.sid).await {
-        Ok(true) => return Err(StatusCode::UNAUTHORIZED),
-        Ok(false) => {}
-        Err(e) => tracing::warn!(error = %e, "revocation check skipped (Redis unavailable) — failing open"),
-    }
-    req.extensions_mut().insert(claims.user_id);
-    Ok(next.run(req).await)
-}
-```
+- [ ] **Step 2 — failing tests** in new `token/jwt_auth.rs` (the three tests from the design: `sign_and_verify_preserves_claims`, `verify_rejects_wrong_secret`, `verify_rejects_expired` using `JwtAuth::new(secret, ttl)` and `sign_access`/`verify_access`). Create `token/mod.rs` = `pub mod jwt_auth;`; add `pub mod token;` to `adapters/outbound/mod.rs`. Run `cargo test --lib token::jwt_auth -v` → FAIL.
 
-- [ ] **Step 2: Handlers.** In `handlers/auth.rs`:
-  - `register`/`login`: call the use case → `AuthSession`; build a `CookieJar` with `access_cookie`, `refresh_cookie` (`{family_id}.{raw_secret}`), `csrf_cookie` (fresh random via `rand`), return `(StatusCode, CookieJar, Json(UserResponse))`. **No token in the body.** The csrf value is generated here (a 32-byte base64url) and set as the readable cookie.
-  - `refresh` (new): read refresh cookie via `CookieJar`, split `family_id.secret`; `RefreshUseCase::execute` → `Ok` sets new access+refresh+csrf cookies (200); `Err(Invalid)` → clear cookies + 401; `Err(Unavailable)` → 503.
-  - `logout` (new): read access cookie → `verify_access` for `sid`; read refresh cookie for `family_id`; `LogoutUseCase::execute(family_id, sid)` → `Ok` clear all cookies + 204; `Err(Unavailable)` → 503 (cookies NOT cleared — logout is fail-closed).
-  - `me`: unchanged.
-  Generate the CSRF token with a shared helper `fn new_csrf() -> String` (reuse the `random_secret` style; put a `pub fn random_token() -> String` in `cookies.rs` to avoid duplication).
+- [ ] **Step 3 — implement `JwtAuth`** with BOTH method sets (legacy `sign_token`/`verify_token` retained verbatim from the old file + new `sign_access`/`verify_access` with the `{ sub, sid, jti, iat, exp }` claims and `access_ttl_secs`). `JwtAuth::new(secret: String, access_ttl_secs: u64)`. (Legacy `sign_token` ignores `access_ttl_secs`, keeps its 7-day default for now — it is removed in Task 6.)
 
-- [ ] **Step 3: Router.** Add `.route("/auth/refresh", post(auth_handlers::refresh))` and `.route("/auth/logout", post(auth_handlers::logout))` to the public group (they manage their own cookies). Apply the CSRF layer to the **protected** router: `.layer(middleware::from_fn_with_state(state.clone(), require_csrf))` (added below `require_auth` so auth runs first). Keep `register`/`login`/`refresh` CSRF-exempt (they are on the public router).
+- [ ] **Step 4 — relocate + rewire.** `rm src/adapters/outbound/postgres/jwt_auth.rs`; remove its `pub mod` from `postgres/mod.rs`. In `state.rs` change import to `crate::adapters::outbound::token::jwt_auth::JwtAuth` and construct `JwtAuth::new(jwt_secret, 900)` (the real `access_ttl_secs` is threaded in Task 6). Update `MockAuth` in `login.rs` tests to implement BOTH method sets. Run `cargo test --lib token::jwt_auth -v` → PASS; `cargo build` → OK; full `cargo nextest run --lib` → PASS.
 
-- [ ] **Step 4: AppState + main wiring.** `AppState::new(pool, redis_pool: fred::clients::Pool, config: &Config)` constructs `RedisSessionStore::new(redis_pool, config.refresh_ttl_secs, config.refresh_grace_secs)`, `JwtAuth::new(config.jwt_secret.clone(), config.access_ttl_secs)`, and `cookie_policy` from config. `main.rs`: `let redis_pool = redis::client::build_pool(&config.redis_url).await?; let state = AppState::new(pool, redis_pool, &config);`.
-
-- [ ] **Step 5: Migrate test harness + tests.** In `tests/common/mod.rs`: `spawn_app` starts BOTH Postgres and Redis containers, builds the redis pool, calls `AppState::new(pool, redis_pool, &test_config)`; set `TestServer::builder().save_cookies().build()` so cookies persist. Rewrite `register_and_login(app, email)` to register+login (cookies now stored in the jar) and return the **csrf token** string (read from the response csrf cookie) for use as the `X-CSRF-Token` header. Add helper `fn csrf(token: &str) -> (HeaderName, HeaderValue)`. Update every mutating request in all integration test files to send the csrf header. Run: `cargo nextest run` → PASS (all suites).
-
-- [ ] **Step 6: Extend `auth_test.rs`.** Add tests: refresh rotates and the old refresh cookie no longer works after grace; logout → `/me` returns 401 (sid revoked); a POST without `X-CSRF-Token` → 403. Run: `cargo nextest run --test auth_test` → PASS.
-
-- [ ] **Step 7: Full gate + commit.**
-```bash
-cargo fmt && cargo clippy --all-targets --all-features -- -D warnings && cargo nextest run
-git add -A apps/backend
-git commit -m "feat(auth): cookie-based access/refresh auth, refresh+logout endpoints, CSRF layer; migrate tests"
-```
+- [ ] **Step 5 — gate + commit.** `git add -A apps/backend/src && git commit -m "feat(auth): add access-token methods to AuthPort (expand); move JwtAuth to token adapter"`.
 
 ---
 
-## Task 8: RedisCache + CachedVehicleRepo decorator
+## Task 5: RefreshUseCase + LogoutUseCase (additive policy)
 
-**Files:**
-- Create: `apps/backend/src/adapters/outbound/redis/cache.rs`
-- Create: `apps/backend/src/adapters/outbound/redis/cached_vehicle_repo.rs`
-- Modify: `apps/backend/src/adapters/outbound/redis/mod.rs`
-- Modify: `apps/backend/src/bootstrap/state.rs` (wrap `vehicle_repo`)
-- Test: `apps/backend/tests/vehicle_cache_test.rs` (integration)
+**Files:** Create `src/application/auth/refresh.rs`, `logout.rs`. Modify `src/application/auth/mod.rs` (READ first; add `pub mod refresh; pub mod logout;` and define `AuthSession`). Test: unit (fake `SessionStore` + fake `AuthPort`). Additive — green.
 
 **Interfaces — Produces:**
-- `RedisCache::new(pool)`; adapter-internal `get_json<T: DeserializeOwned>`, `set_json<T: Serialize>(key, &T, ttl)`, `incr(key) -> u64`, `get_u64(key)`. **Not a port** — used only by decorators.
-- `CachedVehicleRepo { inner: Arc<dyn VehicleRepository>, cache: RedisCache }` implements `VehicleRepository`.
-
-**TDD: integration.** **Big O:** cache hit avoids the SQL round-trip; keys are O(1) by `user_id`(+`vehicle_id`); version bump is one `INCR`. Bahasa Indonesia in dispatch: read O(1) cache lookup; miss → O(1) PG by index; write → O(1) INCR invalidasi seluruh read-key user tanpa scan.
-
-- [ ] **Step 1: Failing integration test** (`vehicle_cache_test.rs`): create user+vehicle; `GET /vehicles` twice → second served from cache (assert correctness, not latency — verify by mutating Postgres directly is out of scope; instead assert a second list after an *uncached* create reflects the new vehicle, proving version invalidation). Concretely:
-  - list → 1 vehicle; create a 2nd vehicle (write bumps version); list → 2 vehicles (no stale 1-vehicle cache). 
-  - cross-user: user B's `GET /vehicles` never returns user A's vehicles even after A populated the cache.
-  Run: `cargo nextest run --test vehicle_cache_test` → FAIL.
-
-- [ ] **Step 2: Implement `RedisCache`** (serde JSON via `serde_json`; fail-open — every method returns `Option`/falls back, never errors the caller):
 ```rust
-const VER_PREFIX: &str = "cache:ver:";
-const VEH_LIST: &str = "vehicles";
-const VEH_ONE: &str = "vehicle";
-// key: cache:v{ver}:vehicles:{user}  /  cache:v{ver}:vehicle:{user}:{id}
+pub struct AuthSession { pub access_token: String, pub family_id: Uuid, pub raw_secret: String, pub sid: Uuid }
+pub struct RefreshOutput { pub access_token: String, pub family_id: Uuid, pub raw_secret: String }
+pub enum RefreshError { Invalid, Unavailable }  // Invalid→401, Unavailable→503
+pub enum LogoutError { Unavailable }             // →503 (fail-closed)
+RefreshUseCase { sessions, auth, access_ttl_secs }::execute(family_id, presented_secret) -> Result<RefreshOutput, RefreshError>
+LogoutUseCase { sessions, access_ttl_secs }::execute(family_id, sid) -> Result<(), LogoutError>
 ```
-`get_json` returns `None` on miss OR any Redis error (logged at debug). `set_json` ignores errors. `bump_version(user_id)` does `INCR cache:ver:{user}` and returns the new value; `version(user_id)` reads it (absent → 0).
+`AuthSession` is produced by register/login in Task 6 (`sid == family_id`).
 
-- [ ] **Step 3: Implement `CachedVehicleRepo`.** Define a private `#[derive(Serialize, Deserialize)] struct VehicleCacheModel` mirroring `Vehicle`'s fields (and `From<Vehicle>` / `Into<Vehicle>` — value objects via their string/int reprs). `list_by_user`: read version → key `cache:v{ver}:vehicles:{user}` → hit returns mapped vehicles; miss → `inner.list_by_user` → `set_json` → return. `find_by_id`: key `cache:v{ver}:vehicle:{user}:{id}`. `insert`/`update`/`delete`: call `inner` first, then on success `cache.bump_version(user_id)` (invalidates all of that user's list+detail keys). Map domain↔model inside this file only (boundary-safe; domain stays serde-free).
+**TDD: yes** — outcome→action mapping + fail-closed; fakes. Big O: O(1).
 
-- [ ] **Step 4: Wire.** In `state.rs`: `let vehicle_repo: Arc<dyn VehicleRepository> = Arc::new(CachedVehicleRepo::new(Arc::new(PgVehicleRepo::new(pool.clone())), RedisCache::new(redis_pool.clone())));`. Run: `cargo nextest run --test vehicle_cache_test` → PASS; full `cargo nextest run` → PASS.
+- [ ] **Step 1 — failing tests.** `refresh.rs` test module: fake `SessionStore` returning a configured `RotateOutcome` and recording calls; fake `AuthPort` (`sign_access` → `"mock.jwt"`). Assert: `Rotated`→`Ok(RefreshOutput{access_token:"mock.jwt",..})`; `Reused`→`Err(Invalid)` AND fake recorded `revoke`+`revoke_session`; `NotFound`→`Err(Invalid)`; store `Err(Unavailable)`→`Err(Unavailable)`. `logout.rs`: both store writes ok→`Ok(())`; either `Unavailable`→`Err(Unavailable)`. Run `cargo test --lib application::auth -v` → FAIL.
 
-- [ ] **Step 5: Commit.**
+- [ ] **Step 2 — implement** `RefreshUseCase` and `LogoutUseCase` exactly as in the design spec §4.4/§4.5 (Rotated → sign new access with `family_id` as `sid` + `Uuid::new_v4()` jti; Reused → `revoke` + `revoke_session(family_id, access_ttl_secs)` then `Err(Invalid)`; store error → `Unavailable`. Logout → `revoke` then `revoke_session`, any error → `Err(Unavailable)`). Define `AuthSession` in `application/auth/mod.rs`. Run `cargo test --lib application::auth -v` → PASS.
+
+- [ ] **Step 3 — gate + commit.** `git commit -m "feat(auth): refresh (rotation + theft response) and logout (fail-closed) use cases"`.
+
+---
+
+## Task 6: ATOMIC auth swap — register/login cookies, middleware, refresh/logout, router, CORS, wiring, test migration, contract removal
+
+> **The one large atomic task.** Switching the auth contract from bearer-token-in-body to HttpOnly
+> cookies cannot be done in smaller green slices — the moment login stops returning a body token, every
+> integration test breaks until the middleware, handlers, and test harness all move together. Everything
+> separable (session store, use cases, cookie builder, AuthPort expand) already landed green in Tasks 1–5.
+> This task also performs the expand-contract CONTRACT step (removes the legacy `sign_token`/`verify_token`).
+
+**Files:** Modify `bootstrap/state.rs`, `bootstrap/main.rs` (actually `src/main.rs`), `middleware/auth.rs`, create `middleware/csrf.rs` (+ `middleware/mod.rs`), `handlers/auth.rs`, `router.rs`, `ports/auth.rs` (remove legacy), `token/jwt_auth.rs` (remove legacy), `tests/common/mod.rs`, ALL `tests/*_test.rs`. Test: extend `tests/auth_test.rs`.
+
+**Interfaces — Consumes:** Tasks 1–5. **Produces:** `AppState::new(pool, redis_pool: fred::clients::Pool, config: &Config)`; fields `sessions: Arc<dyn SessionStore>`, `cookie_policy: CookiePolicy`; `auth` now uses `config.access_ttl_secs`.
+
+**TDD: integration** (end-to-end cookie/refresh/logout/CSRF; unit pieces already covered). Big O: middleware = O(1) verify + one O(1) `EXISTS`.
+
+- [ ] **Step 1 — AppState + main + CORS.** READ `state.rs` first. `AppState::new(pool, redis_pool, config: &Config)`: build `RedisSessionStore::new(redis_pool, config.refresh_ttl_secs, config.refresh_grace_secs)` → `sessions`; `JwtAuth::new(config.jwt_secret.clone(), config.access_ttl_secs)`; `cookie_policy` from config; keep all repo fields. Add `sessions` + `cookie_policy` fields. In `src/main.rs`: `let redis_pool = redis::client::build_pool(&config.redis_url).await?; let state = AppState::new(pool, redis_pool, &config);`. Build a `CorsLayer` from `config.cors_allowed_origins` (parse each to `HeaderValue`), `.allow_credentials(true)`, `.allow_methods([...])`, `.allow_headers([...including x-csrf-token...])` — **never `Any` when credentials are allowed**; if the origins list is empty, apply no permissive CORS (same-origin only). Attach to the router in `main`/`router::build`.
+
+- [ ] **Step 2 — auth middleware (cookie + sid, fail-open, clear-on-401).** Rewrite `require_auth` to read the access cookie via `CookieJar::from_headers`, `verify_access`, then `is_session_revoked(claims.sid)` FAIL-OPEN (Ok(true)→reject, Err→warn+allow). On any rejection, return a response that **clears** access/refresh/csrf cookies (build a `CookieJar` of `clear(...)` cookies + `StatusCode::UNAUTHORIZED` into a `Response`), per Codex #4. Inject `claims.user_id`.
+
+- [ ] **Step 3 — CSRF middleware.** Create `middleware/csrf.rs` `require_csrf` (GET/HEAD/OPTIONS pass; else compare `X-CSRF-Token` header to the csrf cookie via `csrf_name(&state.cookie_policy)`; mismatch/missing → 403). Add `pub mod csrf;` to `middleware/mod.rs`.
+
+- [ ] **Step 4 — handlers.** In `handlers/auth.rs`: `register`/`login` call the use case (now returning `AuthSession`; see Step 7) → build a `CookieJar` with `access_cookie`, `refresh_cookie("{family_id}.{raw_secret}")`, `csrf_cookie(random_token())`; return `(StatusCode, jar, Json(UserResponse))` — NO body token. `refresh`: read refresh cookie, split on the first `.` into `family_id`+`secret`; `RefreshUseCase::execute` → Ok sets fresh access+refresh+csrf cookies (200); `Err(Invalid)`→clear cookies+401; `Err(Unavailable)`→503. `logout`: read access cookie → `verify_access` for `sid`; read refresh cookie for `family_id`; `LogoutUseCase::execute(family_id, sid)` → Ok clears all cookies+204; `Err(Unavailable)`→503 (cookies NOT cleared). `me` unchanged.
+
+- [ ] **Step 5 — router.** Add `/auth/refresh` + `/auth/logout` (POST) to the public group; apply `require_csrf` as a layer on the protected router (after `require_auth`). Keep register/login/refresh CSRF-exempt (public group).
+
+- [ ] **Step 6 — migrate test harness + all tests.** READ `tests/common/mod.rs` first. `spawn_app` starts Postgres AND Redis containers, builds the redis pool, calls `AppState::new(pool, redis_pool, &test_config)` (test config: `cookie_secure=false`, `samesite=Strict`, no domain, empty CORS, short-ish TTLs). Use `TestServer::builder().save_cookies().build()`. Rewrite `register_and_login(app, email)` to register+login (cookies stored in jar) and return the **csrf token** (read from the csrf cookie). Add `fn csrf_header(token: &str) -> (HeaderName, HeaderValue)`. Update EVERY mutating request across all integration test files to attach the csrf header. Run `cargo nextest run` → PASS.
+
+- [ ] **Step 7 — register/login create session.** Update `LoginUseCase`/`RegisterUseCase` to hold `sessions: Arc<dyn SessionStore>` + `access_ttl_secs`, and return `AuthSession` (create session, `sign_access(user.id, family_id, jti)`, `sid = family_id`). Update their unit tests (fake SessionStore). Wire the new fields wherever the use cases are constructed (handlers/state).
+
+- [ ] **Step 8 — extend `auth_test.rs`.** Add: refresh rotates + old refresh cookie rejected after grace; logout → `/me` 401 (sid revoked); POST without `X-CSRF-Token` → 403; login sets HttpOnly access cookie (assert no token in body). Run `cargo nextest run --test auth_test` → PASS.
+
+- [ ] **Step 9 — CONTRACT: remove legacy.** Delete `sign_token`/`verify_token` from `AuthPort`, `JwtAuth`, and `MockAuth` (no callers remain). Run full `cargo nextest run` → PASS.
+
+- [ ] **Step 10 — full gate + commit.** `cargo fmt && cargo clippy --all-targets --all-features -- -D warnings && cargo nextest run && cargo audit`.
 ```bash
 git add -A apps/backend
-git commit -m "feat(cache): transparent CachedVehicleRepo decorator with per-user version invalidation"
+git commit -m "feat(auth): cookie access/refresh auth, refresh+logout endpoints, CSRF, CORS; migrate tests; drop legacy JWT API"
 ```
 
 ---
 
-## Task 9: CachedSummaryRepo (TTL 60s)
+## Task 7: RedisCache + CachedVehicleRepo decorator
 
-**Files:**
-- Create: `apps/backend/src/adapters/outbound/redis/cached_summary_repo.rs`
-- Modify: `apps/backend/src/adapters/outbound/redis/mod.rs`, `src/bootstrap/state.rs`
-- Test: `apps/backend/tests/summary_cache_test.rs`
+**Files:** Create `redis/cache.rs`, `redis/cached_vehicle_repo.rs`. Modify `redis/mod.rs`, `state.rs` (READ first; wrap `vehicle_repo`). Test: `tests/vehicle_cache_test.rs`. Additive decorator — green.
 
-**Interfaces — Produces:** `CachedSummaryRepo { inner: Arc<dyn SummaryRepository>, cache: RedisCache }` impl `SummaryRepository`. Key `cache:summary:{user_id}:{vehicle_id}`, TTL 60s, no invalidation (TTL-only, ≤60s staleness accepted per spec).
+**Interfaces — Produces:** `RedisCache::new(pool)` (adapter-internal `get_json`/`set_json`/`bump_version`/`version`, all fail-open). `CachedVehicleRepo { inner: Arc<dyn VehicleRepository>, cache: RedisCache }` impl `VehicleRepository`.
+
+**TDD: integration.** **Big O:** cache hit O(1) avoids the SQL round-trip; keys O(1) by `user_id`(+`vehicle_id`); write = one `INCR` invalidates all of a user's read keys without a scan. (Dispatch in Bahasa Indonesia: read → cache O(1); miss → PG by index O(log n); write → INCR O(1), invalidasi seluruh read-key user tanpa scan.)
+
+- [ ] **Step 1 — failing test** (`vehicle_cache_test.rs`): list → 1 vehicle; create a 2nd (write bumps version); list → 2 vehicles (no stale cache). Cross-user: user B's list never returns user A's vehicles after A populated the cache. Run → FAIL.
+- [ ] **Step 2 — `RedisCache`** (serde_json; `get_json<T: DeserializeOwned>`→`None` on miss/any error logged at debug; `set_json<T: Serialize>` ignores errors; `bump_version(user)`→`INCR cache:ver:{user}` returns new; `version(user)`→read, absent=0). Keys: `cache:v{ver}:vehicles:{user}`, `cache:v{ver}:vehicle:{user}:{id}`. Consts for prefixes.
+- [ ] **Step 3 — `CachedVehicleRepo`.** Private `#[derive(Serialize,Deserialize)] struct VehicleCacheModel` mirroring `Vehicle` (value objects via string/int reprs) + `From<Vehicle>`/`into`. `list_by_user`/`find_by_id` read-through with version-prefixed keys; `insert`/`update`/`delete` call `inner` first then `cache.bump_version(user_id)` on success. Mapping confined to this file (domain stays serde-free).
+- [ ] **Step 4 — wire** in `state.rs`: `vehicle_repo: Arc<dyn VehicleRepository> = Arc::new(CachedVehicleRepo::new(Arc::new(PgVehicleRepo::new(pool.clone())), RedisCache::new(redis_pool.clone())))`. Run `cargo nextest run --test vehicle_cache_test` + full suite → PASS.
+- [ ] **Step 5 — gate + commit.** `git commit -m "feat(cache): transparent CachedVehicleRepo with per-user version invalidation"`.
+
+---
+
+## Task 8: CachedSummaryRepo (TTL 60s)
+
+**Files:** Create `redis/cached_summary_repo.rs`. Modify `redis/mod.rs`, `state.rs` (READ first; wrap `summary_repo`). Test: `tests/summary_cache_test.rs`. Additive — green.
+
+**Interfaces — Produces:** `CachedSummaryRepo { inner: Arc<dyn SummaryRepository>, cache: RedisCache }` impl `SummaryRepository`. Key `cache:summary:{user_id}:{vehicle_id}`, TTL 60s, no invalidation.
 
 **TDD: integration.** Big O: O(1).
 
-- [ ] **Step 1: Failing test** (`summary_cache_test.rs`): summary for a vehicle returns correct aggregates; a second call within TTL returns the same value (served from cache). Cross-user isolation: user B cannot read user A's summary key. Run → FAIL.
-- [ ] **Step 2: Implement** decorator with a private `SummaryCacheModel` serde mirror; `get_summary` reads `cache:summary:{user}:{vehicle}` → hit returns mapped; miss → `inner.get_summary` → `set_json(key, &model, 60)` → return. Errors fail-open to `inner`.
-- [ ] **Step 3: Wire** `summary_repo` in `state.rs` (wrap `PgSummaryRepo`). Run tests → PASS; full suite → PASS.
-- [ ] **Step 4: Commit.** `git commit -m "feat(cache): CachedSummaryRepo with 60s TTL"`
+- [ ] **Step 1 — failing test** (`summary_cache_test.rs`): summary aggregates correct; second call within TTL served from cache; cross-user isolation (B cannot read A's summary key). Run → FAIL.
+- [ ] **Step 2 — implement** with private `SummaryCacheModel` serde mirror; `get_summary` read-through `cache:summary:{user}:{vehicle}`, miss → `inner` → `set_json(key,&model,60)`; errors fail-open to `inner`.
+- [ ] **Step 3 — wire** `summary_repo` in `state.rs` (wrap `PgSummaryRepo`). Run tests + full suite → PASS.
+- [ ] **Step 4 — gate + commit.** `git commit -m "feat(cache): CachedSummaryRepo with 60s TTL"`.
 
 ---
 
-## Task 10: Deploy config (railway.toml) + README rewrite + architecture diagram
+## Task 9: Deploy config (railway.toml) + README rewrite + architecture diagram
 
-**Files:**
-- Create: `railway.toml` (repo root)
-- Modify: `README.md`
-- Test: none (docs/ops); run the full gate as the deliverable check.
+**Files:** Create `railway.toml` (repo root). Modify `README.md`. Test: none (docs/ops); the full gate is the deliverable check.
 
-**TDD: not applicable** (docs/config). Verify-by: `cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings && cargo nextest run && cargo audit` all green; README renders.
+**TDD: not applicable** (docs/config). Verify-by: full gate green; README + Mermaid render.
 
-- [ ] **Step 1: `railway.toml`** at repo root:
+- [ ] **Step 1 — `railway.toml`** (repo root):
 ```toml
 [build]
 builder = "dockerfile"
@@ -1015,34 +554,30 @@ dockerfilePath = "apps/backend/Dockerfile"
 healthcheckPath = "/health"
 restartPolicyType = "on_failure"
 ```
-(Document: set the Railway service Root Directory to repo root; attach managed Postgres + Redis, which inject `DATABASE_URL` / `REDIS_URL`; set `COOKIE_DOMAIN=veyra.dev`, `COOKIE_SAMESITE=lax`, `COOKIE_SECURE=true`, the CORS allowlist origin, and `JWT_SECRET`.)
+Document in README: Railway service Root Directory = repo root; attach managed Postgres + Redis (inject `DATABASE_URL`/`REDIS_URL`); set `COOKIE_DOMAIN=veyra.dev`, `COOKIE_SAMESITE=lax`, `COOKIE_SECURE=true`, `CORS_ALLOWED_ORIGINS=https://veyra.dev`, `JWT_SECRET`.
 
-- [ ] **Step 2: README rewrite.** Remove ALL emoji from `README.md`; replace section markers with text/Unicode icon glyphs only where a marker adds clarity (e.g. `›`, `—`, `▸`), not decorative emoji. Add/refresh sections: Stack (add Redis, fred, axum-extra); Auth (access+refresh cookies, CSRF, logout/refresh endpoints, the env matrix table for self-host vs prod); Configuration (full env var table from Task 1 + cookie vars); Local dev (`docker compose up` now includes Redis); Deployment (Railway backend via `railway.toml` + managed Postgres/Redis; future Vercel FE under `veyra.dev`; CORS allowlist; cookie domain). Keep copy in clear professional English (this is a disk artifact).
+- [ ] **Step 2 — README rewrite.** Remove ALL emoji; use plain text / restrained Unicode glyphs (`›`,`—`,`▸`) only where a marker aids scanning. Refresh sections: Stack (add Redis/fred/axum-extra); Auth (access+refresh cookies, CSRF, `/auth/refresh` + `/auth/logout`, the self-host-vs-prod env matrix table); Configuration (full env table incl. cookie + CORS vars); Local dev (`docker compose up` now includes Redis); Deployment (Railway backend via `railway.toml` + managed Postgres/Redis; future Vercel FE under `veyra.dev`; CORS allowlist + cookie domain). Professional English (disk artifact).
 
-- [ ] **Step 3: Architecture diagram.** Add a Mermaid diagram to `README.md` showing the hexagonal layers (domain ← application ← ports ← adapters: inbound HTTP / outbound Postgres / outbound Redis-token-cache / bootstrap) and the request/auth/cache flow, plus the deploy topology (Vercel `veyra.dev` → Railway `api.veyra.dev` → managed Postgres + Redis). Verify it renders (GitHub Mermaid). Example skeleton:
+- [ ] **Step 3 — architecture diagram.** Add a Mermaid diagram to README: hexagonal layers (domain ← application ← ports ← adapters: inbound HTTP / outbound Postgres / outbound Redis session+cache / outbound token / bootstrap) + request/auth/cache flow + deploy topology (Vercel `veyra.dev` → Railway `api.veyra.dev` → managed Postgres + Redis). Skeleton:
 ```mermaid
 flowchart LR
-  subgraph Client
-    FE[veyra.dev — Vercel]
-  end
+  FE[veyra.dev — Vercel] -->|HttpOnly cookies + X-CSRF-Token| H
   subgraph API[api.veyra.dev — Railway]
-    direction TB
-    H[inbound/http<br/>handlers · auth+csrf middleware · cookies] --> A[application<br/>use cases]
+    H[inbound/http<br/>handlers · auth+csrf mw · cookies] --> A[application<br/>use cases]
     A --> P[ports<br/>traits]
     P --> PG[(outbound/postgres)]
     P --> RS[outbound/redis<br/>session store]
     P -. decorates .-> CD[cached repos]
     H --> TK[outbound/token<br/>JWT]
   end
-  FE -->|HttpOnly cookies + X-CSRF-Token| H
   PG --> DB[(Postgres)]
   RS --> RD[(Redis)]
   CD --> RD
 ```
+Verify it renders on GitHub.
 
-- [ ] **Step 4: Final gate + commit.**
+- [ ] **Step 4 — final gate + commit.** `cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings && cargo nextest run && cargo audit`.
 ```bash
-cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings && cargo nextest run && cargo audit
 git add railway.toml README.md
 git commit -m "docs: railway deploy config, README rewrite (icons, no emoji), architecture diagram"
 ```
@@ -1051,6 +586,8 @@ git commit -m "docs: railway deploy config, README rewrite (icons, no emoji), ar
 
 ## Notes for the executor
 
-- **Docker required** for every integration suite (Postgres + Redis testcontainers). If Docker Desktop was just started, the first container creation can lag — retry rather than assume breakage.
-- **`cargo audit`:** the existing `apps/backend/.cargo/audit.toml` ignores `RUSTSEC-2023-0071` (sqlx-mysql not compiled). Adding `fred`/`base64`/`hex` may surface new advisories — investigate; only ignore with a documented justification.
-- **Boundary CI:** `serde` in `ports/session.rs` would fail `.github/scripts/check-boundaries.sh`. `RotateOutcome`/`NewSession` use only `uuid`/`String` — keep it that way.
+- **Docker required** for every integration suite (Postgres + Redis testcontainers). After a fresh Docker Desktop start, the first container creation can lag — retry rather than assume breakage.
+- **`cargo audit`:** existing `.cargo/audit.toml` ignores `RUSTSEC-2023-0071`. New deps may surface advisories — triage (Task 1 Step 2); only ignore with justification.
+- **Boundary CI:** `serde` in `ports/session.rs` fails `.github/scripts/check-boundaries.sh`. `RotateOutcome`/`NewSession` use only `uuid`/`String` — keep it that way.
+- **Each task ends green** (`build` + `clippy -D warnings` + `nextest`). Task 6 is the single atomic exception in size, not in greenness — it still ends fully green.
+- **`sid == family_id`** everywhere: the access token's `sid` claim IS the refresh family id; logout/refresh rely on this.
