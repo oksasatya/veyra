@@ -33,5 +33,5 @@ async-trait = "0.1"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full", "test-util"] }
-axum-test = "16"
+axum-test = "21"
 testcontainers-modules = { version = "0.4", features = ["postgres"] }
