@@ -1,6 +1,7 @@
 # Project AI instructions — local only, not committed
 CLAUDE.md
 .claude/
+.impeccable/
 
 # Rust
 apps/backend/target/

@@ -1,0 +1,35 @@
+[package]
+name = "veyra"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "veyra"
+path = "src/main.rs"
+
+[dependencies]
+axum = { version = "0.8", features = ["macros"] }
+tokio = { version = "1", features = ["full"] }
+sqlx = { version = "0.8", features = [
+    "postgres", "uuid", "chrono", "migrate", "runtime-tokio-native-tls"
+] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+anyhow = "1"
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+jsonwebtoken = "9"
+argon2 = "0.5"
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "trace"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+figment = { version = "0.10", features = ["env", "toml"] }
+dotenvy = "0.15"
+rand_core = { version = "0.6", features = ["std"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full", "test-util"] }
+axum-test = "16"
+testcontainers-modules = { version = "0.4", features = ["postgres"] }
