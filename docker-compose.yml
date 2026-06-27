@@ -33,10 +33,10 @@ services:
     environment:
       DATABASE_URL: postgres://veyra:veyra@postgres:5432/veyra
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
-      PORT: 3000
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-min-32-bytes!!}
+      PORT: 8080
     ports:
-      - "3000:3000"
+      - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy

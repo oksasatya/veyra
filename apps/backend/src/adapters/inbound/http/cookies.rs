@@ -182,9 +182,15 @@ pub fn refresh_cookie(p: &CookiePolicy, value: &str) -> Cookie<'static> {
     )
 }
 
-/// CSRF cookie: NOT `HttpOnly` (JS must read it), `Path=/`, TTL = `access_ttl_secs`.
+/// CSRF cookie: NOT `HttpOnly` (JS must read it), `Path=/`,
+/// TTL = `refresh_ttl_secs` (must outlive the refresh path it guards).
+///
+/// `/auth/refresh` is protected by the double-submit CSRF check. If the CSRF cookie
+/// were set to `access_ttl_secs` (15 min), it would expire while the refresh cookie
+/// is still valid (7 days), making it impossible for the SPA to call `/auth/refresh`
+/// after an idle period — resulting in a forced re-login and defeating token rotation.
 pub fn csrf_cookie(p: &CookiePolicy, value: &str) -> Cookie<'static> {
-    let ttl = Duration::seconds(p.access_ttl_secs as i64);
+    let ttl = Duration::seconds(p.refresh_ttl_secs as i64);
     build_cookie(
         csrf_name(p),
         value.to_owned(),
@@ -315,6 +321,44 @@ mod tests {
             c.http_only(),
             Some(true),
             "clear(Csrf) must NOT be HttpOnly"
+        );
+    }
+
+    // C1: CSRF cookie TTL must equal refresh_ttl_secs (not access_ttl_secs)
+    // The CSRF cookie guards /auth/refresh (the 7-day path). After ~15 min idle
+    // the access cookie expires; without a valid CSRF cookie the SPA cannot call
+    // /auth/refresh → 403 → forced re-login. Fix: use refresh_ttl_secs.
+    #[test]
+    fn csrf_cookie_ttl_equals_refresh_ttl() {
+        let p = policy(true, None);
+        // refresh_ttl_secs = 604_800 (7 days), access_ttl_secs = 900 (15 min)
+        let c = csrf_cookie(&p, "token");
+        assert_eq!(
+            c.max_age(),
+            Some(time::Duration::seconds(604_800)),
+            "CSRF cookie must outlive the refresh path it guards (refresh_ttl_secs=604800, not access_ttl_secs=900)"
+        );
+    }
+
+    #[test]
+    fn access_cookie_ttl_equals_access_ttl() {
+        let p = policy(true, None);
+        let c = access_cookie(&p, "token");
+        assert_eq!(
+            c.max_age(),
+            Some(time::Duration::seconds(900)),
+            "Access cookie TTL must equal access_ttl_secs=900"
+        );
+    }
+
+    #[test]
+    fn refresh_cookie_ttl_equals_refresh_ttl() {
+        let p = policy(true, None);
+        let c = refresh_cookie(&p, "token");
+        assert_eq!(
+            c.max_age(),
+            Some(time::Duration::seconds(604_800)),
+            "Refresh cookie TTL must equal refresh_ttl_secs=604800"
         );
     }
 
