@@ -30,3 +30,7 @@ Thumbs.db
 *.log
 
 .superpowers
+
+# Design tooling — generated look-source (regenerable; cards load fonts via CDN)
+design-system/fonts/
+design-system/styles.css
