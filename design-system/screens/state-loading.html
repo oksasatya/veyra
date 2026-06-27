@@ -1,0 +1,73 @@
+<!-- @dsCard group="States" name="Loading — Skeleton" subtitle="Skeleton garage, 390x844" width="390" height="844" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Veyra · Loading</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg:#0D1119; --surface:#151A23; --surface-2:#1B212C; --border:#232B36; --text:#E6EAF0; --muted:#9BA6B5; --accent:#F26A21; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { width:390px; height:844px; }
+  body { background:var(--bg); color:var(--text); font-family:"IBM Plex Sans",system-ui,sans-serif; -webkit-font-smoothing:antialiased; overflow:hidden; position:relative; }
+  .statusbar { display:flex; justify-content:space-between; align-items:center; padding:14px 24px 0; font-size:13px; font-weight:600; }
+  .statusbar .icons { display:flex; gap:6px; opacity:.9; }
+  header { padding:8px 20px 12px; }
+  header h1 { font-family:Sora,sans-serif; font-size:32px; font-weight:700; letter-spacing:-.02em; }
+  .scroll { padding:0 20px; }
+  .sk { position:relative; overflow:hidden; background:var(--surface-2); border-radius:8px; }
+  .sk::after { content:""; position:absolute; inset:0; transform:translateX(-100%);
+    background:linear-gradient(90deg, transparent, rgba(230,234,240,.08), transparent); animation:shimmer 1.3s infinite; }
+  @keyframes shimmer { 100% { transform:translateX(100%); } }
+  @media (prefers-reduced-motion: reduce) { .sk::after { animation:none; } .sk { opacity:.9; } }
+  .overview { display:flex; gap:10px; margin-bottom:18px; }
+  .ovsk { flex:1; height:70px; border:1px solid var(--border); border-radius:14px; background:var(--surface); padding:13px; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:16px; margin-bottom:14px; }
+  .crow { display:flex; align-items:center; gap:12px; }
+  .av { width:44px; height:44px; border-radius:12px; }
+  .lines { flex:1; }
+  .stbar { display:flex; gap:14px; border-top:1px solid var(--border); margin-top:14px; padding-top:14px; }
+  .stbar .col { flex:1; }
+  .home-ind { position:absolute; bottom:9px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:rgba(230,234,240,.28); }
+</style>
+</head>
+<body>
+  <div class="statusbar"><span>9:41</span><span class="icons">●●● ▮▮ 􀛨</span></div>
+  <header><h1>Garage</h1></header>
+  <div class="scroll" aria-busy="true" aria-label="Loading vehicles">
+    <div class="overview">
+      <div class="ovsk"><div class="sk" style="width:46px;height:11px"></div><div class="sk" style="width:28px;height:18px;margin-top:10px"></div></div>
+      <div class="ovsk"><div class="sk" style="width:46px;height:11px"></div><div class="sk" style="width:28px;height:18px;margin-top:10px"></div></div>
+      <div class="ovsk"><div class="sk" style="width:54px;height:11px"></div><div class="sk" style="width:40px;height:18px;margin-top:10px"></div></div>
+    </div>
+    <div class="card">
+      <div class="crow">
+        <div class="sk av"></div>
+        <div class="lines"><div class="sk" style="width:55%;height:14px"></div><div class="sk" style="width:38%;height:11px;margin-top:9px"></div></div>
+      </div>
+      <div class="sk" style="width:75%;height:11px;margin-top:16px"></div>
+      <div class="stbar">
+        <div class="col"><div class="sk" style="width:40px;height:10px"></div><div class="sk" style="width:30px;height:14px;margin-top:8px"></div></div>
+        <div class="col"><div class="sk" style="width:48px;height:10px"></div><div class="sk" style="width:46px;height:14px;margin-top:8px"></div></div>
+        <div class="col"><div class="sk" style="width:44px;height:10px"></div><div class="sk" style="width:50px;height:14px;margin-top:8px"></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="crow">
+        <div class="sk av"></div>
+        <div class="lines"><div class="sk" style="width:48%;height:14px"></div><div class="sk" style="width:34%;height:11px;margin-top:9px"></div></div>
+      </div>
+      <div class="sk" style="width:60%;height:11px;margin-top:16px"></div>
+      <div class="stbar">
+        <div class="col"><div class="sk" style="width:40px;height:10px"></div><div class="sk" style="width:26px;height:14px;margin-top:8px"></div></div>
+        <div class="col"><div class="sk" style="width:48px;height:10px"></div><div class="sk" style="width:46px;height:14px;margin-top:8px"></div></div>
+        <div class="col"><div class="sk" style="width:44px;height:10px"></div><div class="sk" style="width:50px;height:14px;margin-top:8px"></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="home-ind"></div>
+</body>
+</html>

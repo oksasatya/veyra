@@ -1,0 +1,57 @@
+<!-- @dsCard group="States" name="Empty — Garage" subtitle="First-run empty state, 390x844" width="390" height="844" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Veyra · Empty</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg:#0D1119; --surface:#151A23; --surface-2:#1B212C; --border:#232B36; --text:#E6EAF0; --muted:#9BA6B5; --accent:#F26A21; --accent-hover:#FF8338; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { width:390px; height:844px; }
+  body { background:var(--bg); color:var(--text); font-family:"IBM Plex Sans",system-ui,sans-serif; -webkit-font-smoothing:antialiased; overflow:hidden; position:relative; }
+  .statusbar { display:flex; justify-content:space-between; align-items:center; padding:14px 24px 0; font-size:13px; font-weight:600; }
+  .statusbar .icons { display:flex; gap:6px; opacity:.9; }
+  header { padding:8px 20px; }
+  header h1 { font-family:Sora,sans-serif; font-size:30px; font-weight:700; letter-spacing:-.02em; }
+  .empty { height:calc(844px - 56px - 56px - 78px); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 40px; text-align:center; }
+  .art { width:108px; height:108px; border-radius:28px; background:var(--surface); border:1px solid var(--border);
+    display:grid; place-items:center; margin-bottom:26px; position:relative; }
+  .art::after { content:""; position:absolute; inset:-1px; border-radius:28px; box-shadow:0 0 60px rgba(242,106,33,.18); }
+  .empty h2 { font-family:Sora,sans-serif; font-size:21px; font-weight:600; }
+  .empty p { color:var(--muted); font-size:15px; line-height:1.55; margin-top:10px; max-width:30ch; }
+  .cta { margin-top:26px; height:52px; padding:0 26px; border:none; border-radius:14px; background:var(--accent);
+    color:#0D1119; font-family:inherit; font-weight:600; font-size:16px; display:inline-flex; align-items:center; gap:9px; }
+  .tabbar { position:absolute; bottom:0; left:0; right:0; height:78px; background:rgba(13,17,25,.86);
+    backdrop-filter:blur(12px); border-top:1px solid var(--border); display:flex; padding:8px 8px 22px; }
+  .tab { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--muted); font-size:11px; font-weight:500; }
+  .tab.active { color:var(--accent); }
+  .home-ind { position:absolute; bottom:9px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:rgba(230,234,240,.28); }
+</style>
+</head>
+<body>
+  <div class="statusbar"><span>9:41</span><span class="icons">●●● ▮▮ 􀛨</span></div>
+  <header><h1>Garage</h1></header>
+  <div class="empty">
+    <div class="art">
+      <svg viewBox="0 0 120 120" width="52" height="52"><path d="M14 22 L41 22 L60 68 L79 22 L106 22 L60 106 Z" fill="#F26A21" opacity=".85"/><path d="M41 22 L60 68 L60 106 Z" fill="#151A23" opacity=".5"/></svg>
+    </div>
+    <h2>Add your first vehicle</h2>
+    <p>Track services, fuel, expenses, and reminders once your car or bike is in the garage.</p>
+    <button class="cta">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0D1119" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+      Add vehicle
+    </button>
+  </div>
+  <nav class="tabbar">
+    <div class="tab active"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l1.5-4.5A2 2 0 0 1 8.4 7h7.2a2 2 0 0 1 1.9 1.5L19 13"/><path d="M4 13h16v4H4z"/></svg>Garage</div>
+    <div class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>Reminders</div>
+    <div class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/></svg>Docs</div>
+    <div class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.6-2-3.4-2.3 1a7 7 0 0 0-1.7-1l-.3-2.5h-4l-.3 2.5a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.6a7 7 0 0 0 0 2l-2 1.6 2 3.4 2.3-1a7 7 0 0 0 1.7 1l.3 2.5h4l.3-2.5a7 7 0 0 0 1.7-1l2.3 1 2-3.4-2-1.6a7 7 0 0 0 .1-1z"/></svg>Settings</div>
+  </nav>
+  <div class="home-ind"></div>
+</body>
+</html>

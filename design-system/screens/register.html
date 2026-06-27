@@ -1,0 +1,71 @@
+<!-- @dsCard group="Screens" name="Register" subtitle="Create account, 390x844" width="390" height="844" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Veyra · Register</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg:#0D1119; --surface:#151A23; --border:#232B36; --text:#E6EAF0; --muted:#9BA6B5; --accent:#F26A21; --accent-hover:#FF8338; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { width:390px; height:844px; }
+  body { background:var(--bg); color:var(--text); font-family:"IBM Plex Sans",system-ui,sans-serif; -webkit-font-smoothing:antialiased; position:relative; overflow:hidden; }
+  .glow { position:absolute; top:-120px; left:50%; transform:translateX(-50%); width:360px; height:360px; border-radius:50%;
+    background:radial-gradient(circle, rgba(242,106,33,.20), rgba(242,106,33,0) 70%); pointer-events:none; }
+  .statusbar { display:flex; justify-content:space-between; align-items:center; padding:14px 24px 0; font-size:13px; font-weight:600; }
+  .statusbar .icons { display:flex; gap:6px; opacity:.9; }
+  .wrap { position:relative; padding:0 24px; height:100%; display:flex; flex-direction:column; }
+  .back { width:38px; height:38px; border-radius:11px; background:var(--surface); border:1px solid var(--border);
+    display:grid; place-items:center; margin-top:14px; }
+  h1 { font-family:Sora,sans-serif; font-weight:600; font-size:26px; letter-spacing:-.01em; margin-top:26px; }
+  .sub { color:var(--muted); font-size:15px; margin-top:8px; line-height:1.5; }
+  form { margin-top:24px; display:flex; flex-direction:column; gap:13px; }
+  .lbl { font-size:13px; font-weight:500; color:var(--muted); margin-bottom:-4px; }
+  .field { background:var(--surface); border:1px solid var(--border); border-radius:14px; display:flex; align-items:center;
+    gap:11px; padding:0 15px; height:54px; transition:border-color .15s, box-shadow .15s; }
+  .field:focus-within { border-color:var(--accent); box-shadow:0 0 0 3px rgba(242,106,33,.20); }
+  .field input { flex:1; background:none; border:none; outline:none; color:var(--text); font-family:inherit; font-size:16px; }
+  .field input::placeholder { color:#5A6472; }
+  .hint { font-size:12px; color:var(--muted); margin-top:-4px; }
+  .cta { margin-top:10px; height:54px; border:none; border-radius:14px; background:var(--accent); color:#0D1119;
+    font-family:inherit; font-weight:600; font-size:16px; }
+  .foot { margin-top:auto; padding-bottom:30px; text-align:center; color:var(--muted); font-size:15px; }
+  .foot a { color:var(--accent); font-weight:600; text-decoration:none; }
+  .home-ind { position:absolute; bottom:9px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:rgba(230,234,240,.28); }
+  svg.i { opacity:.8; flex:none; }
+</style>
+</head>
+<body>
+  <div class="glow"></div>
+  <div class="statusbar"><span>9:41</span><span class="icons">●●● ▮▮ 􀛨</span></div>
+  <div class="wrap">
+    <div class="back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E6EAF0" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></div>
+    <h1>Create your account</h1>
+    <p class="sub">One account keeps every vehicle, log, and reminder in sync.</p>
+    <form onsubmit="return false">
+      <span class="lbl">Name</span>
+      <div class="field">
+        <svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9BA6B5" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+        <input placeholder="Your name" value="Oksa Satya" />
+      </div>
+      <span class="lbl">Email</span>
+      <div class="field">
+        <svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9BA6B5" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+        <input type="email" placeholder="you@example.com" value="oksa@veyra.dev" />
+      </div>
+      <span class="lbl">Password</span>
+      <div class="field">
+        <svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9BA6B5" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        <input type="password" placeholder="At least 8 characters" value="········" />
+      </div>
+      <span class="hint">Use 8 or more characters.</span>
+      <button class="cta">Create account</button>
+    </form>
+    <p class="foot">Already have an account? <a href="#">Log in</a></p>
+    <div class="home-ind"></div>
+  </div>
+</body>
+</html>

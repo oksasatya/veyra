@@ -1,0 +1,88 @@
+<!-- @dsCard group="Screens" name="Reminders" subtitle="Grouped by due status, 390x844" width="390" height="844" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Veyra · Reminders</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg:#0D1119; --surface:#151A23; --surface-2:#1B212C; --border:#232B36;
+    --text:#E6EAF0; --muted:#9BA6B5; --accent:#F26A21; --info:#34D1C4; --danger:#F2555A; --ok:#4FD08A; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { width:390px; height:844px; }
+  body { background:var(--bg); color:var(--text); font-family:"IBM Plex Sans",system-ui,sans-serif; -webkit-font-smoothing:antialiased; overflow:hidden; position:relative; }
+  .mono { font-family:"IBM Plex Mono",monospace; }
+  .statusbar { display:flex; justify-content:space-between; align-items:center; padding:14px 24px 0; font-size:13px; font-weight:600; }
+  .statusbar .icons { display:flex; gap:6px; opacity:.9; }
+  header { padding:8px 20px 10px; }
+  header h1 { font-family:Sora,sans-serif; font-size:30px; font-weight:700; letter-spacing:-.02em; }
+  .scroll { height:calc(844px - 56px - 50px - 78px); overflow:hidden; padding:6px 20px 0; }
+  .sec { font-size:12px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin:16px 2px 10px; }
+  .sec.first { margin-top:4px; }
+  .item { display:flex; align-items:center; gap:13px; background:var(--surface); border:1px solid var(--border);
+    border-radius:14px; padding:13px 15px; margin-bottom:10px; }
+  .check { width:24px; height:24px; border-radius:50%; border:2px solid var(--border); flex:none; }
+  .check.done { background:var(--ok); border-color:var(--ok); display:grid; place-items:center; }
+  .body { flex:1; min-width:0; }
+  .t { font-weight:500; font-size:15px; }
+  .t.done { color:var(--muted); text-decoration:line-through; }
+  .m { color:var(--muted); font-size:12px; margin-top:3px; }
+  .pill { flex:none; font-size:12px; font-weight:600; padding:5px 10px; border-radius:999px; }
+  .pill.over { background:rgba(242,85,90,.14); color:var(--danger); border:1px solid rgba(242,85,90,.3); }
+  .pill.soon { background:rgba(242,106,33,.14); color:var(--accent); border:1px solid rgba(242,106,33,.32); }
+  .pill.up { background:var(--surface-2); color:var(--muted); border:1px solid var(--border); }
+  .tabbar { position:absolute; bottom:0; left:0; right:0; height:78px; background:rgba(13,17,25,.86);
+    backdrop-filter:blur(12px); border-top:1px solid var(--border); display:flex; padding:8px 8px 22px; }
+  .tab { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--muted); font-size:11px; font-weight:500; }
+  .tab.active { color:var(--accent); }
+  .home-ind { position:absolute; bottom:9px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:rgba(230,234,240,.28); }
+</style>
+</head>
+<body>
+  <div class="statusbar"><span>9:41</span><span class="icons">●●● ▮▮ 􀛨</span></div>
+  <header><h1>Reminders</h1></header>
+  <div class="scroll">
+    <div class="sec first">Overdue</div>
+    <div class="item">
+      <div class="check"></div>
+      <div class="body"><div class="t">Road tax renewal</div><div class="m mono">Toyota Avanza · due 18 Jun</div></div>
+      <span class="pill over">3 days late</span>
+    </div>
+
+    <div class="sec">Due soon</div>
+    <div class="item">
+      <div class="check"></div>
+      <div class="body"><div class="t">Oil + filter service</div><div class="m mono">Toyota Avanza · at 129,000 km</div></div>
+      <span class="pill soon">in 550 km</span>
+    </div>
+    <div class="item">
+      <div class="check"></div>
+      <div class="body"><div class="t">Insurance renewal</div><div class="m mono">Honda Vario 160 · due 5 Jul</div></div>
+      <span class="pill soon">in 13 days</span>
+    </div>
+
+    <div class="sec">Upcoming</div>
+    <div class="item">
+      <div class="check"></div>
+      <div class="body"><div class="t">Tire rotation</div><div class="m mono">Toyota Avanza · at 132,000 km</div></div>
+      <span class="pill up">in 3,550 km</span>
+    </div>
+
+    <div class="sec">Completed</div>
+    <div class="item">
+      <div class="check done"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0D1119" stroke-width="3"><path d="m5 13 4 4L19 7"/></svg></div>
+      <div class="body"><div class="t done">Brake pad check</div><div class="m mono">Honda Vario 160 · done 2 Jun</div></div>
+    </div>
+  </div>
+  <nav class="tabbar">
+    <div class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l1.5-4.5A2 2 0 0 1 8.4 7h7.2a2 2 0 0 1 1.9 1.5L19 13"/><path d="M4 13h16v4H4z"/></svg>Garage</div>
+    <div class="tab active"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>Reminders</div>
+    <div class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/></svg>Docs</div>
+    <div class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.6-2-3.4-2.3 1a7 7 0 0 0-1.7-1l-.3-2.5h-4l-.3 2.5a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.6a7 7 0 0 0 0 2l-2 1.6 2 3.4 2.3-1a7 7 0 0 0 1.7 1l.3 2.5h4l.3-2.5a7 7 0 0 0 1.7-1l2.3 1 2-3.4-2-1.6a7 7 0 0 0 .1-1z"/></svg>Settings</div>
+  </nav>
+  <div class="home-ind"></div>
+</body>
+</html>
