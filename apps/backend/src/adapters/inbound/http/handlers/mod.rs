@@ -5,4 +5,5 @@ pub mod fuel_logs;
 pub mod health;
 pub mod reminders;
 pub mod service_records;
+pub mod summary;
 pub mod vehicles;

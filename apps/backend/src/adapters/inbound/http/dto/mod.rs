@@ -4,4 +4,5 @@ pub mod expense;
 pub mod fuel_log;
 pub mod reminder;
 pub mod service_record;
+pub mod summary;
 pub mod vehicle;
