@@ -19,7 +19,9 @@ pub async fn get_summary(
     Extension(user_id): Extension<Uuid>,
     Path(vehicle_id): Path<Uuid>,
 ) -> Result<Json<VehicleSummaryResponse>, AppError> {
-    let uc = GetSummaryUseCase { pool: state.pool.clone() };
+    let uc = GetSummaryUseCase {
+        repo: state.summary_repo.clone(),
+    };
     let s = uc.execute(vehicle_id, user_id).await?;
     Ok(Json(VehicleSummaryResponse {
         vehicle_id: s.vehicle_id.to_string(),

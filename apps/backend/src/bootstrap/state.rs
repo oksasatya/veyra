@@ -4,16 +4,15 @@ use sqlx::PgPool;
 
 use crate::{
     adapters::outbound::postgres::{
-        document_repo::PgDocumentRepo, expense_repo::PgExpenseRepo,
-        fuel_log_repo::PgFuelLogRepo, jwt_auth::JwtAuth, reminder_repo::PgReminderRepo,
-        service_record_repo::PgServiceRecordRepo, user_repo::PgUserRepo,
-        vehicle_repo::PgVehicleRepo,
+        document_repo::PgDocumentRepo, expense_repo::PgExpenseRepo, fuel_log_repo::PgFuelLogRepo,
+        jwt_auth::JwtAuth, reminder_repo::PgReminderRepo, service_record_repo::PgServiceRecordRepo,
+        summary_repo::PgSummaryRepo, user_repo::PgUserRepo, vehicle_repo::PgVehicleRepo,
     },
     ports::{
         auth::AuthPort,
         repositories::{
             DocumentRepository, ExpenseRepository, FuelLogRepository, ReminderRepository,
-            ServiceRecordRepository, UserRepository, VehicleRepository,
+            ServiceRecordRepository, SummaryRepository, UserRepository, VehicleRepository,
         },
     },
 };
@@ -28,6 +27,7 @@ pub struct AppState {
     pub expense_repo: Arc<dyn ExpenseRepository>,
     pub reminder_repo: Arc<dyn ReminderRepository>,
     pub document_repo: Arc<dyn DocumentRepository>,
+    pub summary_repo: Arc<dyn SummaryRepository>,
     pub auth: Arc<dyn AuthPort>,
 }
 
@@ -40,6 +40,7 @@ impl AppState {
         let expense_repo = Arc::new(PgExpenseRepo::new(pool.clone()));
         let reminder_repo = Arc::new(PgReminderRepo::new(pool.clone()));
         let document_repo = Arc::new(PgDocumentRepo::new(pool.clone()));
+        let summary_repo = Arc::new(PgSummaryRepo::new(pool.clone()));
         let auth = Arc::new(JwtAuth::new(jwt_secret));
         Self {
             pool,
@@ -50,6 +51,7 @@ impl AppState {
             expense_repo,
             reminder_repo,
             document_repo,
+            summary_repo,
             auth,
         }
     }

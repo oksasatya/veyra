@@ -5,7 +5,7 @@ use uuid::Uuid;
 use crate::{
     domain::reminder::entity::{Reminder, ReminderType},
     ports::repositories::{
-        CreateReminderParams, RepositoryError, RepositoryResult, ReminderRepository,
+        CreateReminderParams, ReminderRepository, RepositoryError, RepositoryResult,
         UpdateReminderParams,
     },
 };
@@ -81,6 +81,30 @@ impl ReminderRepository for PgReminderRepo {
         Ok(rows.into_iter().map(row_to_reminder).collect())
     }
 
+    async fn find_by_id(
+        &self,
+        id: Uuid,
+        vehicle_id: Uuid,
+        user_id: Uuid,
+    ) -> RepositoryResult<Reminder> {
+        let query = format!(
+            "SELECT {SELECT_COLS_PREFIXED} \
+             FROM reminders r \
+             JOIN vehicles v ON v.id = r.vehicle_id \
+             WHERE r.id = $1 AND r.vehicle_id = $2 AND v.user_id = $3"
+        );
+        let row = sqlx::query_as::<_, ReminderRow>(&query)
+            .bind(id)
+            .bind(vehicle_id)
+            .bind(user_id)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(map_pg_err)?
+            .ok_or(RepositoryError::NotFound)?;
+
+        Ok(row_to_reminder(row))
+    }
+
     async fn insert(&self, p: CreateReminderParams) -> RepositoryResult<Reminder> {
         let query = format!(
             r#"INSERT INTO reminders
@@ -148,16 +172,18 @@ mod tests {
     use super::*;
     use chrono::NaiveDate;
     use testcontainers_modules::postgres::Postgres;
-    use testcontainers_modules::testcontainers::runners::AsyncRunner;
-    use testcontainers_modules::testcontainers::RunnableImage;
+    use testcontainers_modules::testcontainers::{runners::AsyncRunner, ImageExt};
 
     async fn setup_pool() -> (
         PgPool,
         testcontainers_modules::testcontainers::ContainerAsync<Postgres>,
     ) {
-        let image = RunnableImage::from(Postgres::default()).with_tag("16-alpine");
-        let container = image.start().await;
-        let port = container.get_host_port_ipv4(5432).await;
+        let container = Postgres::default()
+            .with_tag("16-alpine")
+            .start()
+            .await
+            .unwrap();
+        let port = container.get_host_port_ipv4(5432).await.unwrap();
         let url = format!("postgres://postgres:postgres@127.0.0.1:{port}/postgres");
         let pool = PgPool::connect(&url).await.unwrap();
         sqlx::migrate!("./migrations").run(&pool).await.unwrap();

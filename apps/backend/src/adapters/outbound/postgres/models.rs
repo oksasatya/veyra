@@ -91,3 +91,16 @@ pub struct DocumentRow {
     pub notes: Option<String>,
     pub created_at: DateTime<Utc>,
 }
+
+/// Raw row returned by the vehicle-summary CTE query.
+#[derive(Debug, sqlx::FromRow)]
+pub struct SummaryRow {
+    pub id: Uuid,
+    pub current_odometer: i32,
+    pub total_services: i64,
+    pub total_service_cost: Decimal,
+    pub total_refuels: i64,
+    pub total_fuel_cost: Decimal,
+    pub total_expenses: Decimal,
+    pub upcoming_reminders: i64,
+}

@@ -5,7 +5,6 @@ CLAUDE.md
 
 # Rust
 apps/backend/target/
-apps/backend/Cargo.lock
 **/*.rs.bk
 
 # Environment

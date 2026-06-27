@@ -2,11 +2,7 @@ mod common;
 use serde_json::json;
 
 /// Helper: create a vehicle and return its id string.
-async fn create_vehicle(
-    app: &common::TestApp,
-    token: &str,
-    plate: &str,
-) -> String {
+async fn create_vehicle(app: &common::TestApp, token: &str, plate: &str) -> String {
     let v: serde_json::Value = app
         .client
         .post("/vehicles")

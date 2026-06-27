@@ -17,7 +17,12 @@ fn default_port() -> u16 {
 impl Config {
     pub fn load() -> Result<Self> {
         dotenvy::dotenv().ok();
-        let config = Figment::new().merge(Env::raw()).extract()?;
+        let config: Self = Figment::new().merge(Env::raw()).extract()?;
+        anyhow::ensure!(
+            config.jwt_secret.len() >= 32,
+            "JWT_SECRET must be at least 32 bytes (got {})",
+            config.jwt_secret.len()
+        );
         Ok(config)
     }
 }

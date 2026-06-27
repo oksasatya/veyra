@@ -116,6 +116,15 @@ mod tests {
             Ok(self.reminders.clone())
         }
 
+        async fn find_by_id(
+            &self,
+            _id: Uuid,
+            _vehicle_id: Uuid,
+            _user_id: Uuid,
+        ) -> RepositoryResult<Reminder> {
+            Err(RepositoryError::NotFound)
+        }
+
         async fn insert(&self, _p: CreateReminderParams) -> RepositoryResult<Reminder> {
             Err(RepositoryError::NotFound)
         }
@@ -149,8 +158,13 @@ mod tests {
         };
 
         let uc = ListRemindersUseCase {
-            repo: Arc::new(FakeReminderRepo { reminders: vec![reminder] }),
-            vehicle_repo: Arc::new(FakeVehicleRepo { owner_id: user_id, vehicle_id }),
+            repo: Arc::new(FakeReminderRepo {
+                reminders: vec![reminder],
+            }),
+            vehicle_repo: Arc::new(FakeVehicleRepo {
+                owner_id: user_id,
+                vehicle_id,
+            }),
         };
 
         let result = uc.execute(vehicle_id, user_id).await;
@@ -166,7 +180,10 @@ mod tests {
 
         let uc = ListRemindersUseCase {
             repo: Arc::new(FakeReminderRepo { reminders: vec![] }),
-            vehicle_repo: Arc::new(FakeVehicleRepo { owner_id, vehicle_id }),
+            vehicle_repo: Arc::new(FakeVehicleRepo {
+                owner_id,
+                vehicle_id,
+            }),
         };
 
         let result = uc.execute(vehicle_id, intruder_id).await;

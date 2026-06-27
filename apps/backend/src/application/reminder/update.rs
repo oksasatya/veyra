@@ -42,12 +42,9 @@ impl UpdateReminderUseCase {
         // Fetch the existing reminder — returns 404 if not found or wrong user
         let existing = self
             .repo
-            .list_by_vehicle(input.vehicle_id, input.user_id)
+            .find_by_id(input.id, input.vehicle_id, input.user_id)
             .await
-            .map_err(AppError::from)?
-            .into_iter()
-            .find(|r| r.id == input.id)
-            .ok_or(AppError::NotFound)?;
+            .map_err(AppError::from)?;
 
         // Apply patch: caller-supplied value wins; existing value is the fallback
         let due_date = merge_option(input.due_date, existing.due_date);
@@ -75,7 +72,11 @@ impl UpdateReminderUseCase {
 
 /// Returns `new_val` if it is `Some`; otherwise falls back to `existing`.
 fn merge_option<T>(new_val: Option<T>, existing: Option<T>) -> Option<T> {
-    if new_val.is_some() { new_val } else { existing }
+    if new_val.is_some() {
+        new_val
+    } else {
+        existing
+    }
 }
 
 /// Validates that the required due trigger fields are present after the patch.
@@ -85,12 +86,12 @@ fn validate_due_triggers(
     due_odometer: Option<u32>,
 ) -> Result<(), AppError> {
     match reminder_type {
-        ReminderType::Date | ReminderType::Both if due_date.is_none() => {
-            Err(AppError::Validation(DomainError::MissingDueDate.to_string()))
-        }
-        ReminderType::Odometer | ReminderType::Both if due_odometer.is_none() => {
-            Err(AppError::Validation(DomainError::MissingDueOdometer.to_string()))
-        }
+        ReminderType::Date | ReminderType::Both if due_date.is_none() => Err(AppError::Validation(
+            DomainError::MissingDueDate.to_string(),
+        )),
+        ReminderType::Odometer | ReminderType::Both if due_odometer.is_none() => Err(
+            AppError::Validation(DomainError::MissingDueOdometer.to_string()),
+        ),
         _ => Ok(()),
     }
 }
@@ -178,6 +179,19 @@ mod tests {
             Ok(vec![self.existing.clone()])
         }
 
+        async fn find_by_id(
+            &self,
+            id: Uuid,
+            _vehicle_id: Uuid,
+            _user_id: Uuid,
+        ) -> RepositoryResult<Reminder> {
+            if id == self.existing.id {
+                Ok(self.existing.clone())
+            } else {
+                Err(RepositoryError::NotFound)
+            }
+        }
+
         async fn insert(&self, _p: CreateReminderParams) -> RepositoryResult<Reminder> {
             Err(RepositoryError::NotFound)
         }
@@ -226,18 +240,23 @@ mod tests {
 
         let uc = UpdateReminderUseCase {
             repo: Arc::new(FakeReminderRepo { existing }),
-            vehicle_repo: Arc::new(FakeVehicleRepo { owner_id: user_id, vehicle_id }),
+            vehicle_repo: Arc::new(FakeVehicleRepo {
+                owner_id: user_id,
+                vehicle_id,
+            }),
         };
 
-        let result = uc.execute(PatchReminderInput {
-            id: reminder_id,
-            vehicle_id,
-            user_id,
-            is_completed: Some(true),
-            due_date: None,
-            due_odometer: None,
-            notes: None,
-        }).await;
+        let result = uc
+            .execute(PatchReminderInput {
+                id: reminder_id,
+                vehicle_id,
+                user_id,
+                is_completed: Some(true),
+                due_date: None,
+                due_odometer: None,
+                notes: None,
+            })
+            .await;
 
         assert!(result.is_ok());
         assert!(result.unwrap().is_completed);
@@ -256,18 +275,23 @@ mod tests {
 
         let uc = UpdateReminderUseCase {
             repo: Arc::new(FakeReminderRepo { existing }),
-            vehicle_repo: Arc::new(FakeVehicleRepo { owner_id: user_id, vehicle_id }),
+            vehicle_repo: Arc::new(FakeVehicleRepo {
+                owner_id: user_id,
+                vehicle_id,
+            }),
         };
 
-        let result = uc.execute(PatchReminderInput {
-            id: reminder_id,
-            vehicle_id,
-            user_id,
-            is_completed: None,
-            due_date: None,     // still None after merge → should fail validation
-            due_odometer: None,
-            notes: Some("Updated notes".into()),
-        }).await;
+        let result = uc
+            .execute(PatchReminderInput {
+                id: reminder_id,
+                vehicle_id,
+                user_id,
+                is_completed: None,
+                due_date: None, // still None after merge → should fail validation
+                due_odometer: None,
+                notes: Some("Updated notes".into()),
+            })
+            .await;
 
         assert!(matches!(result, Err(AppError::Validation(_))));
     }
@@ -282,18 +306,23 @@ mod tests {
 
         let uc = UpdateReminderUseCase {
             repo: Arc::new(FakeReminderRepo { existing }),
-            vehicle_repo: Arc::new(FakeVehicleRepo { owner_id, vehicle_id }),
+            vehicle_repo: Arc::new(FakeVehicleRepo {
+                owner_id,
+                vehicle_id,
+            }),
         };
 
-        let result = uc.execute(PatchReminderInput {
-            id: reminder_id,
-            vehicle_id,
-            user_id: intruder_id,
-            is_completed: Some(true),
-            due_date: None,
-            due_odometer: None,
-            notes: None,
-        }).await;
+        let result = uc
+            .execute(PatchReminderInput {
+                id: reminder_id,
+                vehicle_id,
+                user_id: intruder_id,
+                is_completed: Some(true),
+                due_date: None,
+                due_odometer: None,
+                notes: None,
+            })
+            .await;
 
         assert!(matches!(result, Err(AppError::NotFound)));
     }

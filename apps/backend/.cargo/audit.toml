@@ -1,0 +1,5 @@
+[advisories]
+# rsa RUSTSEC-2023-0071: sqlx-mysql workspace crate lands in Cargo.lock even
+# though the `mysql` feature is disabled — rsa is never compiled into the
+# binary (cargo tree -i rsa returns nothing). This advisory does not affect us.
+ignore = ["RUSTSEC-2023-0071"]

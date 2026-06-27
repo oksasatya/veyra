@@ -16,11 +16,7 @@ pub struct ListExpensesUseCase {
 impl ListExpensesUseCase {
     /// Verifies ownership of `vehicle_id` before listing its expenses.
     /// Returns `AppError::NotFound` when the vehicle is not owned by `user_id`.
-    pub async fn execute(
-        &self,
-        vehicle_id: Uuid,
-        user_id: Uuid,
-    ) -> Result<Vec<Expense>, AppError> {
+    pub async fn execute(&self, vehicle_id: Uuid, user_id: Uuid) -> Result<Vec<Expense>, AppError> {
         // Ownership guard: vehicle must belong to the caller
         self.vehicle_repo
             .find_by_id(vehicle_id, user_id)

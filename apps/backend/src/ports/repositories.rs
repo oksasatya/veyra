@@ -164,6 +164,12 @@ pub trait ReminderRepository: Send + Sync {
         vehicle_id: Uuid,
         user_id: Uuid,
     ) -> RepositoryResult<Vec<Reminder>>;
+    async fn find_by_id(
+        &self,
+        id: Uuid,
+        vehicle_id: Uuid,
+        user_id: Uuid,
+    ) -> RepositoryResult<Reminder>;
     async fn insert(&self, params: CreateReminderParams) -> RepositoryResult<Reminder>;
     async fn update(
         &self,
@@ -172,6 +178,33 @@ pub trait ReminderRepository: Send + Sync {
         user_id: Uuid,
         params: UpdateReminderParams,
     ) -> RepositoryResult<Reminder>;
+}
+
+// ── Summary ───────────────────────────────────────────────────────────────────
+
+/// Aggregated statistics for a single vehicle, computed in one SQL pass.
+#[derive(Debug)]
+pub struct VehicleSummaryData {
+    pub vehicle_id: Uuid,
+    pub current_odometer: i32,
+    pub total_services: i64,
+    pub total_service_cost: Decimal,
+    pub total_refuels: i64,
+    pub total_fuel_cost: Decimal,
+    pub total_expenses: Decimal,
+    pub upcoming_reminders: i64,
+}
+
+#[async_trait]
+pub trait SummaryRepository: Send + Sync {
+    /// Fetch aggregated vehicle statistics in a single query.
+    ///
+    /// Returns `NotFound` if the vehicle does not exist or is not owned by `user_id`.
+    async fn get_vehicle_summary(
+        &self,
+        vehicle_id: Uuid,
+        user_id: Uuid,
+    ) -> RepositoryResult<VehicleSummaryData>;
 }
 
 // ── Document ──────────────────────────────────────────────────────────────────

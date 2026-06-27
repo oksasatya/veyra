@@ -34,8 +34,9 @@ impl CreateReminderUseCase {
     /// or `AppError::Validation` for invalid type or missing trigger fields.
     pub async fn execute(&self, input: CreateReminderInput) -> Result<Reminder, AppError> {
         // Parse and validate reminder_type before hitting the database
-        let reminder_type = ReminderType::parse(&input.reminder_type)
-            .ok_or_else(|| AppError::Validation(format!("unknown reminder_type: {}", input.reminder_type)))?;
+        let reminder_type = ReminderType::parse(&input.reminder_type).ok_or_else(|| {
+            AppError::Validation(format!("unknown reminder_type: {}", input.reminder_type))
+        })?;
 
         // Validate due trigger fields based on type
         validate_due_triggers(&reminder_type, input.due_date, input.due_odometer)?;
@@ -71,12 +72,12 @@ fn validate_due_triggers(
     due_odometer: Option<u32>,
 ) -> Result<(), AppError> {
     match reminder_type {
-        ReminderType::Date | ReminderType::Both if due_date.is_none() => {
-            Err(AppError::Validation(DomainError::MissingDueDate.to_string()))
-        }
-        ReminderType::Odometer | ReminderType::Both if due_odometer.is_none() => {
-            Err(AppError::Validation(DomainError::MissingDueOdometer.to_string()))
-        }
+        ReminderType::Date | ReminderType::Both if due_date.is_none() => Err(AppError::Validation(
+            DomainError::MissingDueDate.to_string(),
+        )),
+        ReminderType::Odometer | ReminderType::Both if due_odometer.is_none() => Err(
+            AppError::Validation(DomainError::MissingDueOdometer.to_string()),
+        ),
         _ => Ok(()),
     }
 }
@@ -151,6 +152,15 @@ mod tests {
             Ok(vec![])
         }
 
+        async fn find_by_id(
+            &self,
+            _id: Uuid,
+            _vehicle_id: Uuid,
+            _user_id: Uuid,
+        ) -> RepositoryResult<Reminder> {
+            Err(RepositoryError::NotFound)
+        }
+
         async fn insert(&self, p: CreateReminderParams) -> RepositoryResult<Reminder> {
             Ok(Reminder {
                 id: Uuid::new_v4(),
@@ -206,7 +216,10 @@ mod tests {
     fn make_uc(owner_id: Uuid, vehicle_id: Uuid) -> CreateReminderUseCase {
         CreateReminderUseCase {
             repo: Arc::new(FakeReminderRepo),
-            vehicle_repo: Arc::new(FakeVehicleRepo { owner_id, vehicle_id }),
+            vehicle_repo: Arc::new(FakeVehicleRepo {
+                owner_id,
+                vehicle_id,
+            }),
         }
     }
 
@@ -218,15 +231,17 @@ mod tests {
         let uid = Uuid::new_v4();
         let uc = make_uc(uid, vid);
 
-        let result = uc.execute(CreateReminderInput {
-            vehicle_id: vid,
-            user_id: uid,
-            title: "Oil change".into(),
-            reminder_type: "date".into(),
-            due_date: None,        // missing — should fail
-            due_odometer: None,
-            notes: None,
-        }).await;
+        let result = uc
+            .execute(CreateReminderInput {
+                vehicle_id: vid,
+                user_id: uid,
+                title: "Oil change".into(),
+                reminder_type: "date".into(),
+                due_date: None, // missing — should fail
+                due_odometer: None,
+                notes: None,
+            })
+            .await;
 
         assert!(matches!(result, Err(AppError::Validation(_))));
     }
@@ -237,15 +252,17 @@ mod tests {
         let uid = Uuid::new_v4();
         let uc = make_uc(uid, vid);
 
-        let result = uc.execute(CreateReminderInput {
-            vehicle_id: vid,
-            user_id: uid,
-            title: "Oil change".into(),
-            reminder_type: "odometer".into(),
-            due_date: None,
-            due_odometer: None,    // missing — should fail
-            notes: None,
-        }).await;
+        let result = uc
+            .execute(CreateReminderInput {
+                vehicle_id: vid,
+                user_id: uid,
+                title: "Oil change".into(),
+                reminder_type: "odometer".into(),
+                due_date: None,
+                due_odometer: None, // missing — should fail
+                notes: None,
+            })
+            .await;
 
         assert!(matches!(result, Err(AppError::Validation(_))));
     }
@@ -256,15 +273,17 @@ mod tests {
         let uid = Uuid::new_v4();
         let uc = make_uc(uid, vid);
 
-        let result = uc.execute(CreateReminderInput {
-            vehicle_id: vid,
-            user_id: uid,
-            title: "Full service".into(),
-            reminder_type: "both".into(),
-            due_date: None,         // missing — should fail
-            due_odometer: Some(50_000),
-            notes: None,
-        }).await;
+        let result = uc
+            .execute(CreateReminderInput {
+                vehicle_id: vid,
+                user_id: uid,
+                title: "Full service".into(),
+                reminder_type: "both".into(),
+                due_date: None, // missing — should fail
+                due_odometer: Some(50_000),
+                notes: None,
+            })
+            .await;
 
         assert!(matches!(result, Err(AppError::Validation(_))));
     }
@@ -275,15 +294,17 @@ mod tests {
         let uid = Uuid::new_v4();
         let uc = make_uc(uid, vid);
 
-        let result = uc.execute(CreateReminderInput {
-            vehicle_id: vid,
-            user_id: uid,
-            title: "Full service".into(),
-            reminder_type: "both".into(),
-            due_date: Some("2026-12-01".parse().unwrap()),
-            due_odometer: None,     // missing — should fail
-            notes: None,
-        }).await;
+        let result = uc
+            .execute(CreateReminderInput {
+                vehicle_id: vid,
+                user_id: uid,
+                title: "Full service".into(),
+                reminder_type: "both".into(),
+                due_date: Some("2026-12-01".parse().unwrap()),
+                due_odometer: None, // missing — should fail
+                notes: None,
+            })
+            .await;
 
         assert!(matches!(result, Err(AppError::Validation(_))));
     }
@@ -294,15 +315,17 @@ mod tests {
         let uid = Uuid::new_v4();
         let uc = make_uc(uid, vid);
 
-        let result = uc.execute(CreateReminderInput {
-            vehicle_id: vid,
-            user_id: uid,
-            title: "Oil change".into(),
-            reminder_type: "date".into(),
-            due_date: Some("2026-12-01".parse().unwrap()),
-            due_odometer: None,
-            notes: None,
-        }).await;
+        let result = uc
+            .execute(CreateReminderInput {
+                vehicle_id: vid,
+                user_id: uid,
+                title: "Oil change".into(),
+                reminder_type: "date".into(),
+                due_date: Some("2026-12-01".parse().unwrap()),
+                due_odometer: None,
+                notes: None,
+            })
+            .await;
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap().reminder_type, ReminderType::Date);
@@ -314,15 +337,17 @@ mod tests {
         let uid = Uuid::new_v4();
         let uc = make_uc(uid, vid);
 
-        let result = uc.execute(CreateReminderInput {
-            vehicle_id: vid,
-            user_id: uid,
-            title: "Full service".into(),
-            reminder_type: "both".into(),
-            due_date: Some("2026-12-01".parse().unwrap()),
-            due_odometer: Some(50_000),
-            notes: None,
-        }).await;
+        let result = uc
+            .execute(CreateReminderInput {
+                vehicle_id: vid,
+                user_id: uid,
+                title: "Full service".into(),
+                reminder_type: "both".into(),
+                due_date: Some("2026-12-01".parse().unwrap()),
+                due_odometer: Some(50_000),
+                notes: None,
+            })
+            .await;
 
         assert!(result.is_ok());
     }
@@ -333,15 +358,17 @@ mod tests {
         let uid = Uuid::new_v4();
         let uc = make_uc(uid, vid);
 
-        let result = uc.execute(CreateReminderInput {
-            vehicle_id: vid,
-            user_id: uid,
-            title: "Test".into(),
-            reminder_type: "invalid_type".into(),
-            due_date: None,
-            due_odometer: None,
-            notes: None,
-        }).await;
+        let result = uc
+            .execute(CreateReminderInput {
+                vehicle_id: vid,
+                user_id: uid,
+                title: "Test".into(),
+                reminder_type: "invalid_type".into(),
+                due_date: None,
+                due_odometer: None,
+                notes: None,
+            })
+            .await;
 
         assert!(matches!(result, Err(AppError::Validation(_))));
     }
@@ -353,15 +380,17 @@ mod tests {
         let intruder_id = Uuid::new_v4();
         let uc = make_uc(owner_id, vid);
 
-        let result = uc.execute(CreateReminderInput {
-            vehicle_id: vid,
-            user_id: intruder_id,
-            title: "Test".into(),
-            reminder_type: "date".into(),
-            due_date: Some("2026-12-01".parse().unwrap()),
-            due_odometer: None,
-            notes: None,
-        }).await;
+        let result = uc
+            .execute(CreateReminderInput {
+                vehicle_id: vid,
+                user_id: intruder_id,
+                title: "Test".into(),
+                reminder_type: "date".into(),
+                due_date: Some("2026-12-01".parse().unwrap()),
+                due_odometer: None,
+                notes: None,
+            })
+            .await;
 
         assert!(matches!(result, Err(AppError::NotFound)));
     }

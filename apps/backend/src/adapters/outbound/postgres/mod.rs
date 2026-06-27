@@ -5,5 +5,6 @@ pub mod jwt_auth;
 pub mod models;
 pub mod reminder_repo;
 pub mod service_record_repo;
+pub mod summary_repo;
 pub mod user_repo;
 pub mod vehicle_repo;

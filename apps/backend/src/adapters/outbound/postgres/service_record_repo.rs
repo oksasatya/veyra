@@ -112,8 +112,7 @@ mod tests {
     use chrono::NaiveDate;
     use rust_decimal::Decimal;
     use testcontainers_modules::postgres::Postgres;
-    use testcontainers_modules::testcontainers::runners::AsyncRunner;
-    use testcontainers_modules::testcontainers::RunnableImage;
+    use testcontainers_modules::testcontainers::{runners::AsyncRunner, ImageExt};
 
     /// Spins up Postgres 16-alpine, runs all migrations, returns pool + container.
     /// Caller must bind `_container` to keep it alive for the pool's lifetime.
@@ -121,9 +120,12 @@ mod tests {
         PgPool,
         testcontainers_modules::testcontainers::ContainerAsync<Postgres>,
     ) {
-        let image = RunnableImage::from(Postgres::default()).with_tag("16-alpine");
-        let container = image.start().await;
-        let port = container.get_host_port_ipv4(5432).await;
+        let container = Postgres::default()
+            .with_tag("16-alpine")
+            .start()
+            .await
+            .unwrap();
+        let port = container.get_host_port_ipv4(5432).await.unwrap();
         let url = format!("postgres://postgres:postgres@127.0.0.1:{port}/postgres");
         let pool = PgPool::connect(&url).await.unwrap();
         sqlx::migrate!("./migrations").run(&pool).await.unwrap();

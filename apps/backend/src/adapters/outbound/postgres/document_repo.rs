@@ -4,7 +4,9 @@ use uuid::Uuid;
 
 use crate::{
     domain::document::entity::{DocType, Document},
-    ports::repositories::{CreateDocumentParams, DocumentRepository, RepositoryError, RepositoryResult},
+    ports::repositories::{
+        CreateDocumentParams, DocumentRepository, RepositoryError, RepositoryResult,
+    },
 };
 
 use super::models::DocumentRow;
@@ -106,8 +108,7 @@ mod tests {
     use super::*;
     use chrono::NaiveDate;
     use testcontainers_modules::postgres::Postgres;
-    use testcontainers_modules::testcontainers::runners::AsyncRunner;
-    use testcontainers_modules::testcontainers::RunnableImage;
+    use testcontainers_modules::testcontainers::{runners::AsyncRunner, ImageExt};
 
     /// Spins up Postgres 16-alpine, runs all migrations, returns pool + container.
     /// Caller must bind `_container` to keep it alive for the pool's lifetime.
@@ -115,9 +116,12 @@ mod tests {
         PgPool,
         testcontainers_modules::testcontainers::ContainerAsync<Postgres>,
     ) {
-        let image = RunnableImage::from(Postgres::default()).with_tag("16-alpine");
-        let container = image.start().await;
-        let port = container.get_host_port_ipv4(5432).await;
+        let container = Postgres::default()
+            .with_tag("16-alpine")
+            .start()
+            .await
+            .unwrap();
+        let port = container.get_host_port_ipv4(5432).await.unwrap();
         let url = format!("postgres://postgres:postgres@127.0.0.1:{port}/postgres");
         let pool = PgPool::connect(&url).await.unwrap();
         sqlx::migrate!("./migrations").run(&pool).await.unwrap();
@@ -200,10 +204,7 @@ mod tests {
         repo.insert(make_params(vehicle_id)).await.unwrap();
 
         // Querying as a different user should return nothing (JOIN filters it out)
-        let docs = repo
-            .list_by_vehicle(vehicle_id, intruder_id)
-            .await
-            .unwrap();
+        let docs = repo.list_by_vehicle(vehicle_id, intruder_id).await.unwrap();
         assert_eq!(docs.len(), 0);
     }
 
