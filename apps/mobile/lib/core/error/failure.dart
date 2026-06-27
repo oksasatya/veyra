@@ -1,6 +1,7 @@
 /// Application-facing failures. Use cases return `Either<Failure, T>`; the UI
-/// renders these, never a raw transport error.
-sealed class Failure {
+/// renders these, never a raw transport error. Implements [Exception] so it can
+/// be thrown into an `AsyncValue` error state (satisfies `only_throw_errors`).
+sealed class Failure implements Exception {
   const Failure(this.message);
   final String message;
 }

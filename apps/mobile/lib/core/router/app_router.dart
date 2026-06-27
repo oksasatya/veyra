@@ -2,9 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:veyra_mobile/features/auth/presentation/controllers/auth_controller.dart';
-import 'package:veyra_mobile/features/auth/presentation/screens/home_screen.dart';
 import 'package:veyra_mobile/features/auth/presentation/screens/login_screen.dart';
 import 'package:veyra_mobile/features/auth/presentation/screens/register_screen.dart';
+import 'package:veyra_mobile/features/vehicle/presentation/screens/add_vehicle_screen.dart';
+import 'package:veyra_mobile/features/vehicle/presentation/screens/garage_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   // Bridge Riverpod auth-state changes into a Listenable go_router can refresh on.
@@ -27,9 +28,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(path: '/', builder: (_, _) => const HomeScreen()),
+      GoRoute(path: '/', builder: (_, _) => const GarageScreen()),
       GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
       GoRoute(path: '/register', builder: (_, _) => const RegisterScreen()),
+      GoRoute(path: '/vehicles/new', builder: (_, _) => const AddVehicleScreen()),
     ],
   );
 });
