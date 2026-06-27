@@ -1,0 +1,29 @@
+# Project AI instructions — local only, not committed
+CLAUDE.md
+.claude/
+
+# Rust
+apps/backend/target/
+apps/backend/Cargo.lock
+**/*.rs.bk
+
+# Environment
+.env
+.env.local
+apps/backend/.env
+
+# Docker volumes
+postgres_data/
+postgres_dev_data/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
