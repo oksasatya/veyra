@@ -1,4 +1,5 @@
 pub mod auth;
+pub mod documents;
 pub mod expenses;
 pub mod fuel_logs;
 pub mod health;

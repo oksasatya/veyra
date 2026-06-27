@@ -1,3 +1,4 @@
+pub mod document_repo;
 pub mod expense_repo;
 pub mod fuel_log_repo;
 pub mod jwt_auth;

@@ -8,9 +8,9 @@ use crate::bootstrap::state::AppState;
 
 use super::{
     handlers::{
-        auth as auth_handlers, expenses as expense_handlers, fuel_logs as fuel_log_handlers,
-        health::health, reminders as reminder_handlers, service_records as service_record_handlers,
-        vehicles as vehicle_handlers,
+        auth as auth_handlers, documents as document_handlers, expenses as expense_handlers,
+        fuel_logs as fuel_log_handlers, health::health, reminders as reminder_handlers,
+        service_records as service_record_handlers, vehicles as vehicle_handlers,
     },
     middleware::auth::require_auth,
 };
@@ -51,6 +51,10 @@ pub fn build(state: AppState) -> Router {
         .route(
             "/vehicles/{vehicle_id}/reminders/{id}",
             patch(reminder_handlers::patch),
+        )
+        .route(
+            "/vehicles/{vehicle_id}/documents",
+            get(document_handlers::list).post(document_handlers::create),
         )
         .layer(middleware::from_fn_with_state(state.clone(), require_auth));
 
