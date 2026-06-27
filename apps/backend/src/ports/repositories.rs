@@ -4,12 +4,8 @@ use rust_decimal::Decimal;
 use uuid::Uuid;
 
 use crate::domain::{
-    document::entity::Document,
-    expense::entity::Expense,
-    fuel_log::entity::FuelLog,
-    reminder::entity::Reminder,
-    service_record::entity::ServiceRecord,
-    user::entity::User,
+    document::entity::Document, expense::entity::Expense, fuel_log::entity::FuelLog,
+    reminder::entity::Reminder, service_record::entity::ServiceRecord, user::entity::User,
     vehicle::entity::Vehicle,
 };
 
