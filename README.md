@@ -31,7 +31,7 @@ framework-free and tested in isolation. A CI script enforces that `domain/`,
 
 ```mermaid
 flowchart LR
-  FE["Frontend · Vercel<br/>veyra.dev"]:::ext
+  FE["Flutter app · iOS + Android"]:::ext
 
   subgraph RW["Backend · Railway — api.veyra.dev"]
     direction TB
@@ -56,7 +56,7 @@ flowchart LR
   PG[("PostgreSQL")]:::infra
   RD[("Redis")]:::infra
 
-  FE -->|"HttpOnly cookies + X-CSRF-Token"| H
+  FE -->|"Authorization: Bearer · X-Auth-Mode"| H
   H --> A
   A --> P
   A --> D
@@ -106,7 +106,7 @@ Dependency rule (CI-enforced): arrows point **inward** — inbound HTTP → appl
 - Maintenance reminders (by date, odometer, or both)
 - Document tracker (STNK, BPKB, insurance — expiry alerts)
 - Per-vehicle dashboard summary (cached in Redis)
-- Secure cookie-based authentication with rotating refresh tokens and CSRF protection
+- Secure auth with rotating refresh tokens: bearer tokens for the Flutter mobile client (cookie + CSRF flow also supported for browsers)
 
 ---
 
@@ -118,7 +118,7 @@ cp apps/backend/.env.example apps/backend/.env
 # Edit .env: set DATABASE_URL, REDIS_URL, JWT_SECRET (min 32 chars)
 docker compose up -d
 # Wait for the health check to pass:
-curl http://localhost:3000/health
+curl http://localhost:8080/health
 # {"status":"ok","version":"0.1.0"}
 ```
 
@@ -132,13 +132,18 @@ curl http://localhost:3000/health
 | Web | axum 0.8 + axum-extra 0.10 (cookie) |
 | Database | PostgreSQL 17 + sqlx 0.8 |
 | Cache / Session | Redis + fred 10 |
-| Auth | JWT (jsonwebtoken 9) + Argon2id + rotating refresh tokens |
+| Auth | JWT (jsonwebtoken 9) + Argon2id + rotating refresh tokens (cookie + bearer) |
 | Config | figment |
 | Testing | cargo nextest + testcontainers (Postgres + Redis) |
+| Mobile client | Flutter (Dart) — iOS + Android, in `apps/mobile/` |
 
 ---
 
 ## API Overview
+
+> The **Auth** column shows the cookie-flow requirement (shipped). The Flutter mobile client
+> authenticates with `Authorization: Bearer` + `X-Auth-Mode: bearer` and does **not** send CSRF —
+> see [Authentication](#authentication).
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
@@ -162,8 +167,15 @@ curl http://localhost:3000/health
 
 ## Authentication
 
-Veyra uses **short-lived access tokens + rotating refresh tokens**, both delivered as
-HttpOnly cookies. There is no `Authorization: Bearer` header and no token in response bodies.
+Veyra runs **short-lived access tokens + rotating refresh tokens** over one shared session core, with
+**two delivery modes**:
+
+- **Cookie + CSRF** (browsers) — tokens as HttpOnly cookies; the double-submit CSRF flow below. *Shipped.*
+- **Bearer** (native mobile) — opt-in via the `X-Auth-Mode: bearer` request header; tokens are returned
+  in the JSON body and replayed as `Authorization: Bearer <access>`. CSRF is skipped (no cookie surface).
+  Specified in [ADR-0007](docs/adr/0007-dual-mode-auth-bearer-mobile.md); in progress for the Flutter client.
+
+The token model and rotation below are identical across both modes — only delivery and extraction differ.
 
 ### Token model
 
@@ -214,14 +226,14 @@ All configuration is read from environment variables. Defaults are shown where a
 | `DATABASE_URL` | required | PostgreSQL connection string |
 | `REDIS_URL` | required | Redis connection string (`redis://…`) |
 | `JWT_SECRET` | required, min 32 bytes | HMAC-SHA256 signing key for access JWTs |
-| `PORT` | `8080` | Port the HTTP server binds to (frontend dev server uses 3000) |
+| `PORT` | `8080` | Port the HTTP server binds to |
 | `ACCESS_TTL_SECS` | `900` | Access token lifetime in seconds (15 min) |
 | `REFRESH_TTL_SECS` | `604800` | Refresh token lifetime in seconds (7 days) |
 | `REFRESH_GRACE_SECS` | `10` | Grace window for in-flight refresh retries |
 | `COOKIE_SECURE` | `true` | Set the `Secure` flag on cookies; set `false` for local plain-HTTP dev |
 | `COOKIE_SAMESITE` | `strict` | Cookie SameSite policy: `strict`, `lax`, or `none` |
 | `COOKIE_DOMAIN` | unset | Cookie `Domain` attribute; set to `veyra.dev` for the prod subdomain split |
-| `CORS_ALLOWED_ORIGINS` | required in prod | Comma-separated list of allowed origins; wildcard `"*"` is rejected |
+| `CORS_ALLOWED_ORIGINS` | optional | Comma-separated allowed origins for browser clients; wildcard `"*"` is rejected. Not used by the native mobile client (CORS does not apply). |
 
 ---
 
@@ -282,11 +294,13 @@ Steps:
 | `COOKIE_SECURE` | `true` |
 | `CORS_ALLOWED_ORIGINS` | `https://veyra.dev` |
 
-### Vercel (frontend — future)
+### Mobile client (Flutter)
 
-The React frontend will be deployed to Vercel under `veyra.dev`. The API lives at
-`api.veyra.dev` (Railway custom domain). CORS is configured to allow only `https://veyra.dev` —
-never a wildcard. All API requests carry cookies (`credentials: "include"`).
+The Veyra client is a Flutter app (iOS + Android) in `apps/mobile/`, built against the API at
+`api.veyra.dev` and distributed via TestFlight / Play Store (or a self-host build). It authenticates
+with `Authorization: Bearer` tokens (`X-Auth-Mode: bearer`), storing them in the platform secure store
+(Keychain / Keystore); native clients are not subject to CORS. Design: see
+`docs/superpowers/specs/2026-06-27-veyra-mobile-app-design.md`.
 
 ---
 
@@ -300,7 +314,7 @@ never a wildcard. All API requests carry cookies (`credentials: "include"`).
 - [x] v0.6 — Reminders
 - [x] v0.7 — Dashboard summary
 - [x] v0.8 — Redis auth (access + refresh cookies, CSRF, session revocation, read cache)
-- [ ] v0.9 — React frontend (Vercel)
+- [ ] v0.9 — Bearer-mode auth for native clients (ADR-0007) + Flutter mobile app (iOS + Android)
 - [ ] v1.0 — OpenAPI 3.1 spec + stable MVP
 
 ---
