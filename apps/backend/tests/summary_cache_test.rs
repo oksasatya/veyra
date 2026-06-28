@@ -19,7 +19,7 @@ async fn setup(app: &common::TestApp, email: &str, plate: &str) -> (common::Sess
         }))
         .await
         .json();
-    let vid = v["id"].as_str().unwrap().to_string();
+    let vid = v["data"]["id"].as_str().unwrap().to_string();
     (s, vid)
 }
 
@@ -115,32 +115,32 @@ async fn summary_cached_within_ttl() {
     let body1: serde_json::Value = resp1.json();
 
     assert_eq!(
-        body1["total_services"].as_i64().unwrap(),
+        body1["data"]["total_services"].as_i64().unwrap(),
         2,
         "first call: service count"
     );
     assert_eq!(
-        body1["total_service_cost"].as_str().unwrap(),
+        body1["data"]["total_service_cost"].as_str().unwrap(),
         "300.00",
         "first call: service cost"
     );
     assert_eq!(
-        body1["total_refuels"].as_i64().unwrap(),
+        body1["data"]["total_refuels"].as_i64().unwrap(),
         1,
         "first call: refuel count"
     );
     assert_eq!(
-        body1["total_fuel_cost"].as_str().unwrap(),
+        body1["data"]["total_fuel_cost"].as_str().unwrap(),
         "400.00",
         "first call: fuel cost"
     );
     assert_eq!(
-        body1["total_expenses"].as_str().unwrap(),
+        body1["data"]["total_expenses"].as_str().unwrap(),
         "500.00",
         "first call: expense amount"
     );
     assert_eq!(
-        body1["upcoming_reminders"].as_i64().unwrap(),
+        body1["data"]["upcoming_reminders"].as_i64().unwrap(),
         1,
         "first call: reminder count"
     );
@@ -154,8 +154,10 @@ async fn summary_cached_within_ttl() {
     resp2.assert_status_ok();
     let body2: serde_json::Value = resp2.json();
 
+    // Compare the `data` payload only — `meta.request_id` is unique per request
+    // by design, so the full envelopes will never be byte-equal.
     assert_eq!(
-        body1, body2,
+        body1["data"], body2["data"],
         "second call within TTL must return identical values (cache hit)"
     );
 }

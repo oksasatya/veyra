@@ -7,7 +7,7 @@ use argon2::{
 
 use crate::{
     application::{auth::login::issue_session, auth::AuthOutcome, errors::AppError},
-    domain::{errors::DomainError, user::value_objects::Email},
+    domain::{error_code::ErrorCode, errors::DomainError, user::value_objects::Email},
     ports::{auth::AuthPort, repositories::UserRepository, session::SessionStore},
 };
 
@@ -30,13 +30,16 @@ impl RegisterUseCase {
         let email_vo = Email::new(email).map_err(AppError::from)?;
 
         if password.len() < 8 {
-            return Err(AppError::Validation(
-                DomainError::PasswordTooShort.to_string(),
-            ));
+            return Err(DomainError::PasswordTooShort.into());
         }
 
         match self.user_repo.find_by_email(email_vo.as_str()).await {
-            Ok(_) => return Err(AppError::Conflict("email already registered".into())),
+            Ok(_) => {
+                return Err(AppError::conflict(
+                    ErrorCode::EmailAlreadyExists,
+                    "email already registered",
+                ))
+            }
             Err(crate::ports::repositories::RepositoryError::NotFound) => {}
             Err(e) => return Err(AppError::from(e)),
         }
@@ -66,7 +69,7 @@ mod tests {
 
     use crate::domain::user::{
         entity::User,
-        value_objects::{Email, PasswordHash},
+        value_objects::{Email, Language, PasswordHash},
     };
     use crate::ports::session::{NewSession, RotateOutcome, SessionError, SessionResult};
 
@@ -87,6 +90,7 @@ mod tests {
                     email: Email::new(email.to_string()).unwrap(),
                     password_hash: PasswordHash::from_hash("hash".into()),
                     name: "Existing".into(),
+                    preferred_language: Language::default(),
                     created_at: chrono::Utc::now(),
                     updated_at: chrono::Utc::now(),
                 })
@@ -114,9 +118,18 @@ mod tests {
                 email: Email::new(email.to_string()).unwrap(),
                 password_hash: PasswordHash::from_hash("hash".into()),
                 name: "New User".into(),
+                preferred_language: Language::default(),
                 created_at: chrono::Utc::now(),
                 updated_at: chrono::Utc::now(),
             })
+        }
+
+        async fn update_language(
+            &self,
+            _id: Uuid,
+            _language: &str,
+        ) -> crate::ports::repositories::RepositoryResult<User> {
+            Err(crate::ports::repositories::RepositoryError::NotFound)
         }
     }
 
@@ -204,7 +217,7 @@ mod tests {
                 "Alice".into(),
             )
             .await;
-        assert!(matches!(result, Err(AppError::Conflict(_))));
+        assert!(matches!(result, Err(AppError::Conflict { .. })));
     }
 
     #[tokio::test]
@@ -213,6 +226,6 @@ mod tests {
         let result = uc
             .execute("alice@example.com".into(), "short".into(), "Alice".into())
             .await;
-        assert!(matches!(result, Err(AppError::Validation(_))));
+        assert!(matches!(result, Err(AppError::Validation { .. })));
     }
 }

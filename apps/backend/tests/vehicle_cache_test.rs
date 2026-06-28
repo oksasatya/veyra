@@ -38,7 +38,7 @@ async fn write_invalidates_list_cache() {
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
     assert_eq!(
-        body["vehicles"].as_array().unwrap().len(),
+        body["data"].as_array().unwrap().len(),
         1,
         "expected 1 vehicle after first insert"
     );
@@ -68,7 +68,7 @@ async fn write_invalidates_list_cache() {
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
     assert_eq!(
-        body["vehicles"].as_array().unwrap().len(),
+        body["data"].as_array().unwrap().len(),
         2,
         "expected 2 vehicles after second insert — stale cache must not be served"
     );
@@ -106,7 +106,7 @@ async fn cross_user_cache_isolation() {
         .await;
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
-    assert_eq!(body["vehicles"].as_array().unwrap().len(), 1);
+    assert_eq!(body["data"].as_array().unwrap().len(), 1);
 
     // Bob lists — must see 0 (his own empty list), never Alice's.
     let resp = app
@@ -117,7 +117,7 @@ async fn cross_user_cache_isolation() {
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
     assert_eq!(
-        body["vehicles"].as_array().unwrap().len(),
+        body["data"].as_array().unwrap().len(),
         0,
         "Bob must not see Alice's cached vehicles"
     );
@@ -147,7 +147,7 @@ async fn update_invalidates_detail_cache() {
         }))
         .await;
     let body: serde_json::Value = resp.json();
-    let vehicle_id = body["id"].as_str().unwrap();
+    let vehicle_id = body["data"]["id"].as_str().unwrap();
 
     // Prime the detail cache.
     let resp = app
@@ -157,7 +157,7 @@ async fn update_invalidates_detail_cache() {
         .await;
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
-    assert_eq!(body["brand"].as_str().unwrap(), "Mitsubishi");
+    assert_eq!(body["data"]["brand"].as_str().unwrap(), "Mitsubishi");
 
     // Update the vehicle — bumps cache version.
     app.client
@@ -183,11 +183,11 @@ async fn update_invalidates_detail_cache() {
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
     assert_eq!(
-        body["model"].as_str().unwrap(),
+        body["data"]["model"].as_str().unwrap(),
         "Xpander Cross",
         "expected updated model — stale cache must not be served"
     );
-    assert_eq!(body["year"].as_u64().unwrap(), 2023);
+    assert_eq!(body["data"]["year"].as_u64().unwrap(), 2023);
 }
 
 /// After `GET /vehicles` populates the list cache, the Redis key must carry a
@@ -221,7 +221,7 @@ async fn cached_list_entry_has_ttl() {
         }))
         .await;
     let login_body: serde_json::Value = login_resp.json();
-    let user_id: Uuid = login_body["id"]
+    let user_id: Uuid = login_body["data"]["id"]
         .as_str()
         .expect("login response must have id field")
         .parse()

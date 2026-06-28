@@ -24,7 +24,7 @@ async fn create_vehicle_returns_201() {
 
     resp.assert_status(axum::http::StatusCode::CREATED);
     let body: serde_json::Value = resp.json();
-    assert_eq!(body["brand"].as_str().unwrap(), "Toyota");
+    assert_eq!(body["data"]["brand"].as_str().unwrap(), "Toyota");
 }
 
 #[tokio::test]
@@ -58,7 +58,7 @@ async fn list_vehicles_returns_only_own_vehicles() {
 
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
-    assert_eq!(body["vehicles"].as_array().unwrap().len(), 0);
+    assert_eq!(body["data"].as_array().unwrap().len(), 0);
 }
 
 #[tokio::test]
@@ -83,7 +83,7 @@ async fn get_vehicle_not_owned_returns_404() {
         }))
         .await;
     let vehicle: serde_json::Value = created.json();
-    let id = vehicle["id"].as_str().unwrap();
+    let id = vehicle["data"]["id"].as_str().unwrap();
 
     let resp = app
         .client

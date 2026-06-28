@@ -1,13 +1,13 @@
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
     Extension, Json,
 };
 use uuid::Uuid;
 
 use crate::{
-    adapters::inbound::http::dto::document::{
-        CreateDocumentRequest, DocumentListResponse, DocumentResponse,
+    adapters::inbound::http::{
+        dto::document::{CreateDocumentRequest, DocumentResponse},
+        response::ApiResponse,
     },
     application::{
         document::{
@@ -39,15 +39,15 @@ pub async fn list(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
     Path(vehicle_id): Path<Uuid>,
-) -> Result<Json<DocumentListResponse>, AppError> {
+) -> Result<ApiResponse<Vec<DocumentResponse>>, AppError> {
     let uc = ListDocumentsUseCase {
         repo: state.document_repo.clone(),
         vehicle_repo: state.vehicle_repo.clone(),
     };
     let documents = uc.execute(vehicle_id, user_id).await?;
-    Ok(Json(DocumentListResponse {
-        documents: documents.into_iter().map(to_response).collect(),
-    }))
+    Ok(ApiResponse::ok(
+        documents.into_iter().map(to_response).collect(),
+    ))
 }
 
 /// POST /vehicles/{vehicle_id}/documents — create a document for a vehicle.
@@ -59,7 +59,7 @@ pub async fn create(
     Extension(user_id): Extension<Uuid>,
     Path(vehicle_id): Path<Uuid>,
     Json(body): Json<CreateDocumentRequest>,
-) -> Result<(StatusCode, Json<DocumentResponse>), AppError> {
+) -> Result<ApiResponse<DocumentResponse>, AppError> {
     let uc = CreateDocumentUseCase {
         repo: state.document_repo.clone(),
         vehicle_repo: state.vehicle_repo.clone(),
@@ -75,5 +75,5 @@ pub async fn create(
             notes: body.notes,
         })
         .await?;
-    Ok((StatusCode::CREATED, Json(to_response(doc))))
+    Ok(ApiResponse::created(to_response(doc)))
 }

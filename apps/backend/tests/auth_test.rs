@@ -34,11 +34,11 @@ async fn register_returns_201_with_user_and_no_body_token() {
     let body: serde_json::Value = resp.json();
     // No token in the body — auth is carried entirely by cookies.
     assert!(
-        body["token"].is_null(),
+        body["data"]["token"].is_null(),
         "register must NOT return a body token"
     );
-    assert_eq!(body["email"].as_str().unwrap(), "alice@example.com");
-    assert_eq!(body["name"].as_str().unwrap(), "Alice");
+    assert_eq!(body["data"]["email"].as_str().unwrap(), "alice@example.com");
+    assert_eq!(body["data"]["name"].as_str().unwrap(), "Alice");
     // Cookies set.
     assert!(resp.maybe_cookie(ACCESS_COOKIE).is_some());
     assert!(resp.maybe_cookie(REFRESH_COOKIE).is_some());
@@ -82,7 +82,7 @@ async fn login_sets_httponly_access_cookie_and_no_body_token() {
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
     assert!(
-        body["token"].is_null(),
+        body["data"]["token"].is_null(),
         "login must NOT return a body token"
     );
 
@@ -133,7 +133,7 @@ async fn me_returns_user_when_authenticated() {
 
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
-    assert_eq!(body["email"].as_str().unwrap(), "me@example.com");
+    assert_eq!(body["data"]["email"].as_str().unwrap(), "me@example.com");
 }
 
 #[tokio::test]
@@ -358,8 +358,8 @@ async fn bearer_login_returns_tokens_and_no_cookies() {
 
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
-    assert!(body["tokens"]["access_token"].is_string());
-    assert!(body["tokens"]["refresh_token"].is_string());
+    assert!(body["data"]["tokens"]["access_token"].is_string());
+    assert!(body["data"]["tokens"]["refresh_token"].is_string());
     // Security invariant: bearer mode sets NO cookies.
     assert!(
         resp.maybe_cookie(ACCESS_COOKIE).is_none(),
@@ -378,7 +378,7 @@ async fn bearer_me_succeeds_with_authorization_header() {
 
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
-    assert_eq!(body["email"].as_str().unwrap(), "bm@e.com");
+    assert_eq!(body["data"]["email"].as_str().unwrap(), "bm@e.com");
 }
 
 #[tokio::test]
@@ -431,8 +431,8 @@ async fn bearer_refresh_rotates_and_returns_tokens() {
 
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
-    assert!(body["tokens"]["access_token"].is_string());
-    assert!(body["tokens"]["refresh_token"].is_string());
+    assert!(body["data"]["tokens"]["access_token"].is_string());
+    assert!(body["data"]["tokens"]["refresh_token"].is_string());
 }
 
 #[tokio::test]

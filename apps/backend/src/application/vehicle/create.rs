@@ -4,6 +4,7 @@ use uuid::Uuid;
 
 use crate::{
     application::errors::AppError,
+    domain::error_code::ErrorCode,
     domain::vehicle::entity::Vehicle,
     domain::vehicle::value_objects::{FuelType, PlateNumber},
     ports::repositories::{CreateVehicleParams, VehicleRepository},
@@ -29,8 +30,12 @@ impl CreateVehicleUseCase {
     pub async fn execute(&self, input: CreateVehicleInput) -> Result<Vehicle, AppError> {
         // Validate value objects — domain errors surface as Validation
         PlateNumber::new(input.plate_number.clone()).map_err(AppError::from)?;
-        FuelType::parse(&input.fuel_type)
-            .map_err(|_| AppError::Validation(format!("invalid fuel_type: {}", input.fuel_type)))?;
+        FuelType::parse(&input.fuel_type).map_err(|_| {
+            AppError::validation(
+                ErrorCode::InvalidFuelType,
+                format!("invalid fuel_type: {}", input.fuel_type),
+            )
+        })?;
 
         let params = CreateVehicleParams {
             user_id: input.user_id,
@@ -150,7 +155,7 @@ mod tests {
                 notes: None,
             })
             .await;
-        assert!(matches!(result, Err(AppError::Validation(_))));
+        assert!(matches!(result, Err(AppError::Validation { .. })));
     }
 
     #[tokio::test]
@@ -170,7 +175,7 @@ mod tests {
                 notes: None,
             })
             .await;
-        assert!(matches!(result, Err(AppError::Validation(_))));
+        assert!(matches!(result, Err(AppError::Validation { .. })));
     }
 
     #[tokio::test]
@@ -194,6 +199,6 @@ mod tests {
                 notes: None,
             })
             .await;
-        assert!(matches!(result, Err(AppError::Conflict(_))));
+        assert!(matches!(result, Err(AppError::Conflict { .. })));
     }
 }

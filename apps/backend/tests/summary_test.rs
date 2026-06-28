@@ -19,7 +19,7 @@ async fn setup(app: &common::TestApp, email: &str, plate: &str) -> (Session, Str
         }))
         .await
         .json();
-    let vid = v["id"].as_str().unwrap().to_string();
+    let vid = v["data"]["id"].as_str().unwrap().to_string();
     (s, vid)
 }
 
@@ -120,25 +120,33 @@ async fn summary_aggregates_correctly() {
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
 
-    assert_eq!(body["total_services"].as_i64().unwrap(), 2, "service count");
     assert_eq!(
-        body["total_service_cost"].as_str().unwrap(),
+        body["data"]["total_services"].as_i64().unwrap(),
+        2,
+        "service count"
+    );
+    assert_eq!(
+        body["data"]["total_service_cost"].as_str().unwrap(),
         "300.00",
         "service cost"
     );
-    assert_eq!(body["total_refuels"].as_i64().unwrap(), 1, "fuel log count");
     assert_eq!(
-        body["total_fuel_cost"].as_str().unwrap(),
+        body["data"]["total_refuels"].as_i64().unwrap(),
+        1,
+        "fuel log count"
+    );
+    assert_eq!(
+        body["data"]["total_fuel_cost"].as_str().unwrap(),
         "400.00",
         "fuel cost"
     );
     assert_eq!(
-        body["total_expenses"].as_str().unwrap(),
+        body["data"]["total_expenses"].as_str().unwrap(),
         "500.00",
         "expense amount"
     );
     assert_eq!(
-        body["upcoming_reminders"].as_i64().unwrap(),
+        body["data"]["upcoming_reminders"].as_i64().unwrap(),
         1,
         "upcoming reminders"
     );
@@ -167,7 +175,7 @@ async fn completed_reminder_not_counted() {
         }))
         .await
         .json();
-    let rid = created["id"].as_str().unwrap();
+    let rid = created["data"]["id"].as_str().unwrap();
 
     // Mark it complete
     app.client
@@ -186,7 +194,7 @@ async fn completed_reminder_not_counted() {
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
     assert_eq!(
-        body["upcoming_reminders"].as_i64().unwrap(),
+        body["data"]["upcoming_reminders"].as_i64().unwrap(),
         0,
         "completed reminder must not be counted"
     );
@@ -224,10 +232,10 @@ async fn summary_empty_vehicle_returns_zeroes() {
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
 
-    assert_eq!(body["total_services"].as_i64().unwrap(), 0);
-    assert_eq!(body["total_service_cost"].as_str().unwrap(), "0");
-    assert_eq!(body["total_refuels"].as_i64().unwrap(), 0);
-    assert_eq!(body["total_fuel_cost"].as_str().unwrap(), "0");
-    assert_eq!(body["total_expenses"].as_str().unwrap(), "0");
-    assert_eq!(body["upcoming_reminders"].as_i64().unwrap(), 0);
+    assert_eq!(body["data"]["total_services"].as_i64().unwrap(), 0);
+    assert_eq!(body["data"]["total_service_cost"].as_str().unwrap(), "0");
+    assert_eq!(body["data"]["total_refuels"].as_i64().unwrap(), 0);
+    assert_eq!(body["data"]["total_fuel_cost"].as_str().unwrap(), "0");
+    assert_eq!(body["data"]["total_expenses"].as_str().unwrap(), "0");
+    assert_eq!(body["data"]["upcoming_reminders"].as_i64().unwrap(), 0);
 }

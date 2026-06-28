@@ -18,7 +18,7 @@ async fn create_and_list_documents() {
         }))
         .await
         .json();
-    let vid = v["id"].as_str().unwrap();
+    let vid = v["data"]["id"].as_str().unwrap();
 
     let resp = app
         .client
@@ -34,11 +34,11 @@ async fn create_and_list_documents() {
         .await;
     resp.assert_status(axum::http::StatusCode::CREATED);
     let body: serde_json::Value = resp.json();
-    assert_eq!(body["doc_type"].as_str().unwrap(), "stnk");
-    assert_eq!(body["title"].as_str().unwrap(), "STNK 2026");
-    assert_eq!(body["expiry_date"].as_str().unwrap(), "2026-12-31");
+    assert_eq!(body["data"]["doc_type"].as_str().unwrap(), "stnk");
+    assert_eq!(body["data"]["title"].as_str().unwrap(), "STNK 2026");
+    assert_eq!(body["data"]["expiry_date"].as_str().unwrap(), "2026-12-31");
     assert_eq!(
-        body["file_url"].as_str().unwrap(),
+        body["data"]["file_url"].as_str().unwrap(),
         "https://storage.example.com/stnk.pdf"
     );
 
@@ -48,7 +48,7 @@ async fn create_and_list_documents() {
         .add_cookies(s.cookies.clone())
         .await
         .json();
-    assert_eq!(list["documents"].as_array().unwrap().len(), 1);
+    assert_eq!(list["data"].as_array().unwrap().len(), 1);
 }
 
 #[tokio::test]
@@ -68,7 +68,7 @@ async fn document_invalid_doc_type_returns_422() {
         }))
         .await
         .json();
-    let vid = v["id"].as_str().unwrap();
+    let vid = v["data"]["id"].as_str().unwrap();
 
     let resp = app
         .client
@@ -102,7 +102,7 @@ async fn document_for_other_users_vehicle_returns_404() {
         }))
         .await
         .json();
-    let vid = v["id"].as_str().unwrap();
+    let vid = v["data"]["id"].as_str().unwrap();
 
     let resp = app
         .client
@@ -134,7 +134,7 @@ async fn document_without_optional_fields() {
         }))
         .await
         .json();
-    let vid = v["id"].as_str().unwrap();
+    let vid = v["data"]["id"].as_str().unwrap();
 
     let resp = app
         .client
@@ -148,7 +148,7 @@ async fn document_without_optional_fields() {
         .await;
     resp.assert_status(axum::http::StatusCode::CREATED);
     let body: serde_json::Value = resp.json();
-    assert_eq!(body["doc_type"].as_str().unwrap(), "insurance");
-    assert!(body["expiry_date"].is_null());
-    assert!(body["file_url"].is_null());
+    assert_eq!(body["data"]["doc_type"].as_str().unwrap(), "insurance");
+    assert!(body["data"]["expiry_date"].is_null());
+    assert!(body["data"]["file_url"].is_null());
 }

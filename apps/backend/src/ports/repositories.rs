@@ -35,6 +35,10 @@ pub trait UserRepository: Send + Sync {
     async fn find_by_email(&self, email: &str) -> RepositoryResult<User>;
     async fn find_by_id(&self, id: Uuid) -> RepositoryResult<User>;
     async fn insert(&self, email: &str, password_hash: &str, name: &str) -> RepositoryResult<User>;
+    /// Update the user's preferred language. `language` must already be a valid
+    /// code (`"en"` / `"id"`); validation happens in the use case. Returns
+    /// [`RepositoryError::NotFound`] if no user has `id`.
+    async fn update_language(&self, id: Uuid, language: &str) -> RepositoryResult<User>;
 }
 
 // ── Vehicle ──────────────────────────────────────────────────────────────────

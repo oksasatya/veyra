@@ -27,6 +27,15 @@ pub struct MeResponse {
     pub id: String,
     pub email: String,
     pub name: String,
+    /// The user's preferred language code (`"en"` / `"id"`) for server-generated
+    /// content. The client localizes its own UI independently.
+    pub preferred_language: String,
+}
+
+/// Body for `PATCH /me` — updates the user's preferred language.
+#[derive(Debug, Deserialize)]
+pub struct UpdatePreferencesRequest {
+    pub preferred_language: String,
 }
 
 /// Access + refresh pair returned only in bearer mode. `refresh_token` is the

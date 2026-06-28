@@ -1,13 +1,13 @@
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
     Extension, Json,
 };
 use uuid::Uuid;
 
 use crate::{
-    adapters::inbound::http::dto::service_record::{
-        CreateServiceRecordRequest, ServiceRecordListResponse, ServiceRecordResponse,
+    adapters::inbound::http::{
+        dto::service_record::{CreateServiceRecordRequest, ServiceRecordResponse},
+        response::ApiResponse,
     },
     application::{
         errors::AppError,
@@ -41,15 +41,15 @@ pub async fn list(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
     Path(vehicle_id): Path<Uuid>,
-) -> Result<Json<ServiceRecordListResponse>, AppError> {
+) -> Result<ApiResponse<Vec<ServiceRecordResponse>>, AppError> {
     let uc = ListServiceRecordsUseCase {
         repo: state.service_record_repo.clone(),
         vehicle_repo: state.vehicle_repo.clone(),
     };
     let records = uc.execute(vehicle_id, user_id).await?;
-    Ok(Json(ServiceRecordListResponse {
-        records: records.into_iter().map(to_response).collect(),
-    }))
+    Ok(ApiResponse::ok(
+        records.into_iter().map(to_response).collect(),
+    ))
 }
 
 /// POST /vehicles/{vehicle_id}/services — create a service record for a vehicle.
@@ -61,7 +61,7 @@ pub async fn create(
     Extension(user_id): Extension<Uuid>,
     Path(vehicle_id): Path<Uuid>,
     Json(body): Json<CreateServiceRecordRequest>,
-) -> Result<(StatusCode, Json<ServiceRecordResponse>), AppError> {
+) -> Result<ApiResponse<ServiceRecordResponse>, AppError> {
     let uc = CreateServiceRecordUseCase {
         repo: state.service_record_repo.clone(),
         vehicle_repo: state.vehicle_repo.clone(),
@@ -78,5 +78,5 @@ pub async fn create(
             notes: body.notes,
         })
         .await?;
-    Ok((StatusCode::CREATED, Json(to_response(record))))
+    Ok(ApiResponse::created(to_response(record)))
 }

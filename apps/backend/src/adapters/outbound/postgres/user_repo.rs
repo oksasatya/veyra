@@ -5,7 +5,7 @@ use uuid::Uuid;
 use crate::{
     domain::user::{
         entity::User,
-        value_objects::{Email, PasswordHash},
+        value_objects::{Email, Language, PasswordHash},
     },
     ports::repositories::{RepositoryError, RepositoryResult, UserRepository},
 };
@@ -44,11 +44,14 @@ fn map_pg_err(e: sqlx::Error) -> RepositoryError {
 /// enforced on write.
 fn row_to_user(row: UserRow) -> Result<User, RepositoryError> {
     let email = Email::new(row.email).map_err(|e| RepositoryError::Database(e.to_string()))?;
+    // The DB CHECK constraint guarantees a valid code; default defensively if not.
+    let preferred_language = Language::parse(&row.preferred_language).unwrap_or_default();
     Ok(User {
         id: row.id,
         email,
         password_hash: PasswordHash::from_hash(row.password_hash),
         name: row.name,
+        preferred_language,
         created_at: row.created_at,
         updated_at: row.updated_at,
     })
@@ -58,7 +61,7 @@ fn row_to_user(row: UserRow) -> Result<User, RepositoryError> {
 impl UserRepository for PgUserRepo {
     async fn find_by_email(&self, email: &str) -> RepositoryResult<User> {
         let row = sqlx::query_as::<_, UserRow>(
-            "SELECT id, email, password_hash, name, created_at, updated_at \
+            "SELECT id, email, password_hash, name, preferred_language, created_at, updated_at \
              FROM users WHERE email = $1",
         )
         .bind(email)
@@ -72,7 +75,7 @@ impl UserRepository for PgUserRepo {
 
     async fn find_by_id(&self, id: Uuid) -> RepositoryResult<User> {
         let row = sqlx::query_as::<_, UserRow>(
-            "SELECT id, email, password_hash, name, created_at, updated_at \
+            "SELECT id, email, password_hash, name, preferred_language, created_at, updated_at \
              FROM users WHERE id = $1",
         )
         .bind(id)
@@ -88,7 +91,7 @@ impl UserRepository for PgUserRepo {
         let row = sqlx::query_as::<_, UserRow>(
             r#"INSERT INTO users (email, password_hash, name)
                VALUES ($1, $2, $3)
-               RETURNING id, email, password_hash, name, created_at, updated_at"#,
+               RETURNING id, email, password_hash, name, preferred_language, created_at, updated_at"#,
         )
         .bind(email)
         .bind(password_hash)
@@ -96,6 +99,23 @@ impl UserRepository for PgUserRepo {
         .fetch_one(&self.pool)
         .await
         .map_err(map_pg_err)?;
+
+        row_to_user(row)
+    }
+
+    async fn update_language(&self, id: Uuid, language: &str) -> RepositoryResult<User> {
+        let row = sqlx::query_as::<_, UserRow>(
+            r#"UPDATE users
+               SET preferred_language = $2, updated_at = NOW()
+               WHERE id = $1
+               RETURNING id, email, password_hash, name, preferred_language, created_at, updated_at"#,
+        )
+        .bind(id)
+        .bind(language)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| RepositoryError::Database(e.to_string()))?
+        .ok_or(RepositoryError::NotFound)?;
 
         row_to_user(row)
     }

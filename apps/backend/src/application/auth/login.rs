@@ -94,7 +94,7 @@ mod tests {
 
     use crate::domain::user::{
         entity::User,
-        value_objects::{Email, PasswordHash as DomainPasswordHash},
+        value_objects::{Email, Language, PasswordHash as DomainPasswordHash},
     };
     use crate::ports::session::{NewSession, RotateOutcome, SessionError, SessionResult};
 
@@ -115,6 +115,7 @@ mod tests {
                     email: Email::new(email.to_string()).unwrap(),
                     password_hash: DomainPasswordHash::from_hash(self.password_hash.clone()),
                     name: "Alice".into(),
+                    preferred_language: Language::default(),
                     created_at: chrono::Utc::now(),
                     updated_at: chrono::Utc::now(),
                 })
@@ -135,6 +136,14 @@ mod tests {
             _email: &str,
             _hash: &str,
             _name: &str,
+        ) -> crate::ports::repositories::RepositoryResult<User> {
+            Err(crate::ports::repositories::RepositoryError::NotFound)
+        }
+
+        async fn update_language(
+            &self,
+            _id: Uuid,
+            _language: &str,
         ) -> crate::ports::repositories::RepositoryResult<User> {
             Err(crate::ports::repositories::RepositoryError::NotFound)
         }

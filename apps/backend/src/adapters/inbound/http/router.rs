@@ -16,6 +16,7 @@ use super::{
         vehicles as vehicle_handlers,
     },
     middleware::{auth::require_auth, csrf::require_csrf},
+    request_id::propagate_request_id,
 };
 
 /// Build a credentialed CORS layer from the configured allowlist.
@@ -76,7 +77,7 @@ pub fn build(state: AppState) -> Router {
     let cors = cors_layer(&state.cors_allowed_origins);
 
     let protected = Router::new()
-        .route("/me", get(auth_handlers::me))
+        .route("/me", get(auth_handlers::me).patch(auth_handlers::patch_me))
         .route(
             "/vehicles",
             get(vehicle_handlers::list).post(vehicle_handlers::create),
@@ -140,5 +141,9 @@ pub fn build(state: AppState) -> Router {
     if let Some(cors) = cors {
         app = app.layer(cors);
     }
-    app
+
+    // Outermost layer: stamp a request id into a task-local + the X-Request-Id header.
+    // Being outermost means the id is set before any handler or inner middleware runs,
+    // so both success and error envelopes (incl. auth/csrf rejections) can read it.
+    app.layer(middleware::from_fn(propagate_request_id))
 }

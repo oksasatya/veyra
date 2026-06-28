@@ -86,12 +86,12 @@ fn validate_due_triggers(
     due_odometer: Option<u32>,
 ) -> Result<(), AppError> {
     match reminder_type {
-        ReminderType::Date | ReminderType::Both if due_date.is_none() => Err(AppError::Validation(
-            DomainError::MissingDueDate.to_string(),
-        )),
-        ReminderType::Odometer | ReminderType::Both if due_odometer.is_none() => Err(
-            AppError::Validation(DomainError::MissingDueOdometer.to_string()),
-        ),
+        ReminderType::Date | ReminderType::Both if due_date.is_none() => {
+            Err(DomainError::MissingDueDate.into())
+        }
+        ReminderType::Odometer | ReminderType::Both if due_odometer.is_none() => {
+            Err(DomainError::MissingDueOdometer.into())
+        }
         _ => Ok(()),
     }
 }
@@ -293,7 +293,7 @@ mod tests {
             })
             .await;
 
-        assert!(matches!(result, Err(AppError::Validation(_))));
+        assert!(matches!(result, Err(AppError::Validation { .. })));
     }
 
     #[tokio::test]

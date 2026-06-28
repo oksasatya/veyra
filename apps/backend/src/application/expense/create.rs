@@ -6,6 +6,7 @@ use uuid::Uuid;
 
 use crate::{
     application::errors::AppError,
+    domain::error_code::ErrorCode,
     domain::expense::entity::{Expense, ExpenseCategory},
     ports::repositories::{CreateExpenseParams, ExpenseRepository, VehicleRepository},
 };
@@ -31,8 +32,12 @@ impl CreateExpenseUseCase {
     /// or `AppError::Validation` for an unknown category.
     pub async fn execute(&self, input: CreateExpenseInput) -> Result<Expense, AppError> {
         // Validate category before hitting the database
-        let _ = ExpenseCategory::parse(&input.category)
-            .ok_or_else(|| AppError::Validation(format!("unknown category: {}", input.category)))?;
+        let _ = ExpenseCategory::parse(&input.category).ok_or_else(|| {
+            AppError::validation(
+                ErrorCode::InvalidCategory,
+                format!("unknown category: {}", input.category),
+            )
+        })?;
 
         // Ownership guard: vehicle must belong to the caller
         self.vehicle_repo
@@ -207,7 +212,7 @@ mod tests {
         input.category = "unknown_cat".into();
 
         let result = uc.execute(input).await;
-        assert!(matches!(result, Err(AppError::Validation(_))));
+        assert!(matches!(result, Err(AppError::Validation { .. })));
     }
 
     #[tokio::test]

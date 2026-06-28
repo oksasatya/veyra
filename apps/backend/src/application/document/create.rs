@@ -6,6 +6,7 @@ use uuid::Uuid;
 use crate::{
     application::errors::AppError,
     domain::document::entity::{DocType, Document},
+    domain::error_code::ErrorCode,
     ports::repositories::{CreateDocumentParams, DocumentRepository, VehicleRepository},
 };
 
@@ -32,8 +33,12 @@ impl CreateDocumentUseCase {
     /// `AppError::NotFound` when the vehicle is not owned by the caller.
     pub async fn execute(&self, input: CreateDocumentInput) -> Result<Document, AppError> {
         // Validate doc_type before hitting the database
-        let _ = DocType::parse(&input.doc_type)
-            .ok_or_else(|| AppError::Validation(format!("unknown doc_type: {}", input.doc_type)))?;
+        let _ = DocType::parse(&input.doc_type).ok_or_else(|| {
+            AppError::validation(
+                ErrorCode::InvalidDocType,
+                format!("unknown doc_type: {}", input.doc_type),
+            )
+        })?;
 
         // Ownership guard: vehicle must belong to the caller
         self.vehicle_repo
@@ -211,7 +216,7 @@ mod tests {
         input.doc_type = "unknown_type".into();
 
         let result = uc.execute(input).await;
-        assert!(matches!(result, Err(AppError::Validation(_))));
+        assert!(matches!(result, Err(AppError::Validation { .. })));
     }
 
     #[tokio::test]

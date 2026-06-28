@@ -6,8 +6,9 @@ use axum::{
 use uuid::Uuid;
 
 use crate::{
-    adapters::inbound::http::dto::vehicle::{
-        CreateVehicleRequest, UpdateVehicleRequest, VehicleListResponse, VehicleResponse,
+    adapters::inbound::http::{
+        dto::vehicle::{CreateVehicleRequest, UpdateVehicleRequest, VehicleResponse},
+        response::ApiResponse,
     },
     application::{
         errors::AppError,
@@ -41,14 +42,14 @@ fn vehicle_to_response(v: Vehicle) -> VehicleResponse {
 pub async fn list(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
-) -> Result<Json<VehicleListResponse>, AppError> {
+) -> Result<ApiResponse<Vec<VehicleResponse>>, AppError> {
     let uc = ListVehiclesUseCase {
         repo: state.vehicle_repo.clone(),
     };
     let vehicles = uc.execute(user_id).await?;
-    Ok(Json(VehicleListResponse {
-        vehicles: vehicles.into_iter().map(vehicle_to_response).collect(),
-    }))
+    Ok(ApiResponse::ok(
+        vehicles.into_iter().map(vehicle_to_response).collect(),
+    ))
 }
 
 /// POST /vehicles — create a new vehicle for the authenticated user.
@@ -57,7 +58,7 @@ pub async fn create(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
     Json(body): Json<CreateVehicleRequest>,
-) -> Result<(StatusCode, Json<VehicleResponse>), AppError> {
+) -> Result<ApiResponse<VehicleResponse>, AppError> {
     let uc = CreateVehicleUseCase {
         repo: state.vehicle_repo.clone(),
     };
@@ -74,7 +75,7 @@ pub async fn create(
             notes: body.notes,
         })
         .await?;
-    Ok((StatusCode::CREATED, Json(vehicle_to_response(vehicle))))
+    Ok(ApiResponse::created(vehicle_to_response(vehicle)))
 }
 
 /// GET /vehicles/:id — get a specific vehicle by ID.
@@ -83,12 +84,12 @@ pub async fn get(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
     Path(id): Path<Uuid>,
-) -> Result<Json<VehicleResponse>, AppError> {
+) -> Result<ApiResponse<VehicleResponse>, AppError> {
     let uc = GetVehicleUseCase {
         repo: state.vehicle_repo.clone(),
     };
     let vehicle = uc.execute(id, user_id).await?;
-    Ok(Json(vehicle_to_response(vehicle)))
+    Ok(ApiResponse::ok(vehicle_to_response(vehicle)))
 }
 
 /// PUT /vehicles/:id — update a vehicle owned by the authenticated user.
@@ -98,7 +99,7 @@ pub async fn update(
     Extension(user_id): Extension<Uuid>,
     Path(id): Path<Uuid>,
     Json(body): Json<UpdateVehicleRequest>,
-) -> Result<Json<VehicleResponse>, AppError> {
+) -> Result<ApiResponse<VehicleResponse>, AppError> {
     let uc = UpdateVehicleUseCase {
         repo: state.vehicle_repo.clone(),
     };
@@ -117,7 +118,7 @@ pub async fn update(
             },
         )
         .await?;
-    Ok(Json(vehicle_to_response(vehicle)))
+    Ok(ApiResponse::ok(vehicle_to_response(vehicle)))
 }
 
 /// DELETE /vehicles/:id — delete a vehicle owned by the authenticated user.

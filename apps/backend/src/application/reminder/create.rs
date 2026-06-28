@@ -6,6 +6,7 @@ use uuid::Uuid;
 use crate::{
     application::errors::AppError,
     domain::{
+        error_code::ErrorCode,
         errors::DomainError,
         reminder::entity::{Reminder, ReminderType},
     },
@@ -35,7 +36,10 @@ impl CreateReminderUseCase {
     pub async fn execute(&self, input: CreateReminderInput) -> Result<Reminder, AppError> {
         // Parse and validate reminder_type before hitting the database
         let reminder_type = ReminderType::parse(&input.reminder_type).ok_or_else(|| {
-            AppError::Validation(format!("unknown reminder_type: {}", input.reminder_type))
+            AppError::validation(
+                ErrorCode::InvalidReminderType,
+                format!("unknown reminder_type: {}", input.reminder_type),
+            )
         })?;
 
         // Validate due trigger fields based on type
@@ -72,12 +76,12 @@ fn validate_due_triggers(
     due_odometer: Option<u32>,
 ) -> Result<(), AppError> {
     match reminder_type {
-        ReminderType::Date | ReminderType::Both if due_date.is_none() => Err(AppError::Validation(
-            DomainError::MissingDueDate.to_string(),
-        )),
-        ReminderType::Odometer | ReminderType::Both if due_odometer.is_none() => Err(
-            AppError::Validation(DomainError::MissingDueOdometer.to_string()),
-        ),
+        ReminderType::Date | ReminderType::Both if due_date.is_none() => {
+            Err(DomainError::MissingDueDate.into())
+        }
+        ReminderType::Odometer | ReminderType::Both if due_odometer.is_none() => {
+            Err(DomainError::MissingDueOdometer.into())
+        }
         _ => Ok(()),
     }
 }
@@ -243,7 +247,7 @@ mod tests {
             })
             .await;
 
-        assert!(matches!(result, Err(AppError::Validation(_))));
+        assert!(matches!(result, Err(AppError::Validation { .. })));
     }
 
     #[tokio::test]
@@ -264,7 +268,7 @@ mod tests {
             })
             .await;
 
-        assert!(matches!(result, Err(AppError::Validation(_))));
+        assert!(matches!(result, Err(AppError::Validation { .. })));
     }
 
     #[tokio::test]
@@ -285,7 +289,7 @@ mod tests {
             })
             .await;
 
-        assert!(matches!(result, Err(AppError::Validation(_))));
+        assert!(matches!(result, Err(AppError::Validation { .. })));
     }
 
     #[tokio::test]
@@ -306,7 +310,7 @@ mod tests {
             })
             .await;
 
-        assert!(matches!(result, Err(AppError::Validation(_))));
+        assert!(matches!(result, Err(AppError::Validation { .. })));
     }
 
     #[tokio::test]
@@ -370,7 +374,7 @@ mod tests {
             })
             .await;
 
-        assert!(matches!(result, Err(AppError::Validation(_))));
+        assert!(matches!(result, Err(AppError::Validation { .. })));
     }
 
     #[tokio::test]

@@ -17,8 +17,9 @@ use crate::{
         },
         dto::auth::{
             AuthResponse, AuthTokens, BearerRefreshRequest, LoginRequest, MeResponse,
-            RefreshResponse, RegisterRequest, UserResponse,
+            RefreshResponse, RegisterRequest, UpdatePreferencesRequest, UserResponse,
         },
+        response::ApiResponse,
     },
     application::{
         auth::{
@@ -29,6 +30,7 @@ use crate::{
             AuthOutcome, AuthSession,
         },
         errors::AppError,
+        user::update_language::UpdateLanguageUseCase,
     },
     bootstrap::state::AppState,
     domain::user::entity::User,
@@ -97,10 +99,10 @@ pub async fn register(
     let AuthOutcome { user, session } = uc.execute(body.email, body.password, body.name).await?;
 
     if wants_bearer(&headers) {
-        return Ok((StatusCode::CREATED, Json(bearer_response(user, &session))).into_response());
+        return Ok(ApiResponse::created(bearer_response(user, &session)).into_response());
     }
     let jar = session_cookies(&state.cookie_policy, &session);
-    Ok((StatusCode::CREATED, jar, Json(user_response(user))).into_response())
+    Ok((jar, ApiResponse::created(user_response(user))).into_response())
 }
 
 /// POST /auth/login — verify credentials, open a session, deliver the auth state.
@@ -120,10 +122,10 @@ pub async fn login(
     let AuthOutcome { user, session } = uc.execute(body.email, body.password).await?;
 
     if wants_bearer(&headers) {
-        return Ok((StatusCode::OK, Json(bearer_response(user, &session))).into_response());
+        return Ok(ApiResponse::ok(bearer_response(user, &session)).into_response());
     }
     let jar = session_cookies(&state.cookie_policy, &session);
-    Ok((StatusCode::OK, jar, Json(user_response(user))).into_response())
+    Ok((jar, ApiResponse::ok(user_response(user))).into_response())
 }
 
 /// POST /auth/refresh — rotate the refresh token and re-issue the auth state.
@@ -161,7 +163,7 @@ pub async fn refresh(
     match uc.execute(family_id, &secret).await {
         Ok(output) => refresh_success(&state, bearer, output),
         Err(RefreshError::Invalid) => refresh_reject(&state, bearer),
-        Err(RefreshError::Unavailable) => StatusCode::SERVICE_UNAVAILABLE.into_response(),
+        Err(RefreshError::Unavailable) => AppError::Unavailable.into_response(),
     }
 }
 
@@ -178,7 +180,7 @@ fn refresh_success(state: &AppState, bearer: bool, output: RefreshOutput) -> Res
             access_token: session.access_token,
             refresh_token: format!("{}.{}", session.family_id, session.raw_secret),
         };
-        return (StatusCode::OK, Json(RefreshResponse { tokens })).into_response();
+        return ApiResponse::ok(RefreshResponse { tokens }).into_response();
     }
     let fresh = session_cookies(&state.cookie_policy, &session);
     (StatusCode::OK, fresh).into_response()
@@ -189,11 +191,8 @@ fn refresh_reject(state: &AppState, bearer: bool) -> Response {
     if bearer {
         return AppError::Unauthorized.into_response();
     }
-    (
-        StatusCode::UNAUTHORIZED,
-        clearing_cookies(&state.cookie_policy),
-    )
-        .into_response()
+    // Envelope the 401 (per ADR-0008) while clearing the stale cookies.
+    (clearing_cookies(&state.cookie_policy), AppError::Unauthorized).into_response()
 }
 
 /// POST /auth/logout — revoke the session family and its access `sid`.
@@ -231,7 +230,7 @@ pub async fn logout(
     // sid == family_id by invariant — revoke both the family and the access sid.
     match uc.execute(family_id, family_id).await {
         Ok(()) => logout_done(&state, bearer),
-        Err(LogoutError::Unavailable) => StatusCode::SERVICE_UNAVAILABLE.into_response(),
+        Err(LogoutError::Unavailable) => AppError::Unavailable.into_response(),
     }
 }
 
@@ -272,12 +271,22 @@ fn refresh_from_body(body: &Bytes) -> Option<(Uuid, String)> {
     parse_refresh_value(&parsed.refresh_token)
 }
 
+/// Build the `GET /me` / `PATCH /me` body from the authenticated user.
+fn me_response(user: User) -> MeResponse {
+    MeResponse {
+        id: user.id.to_string(),
+        email: user.email.as_str().to_string(),
+        name: user.name,
+        preferred_language: user.preferred_language.as_str().to_string(),
+    }
+}
+
 /// GET /me — returns the authenticated user's profile.
 /// `user_id` is injected by the auth middleware via `Extension<Uuid>`.
 pub async fn me(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
-) -> Result<Json<MeResponse>, AppError> {
+) -> Result<ApiResponse<MeResponse>, AppError> {
     let user = state
         .user_repo
         .find_by_id(user_id)
@@ -287,9 +296,19 @@ pub async fn me(
             other => AppError::from(other),
         })?;
 
-    Ok(Json(MeResponse {
-        id: user.id.to_string(),
-        email: user.email.as_str().to_string(),
-        name: user.name,
-    }))
+    Ok(ApiResponse::ok(me_response(user)))
+}
+
+/// PATCH /me — update the authenticated user's preferred language.
+/// Returns 422 (`INVALID_LANGUAGE`) for an unsupported code.
+pub async fn patch_me(
+    State(state): State<AppState>,
+    Extension(user_id): Extension<Uuid>,
+    Json(body): Json<UpdatePreferencesRequest>,
+) -> Result<ApiResponse<MeResponse>, AppError> {
+    let uc = UpdateLanguageUseCase {
+        user_repo: state.user_repo.clone(),
+    };
+    let user = uc.execute(user_id, &body.preferred_language).await?;
+    Ok(ApiResponse::ok(me_response(user)))
 }

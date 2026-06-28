@@ -20,7 +20,8 @@ pub fn unauthorized_clearing(policy: &CookiePolicy) -> Response {
         .add(clear(policy, CookieKind::Access))
         .add(clear(policy, CookieKind::Refresh))
         .add(clear(policy, CookieKind::Csrf));
-    (axum::http::StatusCode::UNAUTHORIZED, jar).into_response()
+    // Envelope the 401 (per ADR-0008) while still clearing the stale cookies.
+    (jar, AppError::Unauthorized).into_response()
 }
 
 /// Extract the token from an `Authorization: Bearer <token>` header, if present.

@@ -4,6 +4,7 @@ use uuid::Uuid;
 
 use crate::{
     application::errors::AppError,
+    domain::error_code::ErrorCode,
     domain::vehicle::entity::Vehicle,
     domain::vehicle::value_objects::FuelType,
     ports::repositories::{UpdateVehicleParams, VehicleRepository},
@@ -31,8 +32,12 @@ impl UpdateVehicleUseCase {
         input: UpdateVehicleInput,
     ) -> Result<Vehicle, AppError> {
         // Validate fuel_type before hitting the repo — mirrors CreateVehicleUseCase
-        FuelType::parse(&input.fuel_type)
-            .map_err(|_| AppError::Validation(format!("invalid fuel_type: {}", input.fuel_type)))?;
+        FuelType::parse(&input.fuel_type).map_err(|_| {
+            AppError::validation(
+                ErrorCode::InvalidFuelType,
+                format!("invalid fuel_type: {}", input.fuel_type),
+            )
+        })?;
 
         let params = UpdateVehicleParams {
             brand: input.brand,
@@ -238,6 +243,6 @@ mod tests {
             )
             .await;
 
-        assert!(matches!(result, Err(AppError::Validation(_))));
+        assert!(matches!(result, Err(AppError::Validation { .. })));
     }
 }

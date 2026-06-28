@@ -25,8 +25,3 @@ pub struct FuelLogResponse {
     pub station: Option<String>,
     pub is_full_tank: bool,
 }
-
-#[derive(Debug, Serialize)]
-pub struct FuelLogListResponse {
-    pub logs: Vec<FuelLogResponse>,
-}

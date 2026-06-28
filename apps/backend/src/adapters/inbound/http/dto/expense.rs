@@ -20,8 +20,3 @@ pub struct ExpenseResponse {
     pub amount: String,
     pub description: String,
 }
-
-#[derive(Debug, Serialize)]
-pub struct ExpenseListResponse {
-    pub expenses: Vec<ExpenseResponse>,
-}

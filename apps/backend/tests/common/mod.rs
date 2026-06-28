@@ -6,7 +6,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use testcontainers_modules::postgres::Postgres;
 use testcontainers_modules::redis::Redis;
-use testcontainers_modules::testcontainers::{runners::AsyncRunner, ImageExt};
+use testcontainers_modules::testcontainers::{runners::AsyncRunner, ContainerAsync, ImageExt};
 use veyra::adapters::inbound::http::cookies::X_CSRF_TOKEN;
 use veyra::adapters::outbound::redis::{client::build_pool, session_store::RedisSessionStore};
 use veyra::bootstrap::config::{Config, SameSiteCfg};
@@ -18,6 +18,15 @@ pub struct TestApp {
     /// commands (e.g. `TTL`, `GET`) against the same Redis instance.
     #[allow(dead_code)]
     pub redis_pool: RedisPool,
+    // Container handles held for the TestApp's lifetime: the containers stay up for
+    // the whole test and are stopped on Drop when it ends. They are NOT leaked — a
+    // previous `mem::forget` left every test's containers running, accumulating across
+    // the suite until the Docker daemon saturated. Holding them bounds the live
+    // container count to the in-flight tests.
+    #[allow(dead_code)]
+    _pg: ContainerAsync<Postgres>,
+    #[allow(dead_code)]
+    _redis: ContainerAsync<Redis>,
 }
 
 /// An authenticated session captured after register+login. Holds the user's
@@ -125,8 +134,14 @@ pub async fn register_and_login_bearer(app: &TestApp, email: &str) -> (String, S
         .json(&json!({ "email": email, "password": "password123" }))
         .await;
     let body: serde_json::Value = resp.json();
-    let access = body["tokens"]["access_token"].as_str().unwrap().to_string();
-    let refresh = body["tokens"]["refresh_token"].as_str().unwrap().to_string();
+    let access = body["data"]["tokens"]["access_token"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let refresh = body["data"]["tokens"]["refresh_token"]
+        .as_str()
+        .unwrap()
+        .to_string();
     (access, refresh)
 }
 
@@ -164,11 +179,14 @@ pub async fn spawn_app_with_grace(refresh_grace_secs: u64) -> TestApp {
     let app = router::build(state);
     let client = TestServer::builder().save_cookies().build(app);
 
-    // Leak the containers — they outlive the test; the process exit cleans up.
-    std::mem::forget(pg);
-    std::mem::forget(redis);
-
-    TestApp { client, redis_pool }
+    // Hold the container handles in TestApp so they live for the whole test and are
+    // stopped on Drop when it ends — never leaked.
+    TestApp {
+        client,
+        redis_pool,
+        _pg: pg,
+        _redis: redis,
+    }
 }
 
 /// Spins up a real Redis container and returns a `RedisSessionStore` (grace = 0)

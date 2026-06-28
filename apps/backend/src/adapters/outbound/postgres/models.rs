@@ -9,6 +9,7 @@ pub struct UserRow {
     pub email: String,
     pub password_hash: String,
     pub name: String,
+    pub preferred_language: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }

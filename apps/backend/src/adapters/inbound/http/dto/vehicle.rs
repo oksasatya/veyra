@@ -35,8 +35,3 @@ pub struct VehicleResponse {
     pub current_odometer: u32,
     pub notes: Option<String>,
 }
-
-#[derive(Debug, Serialize)]
-pub struct VehicleListResponse {
-    pub vehicles: Vec<VehicleResponse>,
-}

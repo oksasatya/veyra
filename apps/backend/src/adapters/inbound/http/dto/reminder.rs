@@ -30,8 +30,3 @@ pub struct ReminderResponse {
     pub is_completed: bool,
     pub notes: Option<String>,
 }
-
-#[derive(Debug, Serialize)]
-pub struct ReminderListResponse {
-    pub reminders: Vec<ReminderResponse>,
-}

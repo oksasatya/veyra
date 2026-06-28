@@ -18,7 +18,7 @@ async fn create_and_list_expenses() {
         }))
         .await
         .json();
-    let vid = v["id"].as_str().unwrap();
+    let vid = v["data"]["id"].as_str().unwrap();
 
     let resp = app
         .client
@@ -34,8 +34,8 @@ async fn create_and_list_expenses() {
         .await;
     resp.assert_status(axum::http::StatusCode::CREATED);
     let body: serde_json::Value = resp.json();
-    assert_eq!(body["category"].as_str().unwrap(), "tire");
-    assert_eq!(body["amount"].as_str().unwrap(), "350000.00");
+    assert_eq!(body["data"]["category"].as_str().unwrap(), "tire");
+    assert_eq!(body["data"]["amount"].as_str().unwrap(), "350000.00");
 
     let list: serde_json::Value = app
         .client
@@ -43,7 +43,7 @@ async fn create_and_list_expenses() {
         .add_cookies(s.cookies.clone())
         .await
         .json();
-    assert_eq!(list["expenses"].as_array().unwrap().len(), 1);
+    assert_eq!(list["data"].as_array().unwrap().len(), 1);
 }
 
 #[tokio::test]
@@ -63,7 +63,7 @@ async fn expense_invalid_category_returns_422() {
         }))
         .await
         .json();
-    let vid = v["id"].as_str().unwrap();
+    let vid = v["data"]["id"].as_str().unwrap();
 
     let resp = app
         .client
@@ -99,7 +99,7 @@ async fn expense_for_other_users_vehicle_returns_404() {
         }))
         .await
         .json();
-    let vid = v["id"].as_str().unwrap();
+    let vid = v["data"]["id"].as_str().unwrap();
 
     let resp = app
         .client

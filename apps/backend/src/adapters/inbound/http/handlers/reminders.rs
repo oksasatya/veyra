@@ -1,13 +1,13 @@
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
     Extension, Json,
 };
 use uuid::Uuid;
 
 use crate::{
-    adapters::inbound::http::dto::reminder::{
-        CreateReminderRequest, PatchReminderRequest, ReminderListResponse, ReminderResponse,
+    adapters::inbound::http::{
+        dto::reminder::{CreateReminderRequest, PatchReminderRequest, ReminderResponse},
+        response::ApiResponse,
     },
     application::{
         errors::AppError,
@@ -40,15 +40,15 @@ pub async fn list(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
     Path(vehicle_id): Path<Uuid>,
-) -> Result<Json<ReminderListResponse>, AppError> {
+) -> Result<ApiResponse<Vec<ReminderResponse>>, AppError> {
     let uc = ListRemindersUseCase {
         repo: state.reminder_repo.clone(),
         vehicle_repo: state.vehicle_repo.clone(),
     };
     let reminders = uc.execute(vehicle_id, user_id).await?;
-    Ok(Json(ReminderListResponse {
-        reminders: reminders.into_iter().map(to_response).collect(),
-    }))
+    Ok(ApiResponse::ok(
+        reminders.into_iter().map(to_response).collect(),
+    ))
 }
 
 /// POST /vehicles/{vehicle_id}/reminders — create a reminder for a vehicle.
@@ -60,7 +60,7 @@ pub async fn create(
     Extension(user_id): Extension<Uuid>,
     Path(vehicle_id): Path<Uuid>,
     Json(body): Json<CreateReminderRequest>,
-) -> Result<(StatusCode, Json<ReminderResponse>), AppError> {
+) -> Result<ApiResponse<ReminderResponse>, AppError> {
     let uc = CreateReminderUseCase {
         repo: state.reminder_repo.clone(),
         vehicle_repo: state.vehicle_repo.clone(),
@@ -76,7 +76,7 @@ pub async fn create(
             notes: body.notes,
         })
         .await?;
-    Ok((StatusCode::CREATED, Json(to_response(reminder))))
+    Ok(ApiResponse::created(to_response(reminder)))
 }
 
 /// PATCH /vehicles/{vehicle_id}/reminders/{id} — partial update.
@@ -89,7 +89,7 @@ pub async fn patch(
     Extension(user_id): Extension<Uuid>,
     Path((vehicle_id, id)): Path<(Uuid, Uuid)>,
     Json(body): Json<PatchReminderRequest>,
-) -> Result<Json<ReminderResponse>, AppError> {
+) -> Result<ApiResponse<ReminderResponse>, AppError> {
     let uc = UpdateReminderUseCase {
         repo: state.reminder_repo.clone(),
         vehicle_repo: state.vehicle_repo.clone(),
@@ -105,5 +105,5 @@ pub async fn patch(
             notes: body.notes,
         })
         .await?;
-    Ok(Json(to_response(reminder)))
+    Ok(ApiResponse::ok(to_response(reminder)))
 }

@@ -58,6 +58,41 @@ impl From<PasswordHash> for String {
     }
 }
 
+/// The user's preferred language for server-generated content. Static UI copy is
+/// localized by the client; this drives only what the backend renders itself
+/// (notifications, emails). Defaults to English.
+///
+/// The wire/storage representation is the lowercase code from [`Language::as_str`]
+/// (`"en"` / `"id"`); the DB enforces the same set via a CHECK constraint.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Language {
+    #[default]
+    En,
+    Id,
+}
+
+impl Language {
+    /// Parse a language code (case-insensitive, trimmed).
+    ///
+    /// # Errors
+    /// Returns [`DomainError::InvalidLanguage`] for any value other than
+    /// `"en"` or `"id"`.
+    pub fn parse(raw: &str) -> Result<Self, DomainError> {
+        match raw.trim().to_lowercase().as_str() {
+            "en" => Ok(Language::En),
+            "id" => Ok(Language::Id),
+            _ => Err(DomainError::InvalidLanguage),
+        }
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Language::En => "en",
+            Language::Id => "id",
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -88,5 +123,27 @@ mod tests {
     #[test]
     fn email_no_domain_dot_rejected() {
         assert!(Email::new("a@nodot".to_string()).is_err());
+    }
+
+    #[test]
+    fn language_parses_known_codes_case_insensitively() {
+        assert_eq!(Language::parse("en").unwrap(), Language::En);
+        assert_eq!(Language::parse("ID").unwrap(), Language::Id);
+        assert_eq!(Language::parse(" id ").unwrap(), Language::Id);
+    }
+
+    #[test]
+    fn language_rejects_unknown_code() {
+        assert!(matches!(
+            Language::parse("fr"),
+            Err(DomainError::InvalidLanguage)
+        ));
+    }
+
+    #[test]
+    fn language_default_is_english() {
+        assert_eq!(Language::default(), Language::En);
+        assert_eq!(Language::En.as_str(), "en");
+        assert_eq!(Language::Id.as_str(), "id");
     }
 }

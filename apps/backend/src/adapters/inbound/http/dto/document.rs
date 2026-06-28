@@ -19,8 +19,3 @@ pub struct DocumentResponse {
     pub expiry_date: Option<NaiveDate>,
     pub file_url: Option<String>,
 }
-
-#[derive(Debug, Serialize)]
-pub struct DocumentListResponse {
-    pub documents: Vec<DocumentResponse>,
-}

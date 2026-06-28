@@ -24,8 +24,3 @@ pub struct ServiceRecordResponse {
     pub cost: Option<String>,
     pub notes: Option<String>,
 }
-
-#[derive(Debug, Serialize)]
-pub struct ServiceRecordListResponse {
-    pub records: Vec<ServiceRecordResponse>,
-}

@@ -18,7 +18,7 @@ async fn create_and_list_service_records() {
         }))
         .await;
     let v_body: serde_json::Value = v.json();
-    let vid = v_body["id"].as_str().unwrap();
+    let vid = v_body["data"]["id"].as_str().unwrap();
 
     // Create service record
     let resp = app
@@ -44,9 +44,9 @@ async fn create_and_list_service_records() {
         .await;
     list.assert_status_ok();
     let list_body: serde_json::Value = list.json();
-    assert_eq!(list_body["records"].as_array().unwrap().len(), 1);
+    assert_eq!(list_body["data"].as_array().unwrap().len(), 1);
     assert_eq!(
-        list_body["records"][0]["description"].as_str().unwrap(),
+        list_body["data"][0]["description"].as_str().unwrap(),
         "Oil change"
     );
 }
@@ -71,7 +71,7 @@ async fn service_record_for_other_users_vehicle_returns_404() {
         }))
         .await;
     let v_body: serde_json::Value = v.json();
-    let vid = v_body["id"].as_str().unwrap();
+    let vid = v_body["data"]["id"].as_str().unwrap();
 
     // Intruder tries to create a service record on owner's vehicle
     let resp = app

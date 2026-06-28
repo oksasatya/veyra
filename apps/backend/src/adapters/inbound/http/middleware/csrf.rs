@@ -1,6 +1,6 @@
 use axum::{
     extract::{Request, State},
-    http::{header::AUTHORIZATION, Method, StatusCode},
+    http::{header::AUTHORIZATION, Method},
     middleware::Next,
     response::{IntoResponse, Response},
 };
@@ -11,6 +11,7 @@ use crate::{
         auth_mode::wants_bearer,
         cookies::{csrf_name, X_CSRF_TOKEN},
     },
+    application::errors::AppError,
     bootstrap::state::AppState,
 };
 
@@ -52,6 +53,6 @@ pub async fn require_csrf(State(state): State<AppState>, req: Request, next: Nex
 
     match (header_token, cookie_token) {
         (Some(h), Some(c)) if !h.is_empty() && h == c => next.run(req).await,
-        _ => StatusCode::FORBIDDEN.into_response(),
+        _ => AppError::Forbidden.into_response(),
     }
 }

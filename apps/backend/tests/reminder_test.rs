@@ -16,7 +16,7 @@ async fn create_vehicle(app: &common::TestApp, session: &Session, plate: &str) -
         }))
         .await
         .json();
-    v["id"].as_str().unwrap().to_string()
+    v["data"]["id"].as_str().unwrap().to_string()
 }
 
 #[tokio::test]
@@ -39,9 +39,9 @@ async fn create_and_list_reminders() {
         .await;
     resp.assert_status(axum::http::StatusCode::CREATED);
     let body: serde_json::Value = resp.json();
-    assert_eq!(body["title"].as_str().unwrap(), "Oil change");
-    assert_eq!(body["reminder_type"].as_str().unwrap(), "date");
-    assert!(!body["is_completed"].as_bool().unwrap());
+    assert_eq!(body["data"]["title"].as_str().unwrap(), "Oil change");
+    assert_eq!(body["data"]["reminder_type"].as_str().unwrap(), "date");
+    assert!(!body["data"]["is_completed"].as_bool().unwrap());
 
     let list: serde_json::Value = app
         .client
@@ -49,11 +49,8 @@ async fn create_and_list_reminders() {
         .add_cookies(s.cookies.clone())
         .await
         .json();
-    assert_eq!(list["reminders"].as_array().unwrap().len(), 1);
-    assert_eq!(
-        list["reminders"][0]["title"].as_str().unwrap(),
-        "Oil change"
-    );
+    assert_eq!(list["data"].as_array().unwrap().len(), 1);
+    assert_eq!(list["data"][0]["title"].as_str().unwrap(), "Oil change");
 }
 
 #[tokio::test]
@@ -76,7 +73,7 @@ async fn mark_reminder_complete() {
         }))
         .await
         .json();
-    let rid = created["id"].as_str().unwrap();
+    let rid = created["data"]["id"].as_str().unwrap();
 
     // PATCH to mark complete
     let resp = app
@@ -88,7 +85,7 @@ async fn mark_reminder_complete() {
         .await;
     resp.assert_status(axum::http::StatusCode::OK);
     let updated: serde_json::Value = resp.json();
-    assert!(updated["is_completed"].as_bool().unwrap());
+    assert!(updated["data"]["is_completed"].as_bool().unwrap());
 
     // List confirms it's complete
     let list: serde_json::Value = app
@@ -97,7 +94,7 @@ async fn mark_reminder_complete() {
         .add_cookies(s.cookies.clone())
         .await
         .json();
-    assert!(list["reminders"][0]["is_completed"].as_bool().unwrap());
+    assert!(list["data"][0]["is_completed"].as_bool().unwrap());
 }
 
 #[tokio::test]
@@ -207,7 +204,7 @@ async fn patch_both_type_reminder_preserves_existing_due_date() {
         }))
         .await
         .json();
-    let rid = created["id"].as_str().unwrap();
+    let rid = created["data"]["id"].as_str().unwrap();
 
     // PATCH only is_completed — due triggers preserved via merge
     let resp = app
@@ -219,7 +216,7 @@ async fn patch_both_type_reminder_preserves_existing_due_date() {
         .await;
     resp.assert_status(axum::http::StatusCode::OK);
     let updated: serde_json::Value = resp.json();
-    assert!(updated["is_completed"].as_bool().unwrap());
-    assert_eq!(updated["due_date"].as_str().unwrap(), "2027-01-01");
-    assert_eq!(updated["due_odometer"].as_u64().unwrap(), 60000);
+    assert!(updated["data"]["is_completed"].as_bool().unwrap());
+    assert_eq!(updated["data"]["due_date"].as_str().unwrap(), "2027-01-01");
+    assert_eq!(updated["data"]["due_odometer"].as_u64().unwrap(), 60000);
 }

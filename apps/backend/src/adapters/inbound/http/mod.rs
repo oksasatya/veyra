@@ -4,4 +4,6 @@ pub mod dto;
 pub mod errors;
 pub mod handlers;
 pub mod middleware;
+pub mod request_id;
+pub mod response;
 pub mod router;

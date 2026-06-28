@@ -18,7 +18,7 @@ async fn create_and_list_fuel_logs() {
         }))
         .await
         .json();
-    let vid = v["id"].as_str().unwrap();
+    let vid = v["data"]["id"].as_str().unwrap();
 
     let resp = app
         .client
@@ -36,7 +36,7 @@ async fn create_and_list_fuel_logs() {
         .await;
     resp.assert_status(axum::http::StatusCode::CREATED);
     let body: serde_json::Value = resp.json();
-    assert_eq!(body["total_cost"].as_str().unwrap(), "400000.00");
+    assert_eq!(body["data"]["total_cost"].as_str().unwrap(), "400000.00");
 
     let list: serde_json::Value = app
         .client
@@ -44,7 +44,7 @@ async fn create_and_list_fuel_logs() {
         .add_cookies(s.cookies.clone())
         .await
         .json();
-    assert_eq!(list["logs"].as_array().unwrap().len(), 1);
+    assert_eq!(list["data"].as_array().unwrap().len(), 1);
 }
 
 #[tokio::test]
@@ -66,7 +66,7 @@ async fn fuel_log_for_other_users_vehicle_returns_404() {
         }))
         .await
         .json();
-    let vid = v["id"].as_str().unwrap();
+    let vid = v["data"]["id"].as_str().unwrap();
 
     let resp = app
         .client

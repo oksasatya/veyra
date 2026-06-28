@@ -1,13 +1,13 @@
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
     Extension, Json,
 };
 use uuid::Uuid;
 
 use crate::{
-    adapters::inbound::http::dto::expense::{
-        CreateExpenseRequest, ExpenseListResponse, ExpenseResponse,
+    adapters::inbound::http::{
+        dto::expense::{CreateExpenseRequest, ExpenseResponse},
+        response::ApiResponse,
     },
     application::{
         errors::AppError,
@@ -39,15 +39,15 @@ pub async fn list(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
     Path(vehicle_id): Path<Uuid>,
-) -> Result<Json<ExpenseListResponse>, AppError> {
+) -> Result<ApiResponse<Vec<ExpenseResponse>>, AppError> {
     let uc = ListExpensesUseCase {
         repo: state.expense_repo.clone(),
         vehicle_repo: state.vehicle_repo.clone(),
     };
     let expenses = uc.execute(vehicle_id, user_id).await?;
-    Ok(Json(ExpenseListResponse {
-        expenses: expenses.into_iter().map(to_response).collect(),
-    }))
+    Ok(ApiResponse::ok(
+        expenses.into_iter().map(to_response).collect(),
+    ))
 }
 
 /// POST /vehicles/{vehicle_id}/expenses — create an expense for a vehicle.
@@ -59,7 +59,7 @@ pub async fn create(
     Extension(user_id): Extension<Uuid>,
     Path(vehicle_id): Path<Uuid>,
     Json(body): Json<CreateExpenseRequest>,
-) -> Result<(StatusCode, Json<ExpenseResponse>), AppError> {
+) -> Result<ApiResponse<ExpenseResponse>, AppError> {
     let uc = CreateExpenseUseCase {
         repo: state.expense_repo.clone(),
         vehicle_repo: state.vehicle_repo.clone(),
@@ -74,5 +74,5 @@ pub async fn create(
             amount: body.amount,
         })
         .await?;
-    Ok((StatusCode::CREATED, Json(to_response(expense))))
+    Ok(ApiResponse::created(to_response(expense)))
 }

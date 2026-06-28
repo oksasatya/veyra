@@ -1,11 +1,11 @@
 use axum::{
     extract::{Path, State},
-    Extension, Json,
+    Extension,
 };
 use uuid::Uuid;
 
 use crate::{
-    adapters::inbound::http::dto::summary::VehicleSummaryResponse,
+    adapters::inbound::http::{dto::summary::VehicleSummaryResponse, response::ApiResponse},
     application::{errors::AppError, summary::get::GetSummaryUseCase},
     bootstrap::state::AppState,
 };
@@ -18,12 +18,12 @@ pub async fn get_summary(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
     Path(vehicle_id): Path<Uuid>,
-) -> Result<Json<VehicleSummaryResponse>, AppError> {
+) -> Result<ApiResponse<VehicleSummaryResponse>, AppError> {
     let uc = GetSummaryUseCase {
         repo: state.summary_repo.clone(),
     };
     let s = uc.execute(vehicle_id, user_id).await?;
-    Ok(Json(VehicleSummaryResponse {
+    Ok(ApiResponse::ok(VehicleSummaryResponse {
         vehicle_id: s.vehicle_id.to_string(),
         current_odometer: s.current_odometer,
         total_services: s.total_services,

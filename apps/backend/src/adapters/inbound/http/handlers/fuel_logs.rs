@@ -1,13 +1,13 @@
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
     Extension, Json,
 };
 use uuid::Uuid;
 
 use crate::{
-    adapters::inbound::http::dto::fuel_log::{
-        CreateFuelLogRequest, FuelLogListResponse, FuelLogResponse,
+    adapters::inbound::http::{
+        dto::fuel_log::{CreateFuelLogRequest, FuelLogResponse},
+        response::ApiResponse,
     },
     application::{
         errors::AppError,
@@ -42,15 +42,13 @@ pub async fn list(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
     Path(vehicle_id): Path<Uuid>,
-) -> Result<Json<FuelLogListResponse>, AppError> {
+) -> Result<ApiResponse<Vec<FuelLogResponse>>, AppError> {
     let uc = ListFuelLogsUseCase {
         repo: state.fuel_log_repo.clone(),
         vehicle_repo: state.vehicle_repo.clone(),
     };
     let logs = uc.execute(vehicle_id, user_id).await?;
-    Ok(Json(FuelLogListResponse {
-        logs: logs.into_iter().map(to_response).collect(),
-    }))
+    Ok(ApiResponse::ok(logs.into_iter().map(to_response).collect()))
 }
 
 /// POST /vehicles/{vehicle_id}/fuel-logs — create a fuel log for a vehicle.
@@ -62,7 +60,7 @@ pub async fn create(
     Extension(user_id): Extension<Uuid>,
     Path(vehicle_id): Path<Uuid>,
     Json(body): Json<CreateFuelLogRequest>,
-) -> Result<(StatusCode, Json<FuelLogResponse>), AppError> {
+) -> Result<ApiResponse<FuelLogResponse>, AppError> {
     let uc = CreateFuelLogUseCase {
         repo: state.fuel_log_repo.clone(),
         vehicle_repo: state.vehicle_repo.clone(),
@@ -79,5 +77,5 @@ pub async fn create(
             is_full_tank: body.is_full_tank.unwrap_or(true),
         })
         .await?;
-    Ok((StatusCode::CREATED, Json(to_response(log))))
+    Ok(ApiResponse::created(to_response(log)))
 }
