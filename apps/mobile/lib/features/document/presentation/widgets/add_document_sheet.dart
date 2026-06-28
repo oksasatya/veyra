@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:veyra_mobile/core/error/failure_l10n.dart';
 import 'package:veyra_mobile/core/theme/app_theme.dart';
 import 'package:veyra_mobile/features/document/data/repositories/document_repository_impl.dart';
 import 'package:veyra_mobile/features/document/domain/repositories/document_repository.dart';
 import 'package:veyra_mobile/features/document/domain/value_objects/doc_type.dart';
+import 'package:veyra_mobile/l10n/app_localizations.dart';
 
 /// Bottom-sheet form to add a document to a vehicle. Pops on success.
 class AddDocumentSheet extends ConsumerStatefulWidget {
@@ -43,8 +45,9 @@ class _AddDocumentSheetState extends ConsumerState<AddDocumentSheet> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context);
     if (_title.text.trim().isEmpty) {
-      setState(() => _error = 'Enter a document title.');
+      setState(() => _error = l10n.documentErrorEnterTitle);
       return;
     }
     setState(() {
@@ -64,9 +67,10 @@ class _AddDocumentSheetState extends ConsumerState<AddDocumentSheet> {
       ),
     );
     if (!mounted) return;
+    final l10nAfter = AppLocalizations.of(context);
     result.fold(
       (failure) => setState(() {
-        _error = failure.message;
+        _error = localizedFailure(l10nAfter, failure);
         _saving = false;
       }),
       (_) {
@@ -78,6 +82,7 @@ class _AddDocumentSheetState extends ConsumerState<AddDocumentSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final inset = MediaQuery.of(context).viewInsets.bottom;
     return Padding(
       padding: EdgeInsets.only(bottom: inset),
@@ -96,20 +101,32 @@ class _AddDocumentSheetState extends ConsumerState<AddDocumentSheet> {
               children: [
                 const _Grabber(),
                 const SizedBox(height: 14),
-                Text('Add document', style: soraDisplay(size: 20)),
+                Text(l10n.documentAddTitle, style: soraDisplay(size: 20)),
                 const SizedBox(height: 18),
-                const _Label('Type'),
+                _Label(l10n.documentFieldType),
                 _DocTypeSelector(
                   value: _docType,
                   onChanged: (t) => setState(() => _docType = t),
                 ),
                 const SizedBox(height: 16),
-                _field('Title', _title, hint: 'STNK'),
-                const _Label('Expiry date (optional)'),
+                _field(
+                  l10n.documentFieldTitle,
+                  _title,
+                  hint: l10n.documentFieldTitleHint,
+                ),
+                _Label(l10n.documentFieldExpiry),
                 _DateField(value: _expiry, onTap: _pickExpiry),
                 const SizedBox(height: 16),
-                _field('File URL (optional)', _fileUrl, hint: 'https://…'),
-                _field('Notes (optional)', _notes, hint: 'Anything to note'),
+                _field(
+                  l10n.documentFieldFileUrl,
+                  _fileUrl,
+                  hint: l10n.documentFieldFileUrlHint,
+                ),
+                _field(
+                  l10n.documentFieldNotes,
+                  _notes,
+                  hint: l10n.documentFieldNotesHint,
+                ),
                 if (_error != null) ...[
                   const SizedBox(height: 6),
                   Text(
@@ -132,7 +149,7 @@ class _AddDocumentSheetState extends ConsumerState<AddDocumentSheet> {
                             color: VeyraColors.bg,
                           ),
                         )
-                      : const Text('Save document'),
+                      : Text(l10n.documentSave),
                 ),
               ],
             ),
@@ -199,25 +216,28 @@ class _DocTypeSelector extends StatelessWidget {
   final ValueChanged<DocType> onChanged;
 
   @override
-  Widget build(BuildContext context) => Wrap(
-    spacing: 8,
-    runSpacing: 8,
-    children: [
-      for (final t in DocType.values)
-        ChoiceChip(
-          label: Text(t.label),
-          selected: t == value,
-          onSelected: (_) => onChanged(t),
-          backgroundColor: VeyraColors.surface,
-          selectedColor: VeyraColors.accent,
-          labelStyle: TextStyle(
-            color: t == value ? VeyraColors.bg : VeyraColors.text,
-            fontWeight: FontWeight.w500,
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final t in DocType.values)
+          ChoiceChip(
+            label: Text(_localizedDocType(l10n, t)),
+            selected: t == value,
+            onSelected: (_) => onChanged(t),
+            backgroundColor: VeyraColors.surface,
+            selectedColor: VeyraColors.accent,
+            labelStyle: TextStyle(
+              color: t == value ? VeyraColors.bg : VeyraColors.text,
+              fontWeight: FontWeight.w500,
+            ),
+            side: const BorderSide(color: VeyraColors.border),
           ),
-          side: const BorderSide(color: VeyraColors.border),
-        ),
-    ],
-  );
+      ],
+    );
+  }
 }
 
 class _DateField extends StatelessWidget {
@@ -226,34 +246,44 @@ class _DateField extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => InkWell(
-    onTap: onTap,
-    borderRadius: BorderRadius.circular(14),
-    child: InputDecorator(
-      decoration: const InputDecoration(),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              value == null ? 'No expiry' : _formatDate(value!),
-              style: TextStyle(
-                color: value == null
-                    ? const Color(0xFF5A6472)
-                    : VeyraColors.text,
-                fontSize: 16,
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: InputDecorator(
+        decoration: const InputDecoration(),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                value == null ? l10n.documentNoExpiry : _formatDate(value!),
+                style: TextStyle(
+                  color: value == null
+                      ? const Color(0xFF5A6472)
+                      : VeyraColors.text,
+                  fontSize: 16,
+                ),
               ),
             ),
-          ),
-          const Icon(
-            Icons.calendar_today_outlined,
-            color: VeyraColors.textMuted,
-            size: 18,
-          ),
-        ],
+            const Icon(
+              Icons.calendar_today_outlined,
+              color: VeyraColors.textMuted,
+              size: 18,
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
+
+String _localizedDocType(AppLocalizations l10n, DocType type) => switch (type) {
+  DocType.stnk => l10n.docTypeStnk,
+  DocType.bpkb => l10n.docTypeBpkb,
+  DocType.insurance => l10n.docTypeInsurance,
+  DocType.other => l10n.docTypeOther,
+};
 
 const _months = [
   'Jan',

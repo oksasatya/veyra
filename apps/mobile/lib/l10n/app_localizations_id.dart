@@ -421,4 +421,129 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get reminderFormSave => 'Simpan';
+
+  @override
+  String get commonTryAgain => 'Coba lagi';
+
+  @override
+  String get documentTitle => 'Dokumen';
+
+  @override
+  String get documentAllVehicles => 'Semua kendaraan';
+
+  @override
+  String documentCountAcrossVehicles(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dari semua kendaraan',
+      one: '1 dari semua kendaraan',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get documentErrorTitle => 'Dokumen gagal dimuat';
+
+  @override
+  String get documentEmptyTitle => 'Belum ada dokumen';
+
+  @override
+  String get documentEmptyBody =>
+      'Belum ada dokumen. Tambahkan STNK, BPKB, asuransi, dan lainnya dari kendaraan.';
+
+  @override
+  String get documentEmptyBodyDetail =>
+      'Tambahkan STNK, BPKB, asuransi, atau dokumen apa pun yang ingin Anda simpan bersama kendaraan ini.';
+
+  @override
+  String get documentStatusExpired => 'Kedaluwarsa';
+
+  @override
+  String get documentStatusExpiringSoon => 'Segera kedaluwarsa';
+
+  @override
+  String get documentStatusValid => 'Valid';
+
+  @override
+  String get documentStatusOnFile => 'Tersimpan';
+
+  @override
+  String documentDaysLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'sisa $count hari',
+      one: 'sisa 1 hari',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get documentNoExpiry => 'Tidak ada kedaluwarsa';
+
+  @override
+  String documentValidUntil(String date) {
+    return 'Valid hingga $date';
+  }
+
+  @override
+  String documentExpires(String date) {
+    return 'Kedaluwarsa $date';
+  }
+
+  @override
+  String documentNoExpiryMeta(String docType) {
+    return 'Tidak ada kedaluwarsa · $docType';
+  }
+
+  @override
+  String documentExpiresMeta(String date) {
+    return 'Kedaluwarsa $date';
+  }
+
+  @override
+  String get documentAddTitle => 'Tambah dokumen';
+
+  @override
+  String get documentFieldType => 'Jenis';
+
+  @override
+  String get documentFieldTitle => 'Judul';
+
+  @override
+  String get documentFieldTitleHint => 'STNK';
+
+  @override
+  String get documentFieldExpiry => 'Tanggal kedaluwarsa (opsional)';
+
+  @override
+  String get documentFieldFileUrl => 'URL file (opsional)';
+
+  @override
+  String get documentFieldFileUrlHint => 'https://…';
+
+  @override
+  String get documentFieldNotes => 'Catatan (opsional)';
+
+  @override
+  String get documentFieldNotesHint => 'Tulis catatan apa pun';
+
+  @override
+  String get documentSave => 'Simpan dokumen';
+
+  @override
+  String get documentErrorEnterTitle => 'Masukkan judul dokumen.';
+
+  @override
+  String get docTypeStnk => 'STNK';
+
+  @override
+  String get docTypeBpkb => 'BPKB';
+
+  @override
+  String get docTypeInsurance => 'Asuransi';
+
+  @override
+  String get docTypeOther => 'Lainnya';
 }

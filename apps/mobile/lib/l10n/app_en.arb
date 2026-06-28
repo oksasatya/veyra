@@ -192,5 +192,82 @@
   "reminderFormTitle": "Add Reminder",
   "reminderFormDueDate": "Due Date",
   "reminderFormDueOdometer": "Due Odometer (km)",
-  "reminderFormSave": "Save"
+  "reminderFormSave": "Save",
+
+  "commonTryAgain": "Try again",
+
+  "documentTitle": "Documents",
+  "documentAllVehicles": "All vehicles",
+  "documentCountAcrossVehicles": "{count,plural, =1{1 across all vehicles} other{{count} across all vehicles}}",
+  "@documentCountAcrossVehicles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "documentErrorTitle": "Can't load documents",
+  "documentEmptyTitle": "No documents yet",
+  "documentEmptyBody": "No documents yet. Add STNK, BPKB, insurance, and more from a vehicle.",
+  "documentEmptyBodyDetail": "Add the STNK, BPKB, insurance, or any document you want to keep with this vehicle.",
+  "documentStatusExpired": "Expired",
+  "documentStatusExpiringSoon": "Expiring soon",
+  "documentStatusValid": "Valid",
+  "documentStatusOnFile": "On file",
+  "documentDaysLeft": "{count,plural, =1{1 day left} other{{count} days left}}",
+  "@documentDaysLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "documentNoExpiry": "No expiry",
+  "documentValidUntil": "Valid until {date}",
+  "@documentValidUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "documentExpires": "Expires {date}",
+  "@documentExpires": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "documentNoExpiryMeta": "No expiry · {docType}",
+  "@documentNoExpiryMeta": {
+    "placeholders": {
+      "docType": {
+        "type": "String"
+      }
+    }
+  },
+  "documentExpiresMeta": "Expires {date}",
+  "@documentExpiresMeta": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "documentAddTitle": "Add document",
+  "documentFieldType": "Type",
+  "documentFieldTitle": "Title",
+  "documentFieldTitleHint": "STNK",
+  "documentFieldExpiry": "Expiry date (optional)",
+  "documentFieldFileUrl": "File URL (optional)",
+  "documentFieldFileUrlHint": "https://…",
+  "documentFieldNotes": "Notes (optional)",
+  "documentFieldNotesHint": "Anything to note",
+  "documentSave": "Save document",
+  "documentErrorEnterTitle": "Enter a document title.",
+  "docTypeStnk": "STNK",
+  "docTypeBpkb": "BPKB",
+  "docTypeInsurance": "Insurance",
+  "docTypeOther": "Other"
 }

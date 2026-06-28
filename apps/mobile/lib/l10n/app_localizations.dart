@@ -823,6 +823,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save'**
   String get reminderFormSave;
+
+  /// No description provided for @commonTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get commonTryAgain;
+
+  /// No description provided for @documentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents'**
+  String get documentTitle;
+
+  /// No description provided for @documentAllVehicles.
+  ///
+  /// In en, this message translates to:
+  /// **'All vehicles'**
+  String get documentAllVehicles;
+
+  /// No description provided for @documentCountAcrossVehicles.
+  ///
+  /// In en, this message translates to:
+  /// **'{count,plural, =1{1 across all vehicles} other{{count} across all vehicles}}'**
+  String documentCountAcrossVehicles(int count);
+
+  /// No description provided for @documentErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t load documents'**
+  String get documentErrorTitle;
+
+  /// No description provided for @documentEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No documents yet'**
+  String get documentEmptyTitle;
+
+  /// No description provided for @documentEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'No documents yet. Add STNK, BPKB, insurance, and more from a vehicle.'**
+  String get documentEmptyBody;
+
+  /// No description provided for @documentEmptyBodyDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the STNK, BPKB, insurance, or any document you want to keep with this vehicle.'**
+  String get documentEmptyBodyDetail;
+
+  /// No description provided for @documentStatusExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get documentStatusExpired;
+
+  /// No description provided for @documentStatusExpiringSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiring soon'**
+  String get documentStatusExpiringSoon;
+
+  /// No description provided for @documentStatusValid.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid'**
+  String get documentStatusValid;
+
+  /// No description provided for @documentStatusOnFile.
+  ///
+  /// In en, this message translates to:
+  /// **'On file'**
+  String get documentStatusOnFile;
+
+  /// No description provided for @documentDaysLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{count,plural, =1{1 day left} other{{count} days left}}'**
+  String documentDaysLeft(int count);
+
+  /// No description provided for @documentNoExpiry.
+  ///
+  /// In en, this message translates to:
+  /// **'No expiry'**
+  String get documentNoExpiry;
+
+  /// No description provided for @documentValidUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid until {date}'**
+  String documentValidUntil(String date);
+
+  /// No description provided for @documentExpires.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires {date}'**
+  String documentExpires(String date);
+
+  /// No description provided for @documentNoExpiryMeta.
+  ///
+  /// In en, this message translates to:
+  /// **'No expiry · {docType}'**
+  String documentNoExpiryMeta(String docType);
+
+  /// No description provided for @documentExpiresMeta.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires {date}'**
+  String documentExpiresMeta(String date);
+
+  /// No description provided for @documentAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add document'**
+  String get documentAddTitle;
+
+  /// No description provided for @documentFieldType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get documentFieldType;
+
+  /// No description provided for @documentFieldTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get documentFieldTitle;
+
+  /// No description provided for @documentFieldTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'STNK'**
+  String get documentFieldTitleHint;
+
+  /// No description provided for @documentFieldExpiry.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiry date (optional)'**
+  String get documentFieldExpiry;
+
+  /// No description provided for @documentFieldFileUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'File URL (optional)'**
+  String get documentFieldFileUrl;
+
+  /// No description provided for @documentFieldFileUrlHint.
+  ///
+  /// In en, this message translates to:
+  /// **'https://…'**
+  String get documentFieldFileUrlHint;
+
+  /// No description provided for @documentFieldNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes (optional)'**
+  String get documentFieldNotes;
+
+  /// No description provided for @documentFieldNotesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Anything to note'**
+  String get documentFieldNotesHint;
+
+  /// No description provided for @documentSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save document'**
+  String get documentSave;
+
+  /// No description provided for @documentErrorEnterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a document title.'**
+  String get documentErrorEnterTitle;
+
+  /// No description provided for @docTypeStnk.
+  ///
+  /// In en, this message translates to:
+  /// **'STNK'**
+  String get docTypeStnk;
+
+  /// No description provided for @docTypeBpkb.
+  ///
+  /// In en, this message translates to:
+  /// **'BPKB'**
+  String get docTypeBpkb;
+
+  /// No description provided for @docTypeInsurance.
+  ///
+  /// In en, this message translates to:
+  /// **'Insurance'**
+  String get docTypeInsurance;
+
+  /// No description provided for @docTypeOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get docTypeOther;
 }
 
 class _AppLocalizationsDelegate

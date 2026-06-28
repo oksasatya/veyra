@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:veyra_mobile/core/error/failure.dart';
+import 'package:veyra_mobile/core/error/failure_l10n.dart';
 import 'package:veyra_mobile/core/theme/app_theme.dart';
 import 'package:veyra_mobile/features/document/data/repositories/document_repository_impl.dart';
 import 'package:veyra_mobile/features/document/domain/entities/document.dart';
+import 'package:veyra_mobile/features/document/domain/value_objects/doc_type.dart';
 import 'package:veyra_mobile/features/document/domain/value_objects/expiry_status.dart';
+import 'package:veyra_mobile/l10n/app_localizations.dart';
 
 /// Documents for a vehicle: doc icon · title · expiry meta, with an
 /// expiry-status pill derived from the domain helper. Renders loading / empty /
@@ -15,11 +18,12 @@ class DocumentList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final docs = ref.watch(documentListProvider(vehicleId));
     return docs.when(
       loading: () => const _DocsSkeleton(),
       error: (e, _) => _ErrorState(
-        message: e is Failure ? e.message : 'Something went wrong.',
+        message: e is Failure ? localizedFailure(l10n, e) : l10n.documentErrorTitle,
         onRetry: () => ref.invalidate(documentListProvider(vehicleId)),
       ),
       data: (list) => list.isEmpty
@@ -65,6 +69,7 @@ class _DocCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final status = expiryStatusFor(expiry: document.expiryDate, today: today);
     return Container(
       padding: const EdgeInsets.all(15),
@@ -101,7 +106,7 @@ class _DocCard extends StatelessWidget {
                   style: soraDisplay(size: 15),
                 ),
                 const SizedBox(height: 4),
-                Text(_meta(document), style: plexMono(size: 12)),
+                Text(_meta(l10n, document), style: plexMono(size: 12)),
               ],
             ),
           ),
@@ -112,9 +117,11 @@ class _DocCard extends StatelessWidget {
     );
   }
 
-  String _meta(Document d) {
-    if (d.expiryDate == null) return 'No expiry · ${d.docType.label}';
-    return 'Expires ${_formatDate(d.expiryDate!)}';
+  String _meta(AppLocalizations l10n, Document d) {
+    if (d.expiryDate == null) {
+      return l10n.documentNoExpiryMeta(_localizedDocType(l10n, d.docType));
+    }
+    return l10n.documentExpiresMeta(_formatDate(d.expiryDate!));
   }
 }
 
@@ -124,6 +131,7 @@ class _ExpiryPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final color = _color(status);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -133,7 +141,7 @@ class _ExpiryPill extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
-        status.label,
+        _localizedStatus(l10n, status),
         style: TextStyle(
           color: color,
           fontSize: 11,
@@ -151,38 +159,48 @@ class _ExpiryPill extends StatelessWidget {
   };
 }
 
+String _localizedStatus(AppLocalizations l10n, ExpiryStatus status) =>
+    switch (status) {
+      ExpiryStatus.expired => l10n.documentStatusExpired,
+      ExpiryStatus.expiringSoon => l10n.documentStatusExpiringSoon,
+      ExpiryStatus.valid => l10n.documentStatusValid,
+      ExpiryStatus.onFile => l10n.documentStatusOnFile,
+    };
+
 class _EmptyDocs extends StatelessWidget {
   const _EmptyDocs();
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(
-            Icons.folder_open_outlined,
-            color: VeyraColors.textMuted,
-            size: 40,
-          ),
-          const SizedBox(height: 16),
-          Text('No documents yet', style: soraDisplay(size: 18)),
-          const SizedBox(height: 10),
-          const Text(
-            'Add the STNK, BPKB, insurance, or any document you want to '
-            'keep with this vehicle.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.folder_open_outlined,
               color: VeyraColors.textMuted,
-              fontSize: 14,
-              height: 1.5,
+              size: 40,
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            Text(l10n.documentEmptyTitle, style: soraDisplay(size: 18)),
+            const SizedBox(height: 10),
+            Text(
+              l10n.documentEmptyBodyDetail,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: VeyraColors.textMuted,
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _ErrorState extends StatelessWidget {
@@ -191,31 +209,37 @@ class _ErrorState extends StatelessWidget {
   final VoidCallback onRetry;
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.cloud_off, color: VeyraColors.danger, size: 40),
-          const SizedBox(height: 16),
-          Text("Can't load documents", style: soraDisplay(size: 18)),
-          const SizedBox(height: 10),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: VeyraColors.textMuted,
-              fontSize: 14,
-              height: 1.5,
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.cloud_off, color: VeyraColors.danger, size: 40),
+            const SizedBox(height: 16),
+            Text(l10n.documentErrorTitle, style: soraDisplay(size: 18)),
+            const SizedBox(height: 10),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: VeyraColors.textMuted,
+                fontSize: 14,
+                height: 1.5,
+              ),
             ),
-          ),
-          const SizedBox(height: 22),
-          FilledButton(onPressed: onRetry, child: const Text('Try again')),
-        ],
+            const SizedBox(height: 22),
+            FilledButton(
+              onPressed: onRetry,
+              child: Text(l10n.commonTryAgain),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _DocsSkeleton extends StatelessWidget {
@@ -256,3 +280,10 @@ const _months = [
 ];
 
 String _formatDate(DateTime d) => '${d.day} ${_months[d.month - 1]} ${d.year}';
+
+String _localizedDocType(AppLocalizations l10n, DocType type) => switch (type) {
+  DocType.stnk => l10n.docTypeStnk,
+  DocType.bpkb => l10n.docTypeBpkb,
+  DocType.insurance => l10n.docTypeInsurance,
+  DocType.other => l10n.docTypeOther,
+};

@@ -419,4 +419,129 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reminderFormSave => 'Save';
+
+  @override
+  String get commonTryAgain => 'Try again';
+
+  @override
+  String get documentTitle => 'Documents';
+
+  @override
+  String get documentAllVehicles => 'All vehicles';
+
+  @override
+  String documentCountAcrossVehicles(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count across all vehicles',
+      one: '1 across all vehicles',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get documentErrorTitle => 'Can\'t load documents';
+
+  @override
+  String get documentEmptyTitle => 'No documents yet';
+
+  @override
+  String get documentEmptyBody =>
+      'No documents yet. Add STNK, BPKB, insurance, and more from a vehicle.';
+
+  @override
+  String get documentEmptyBodyDetail =>
+      'Add the STNK, BPKB, insurance, or any document you want to keep with this vehicle.';
+
+  @override
+  String get documentStatusExpired => 'Expired';
+
+  @override
+  String get documentStatusExpiringSoon => 'Expiring soon';
+
+  @override
+  String get documentStatusValid => 'Valid';
+
+  @override
+  String get documentStatusOnFile => 'On file';
+
+  @override
+  String documentDaysLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days left',
+      one: '1 day left',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get documentNoExpiry => 'No expiry';
+
+  @override
+  String documentValidUntil(String date) {
+    return 'Valid until $date';
+  }
+
+  @override
+  String documentExpires(String date) {
+    return 'Expires $date';
+  }
+
+  @override
+  String documentNoExpiryMeta(String docType) {
+    return 'No expiry · $docType';
+  }
+
+  @override
+  String documentExpiresMeta(String date) {
+    return 'Expires $date';
+  }
+
+  @override
+  String get documentAddTitle => 'Add document';
+
+  @override
+  String get documentFieldType => 'Type';
+
+  @override
+  String get documentFieldTitle => 'Title';
+
+  @override
+  String get documentFieldTitleHint => 'STNK';
+
+  @override
+  String get documentFieldExpiry => 'Expiry date (optional)';
+
+  @override
+  String get documentFieldFileUrl => 'File URL (optional)';
+
+  @override
+  String get documentFieldFileUrlHint => 'https://…';
+
+  @override
+  String get documentFieldNotes => 'Notes (optional)';
+
+  @override
+  String get documentFieldNotesHint => 'Anything to note';
+
+  @override
+  String get documentSave => 'Save document';
+
+  @override
+  String get documentErrorEnterTitle => 'Enter a document title.';
+
+  @override
+  String get docTypeStnk => 'STNK';
+
+  @override
+  String get docTypeBpkb => 'BPKB';
+
+  @override
+  String get docTypeInsurance => 'Insurance';
+
+  @override
+  String get docTypeOther => 'Other';
 }

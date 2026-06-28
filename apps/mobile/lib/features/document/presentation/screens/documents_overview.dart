@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:veyra_mobile/core/error/failure.dart';
+import 'package:veyra_mobile/core/error/failure_l10n.dart';
 import 'package:veyra_mobile/core/theme/app_theme.dart';
 import 'package:veyra_mobile/core/widgets/skeleton.dart';
 import 'package:veyra_mobile/core/widgets/status_pill.dart';
 import 'package:veyra_mobile/features/document/domain/value_objects/doc_type.dart';
 import 'package:veyra_mobile/features/document/domain/value_objects/expiry_status.dart';
 import 'package:veyra_mobile/features/document/presentation/controllers/documents_overview_controller.dart';
+import 'package:veyra_mobile/l10n/app_localizations.dart';
 
 /// Cross-vehicle documents with expiry status (design `documents.html`).
 class DocumentsOverview extends ConsumerWidget {
@@ -14,6 +16,7 @@ class DocumentsOverview extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final docs = ref.watch(documentsOverviewProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -23,12 +26,14 @@ class DocumentsOverview extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Documents', style: soraDisplay(size: 30)),
+              Text(l10n.documentTitle, style: soraDisplay(size: 30)),
               const SizedBox(height: 4),
               Text(
                 docs.asData == null
-                    ? 'All vehicles'
-                    : '${docs.asData!.value.length} across all vehicles',
+                    ? l10n.documentAllVehicles
+                    : l10n.documentCountAcrossVehicles(
+                        docs.asData!.value.length,
+                      ),
                 style: const TextStyle(
                   color: VeyraColors.textMuted,
                   fontSize: 13,
@@ -41,7 +46,9 @@ class DocumentsOverview extends ConsumerWidget {
           child: docs.when(
             loading: () => const _DocsSkeleton(),
             error: (e, _) => _SectionError(
-              message: e is Failure ? e.message : 'Could not load documents.',
+              message: e is Failure
+                  ? localizedFailure(l10n, e)
+                  : l10n.documentErrorTitle,
               onRetry: () => ref.invalidate(documentsOverviewProvider),
             ),
             data: (items) => items.isEmpty
@@ -63,6 +70,7 @@ class _DocRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final doc = item.document;
     final status = expiryStatusFor(
       expiry: doc.expiryDate,
@@ -102,12 +110,12 @@ class _DocRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(_meta(item, status), style: plexMono(size: 12)),
+                Text(_meta(l10n, item, status), style: plexMono(size: 12)),
               ],
             ),
           ),
           const SizedBox(width: 10),
-          _pill(status, doc.expiryDate),
+          _pill(l10n, status, doc.expiryDate),
         ],
       ),
     );
@@ -127,26 +135,37 @@ Color _iconColor(ExpiryStatus status) => switch (status) {
       _ => VeyraColors.accent,
     };
 
-StatusPill _pill(ExpiryStatus status, DateTime? expiry) {
+StatusPill _pill(
+  AppLocalizations l10n,
+  ExpiryStatus status,
+  DateTime? expiry,
+) {
   switch (status) {
     case ExpiryStatus.expired:
-      return const StatusPill('Expired', tone: PillTone.danger);
+      return StatusPill(l10n.documentStatusExpired, tone: PillTone.danger);
     case ExpiryStatus.expiringSoon:
       final days = _daysUntil(expiry!);
-      return StatusPill('$days days left', tone: PillTone.accent);
+      return StatusPill(
+        l10n.documentDaysLeft(days),
+        tone: PillTone.accent,
+      );
     case ExpiryStatus.valid:
-      return const StatusPill('Valid', tone: PillTone.ok);
+      return StatusPill(l10n.documentStatusValid, tone: PillTone.ok);
     case ExpiryStatus.onFile:
-      return const StatusPill('On file', tone: PillTone.muted);
+      return StatusPill(l10n.documentStatusOnFile, tone: PillTone.muted);
   }
 }
 
-String _meta(DocumentWithVehicle item, ExpiryStatus status) {
+String _meta(
+  AppLocalizations l10n,
+  DocumentWithVehicle item,
+  ExpiryStatus status,
+) {
   final expiry = item.document.expiryDate;
   final tail = switch (status) {
-    ExpiryStatus.onFile => 'No expiry',
-    ExpiryStatus.valid => 'Valid until ${_longDate(expiry)}',
-    _ => 'Expires ${_longDate(expiry)}',
+    ExpiryStatus.onFile => l10n.documentNoExpiry,
+    ExpiryStatus.valid => l10n.documentValidUntil(_longDate(expiry)),
+    _ => l10n.documentExpires(_longDate(expiry)),
   };
   return '${item.vehicleName} · $tail';
 }
@@ -171,17 +190,19 @@ class _DocsEmpty extends StatelessWidget {
   const _DocsEmpty();
 
   @override
-  Widget build(BuildContext context) => const Center(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 40),
-          child: Text(
-            'No documents yet. Add STNK, BPKB, insurance, and more from a '
-            'vehicle.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: VeyraColors.textMuted, fontSize: 15),
-          ),
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Text(
+          l10n.documentEmptyBody,
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: VeyraColors.textMuted, fontSize: 15),
         ),
-      );
+      ),
+    );
+  }
 }
 
 class _SectionError extends StatelessWidget {
@@ -190,26 +211,32 @@ class _SectionError extends StatelessWidget {
   final VoidCallback onRetry;
 
   @override
-  Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: VeyraColors.textMuted,
-                  fontSize: 15,
-                ),
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: VeyraColors.textMuted,
+                fontSize: 15,
               ),
-              const SizedBox(height: 16),
-              FilledButton(onPressed: onRetry, child: const Text('Try again')),
-            ],
-          ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: onRetry,
+              child: Text(l10n.commonTryAgain),
+            ),
+          ],
         ),
-      );
+      ),
+    );
+  }
 }
 
 int _daysUntil(DateTime date) {

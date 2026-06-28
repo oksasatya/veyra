@@ -192,5 +192,82 @@
   "reminderFormTitle": "Tambah Pengingat",
   "reminderFormDueDate": "Tanggal Jatuh Tempo",
   "reminderFormDueOdometer": "Odometer Jatuh Tempo (km)",
-  "reminderFormSave": "Simpan"
+  "reminderFormSave": "Simpan",
+
+  "commonTryAgain": "Coba lagi",
+
+  "documentTitle": "Dokumen",
+  "documentAllVehicles": "Semua kendaraan",
+  "documentCountAcrossVehicles": "{count,plural, =1{1 dari semua kendaraan} other{{count} dari semua kendaraan}}",
+  "@documentCountAcrossVehicles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "documentErrorTitle": "Dokumen gagal dimuat",
+  "documentEmptyTitle": "Belum ada dokumen",
+  "documentEmptyBody": "Belum ada dokumen. Tambahkan STNK, BPKB, asuransi, dan lainnya dari kendaraan.",
+  "documentEmptyBodyDetail": "Tambahkan STNK, BPKB, asuransi, atau dokumen apa pun yang ingin Anda simpan bersama kendaraan ini.",
+  "documentStatusExpired": "Kedaluwarsa",
+  "documentStatusExpiringSoon": "Segera kedaluwarsa",
+  "documentStatusValid": "Valid",
+  "documentStatusOnFile": "Tersimpan",
+  "documentDaysLeft": "{count,plural, =1{sisa 1 hari} other{sisa {count} hari}}",
+  "@documentDaysLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "documentNoExpiry": "Tidak ada kedaluwarsa",
+  "documentValidUntil": "Valid hingga {date}",
+  "@documentValidUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "documentExpires": "Kedaluwarsa {date}",
+  "@documentExpires": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "documentNoExpiryMeta": "Tidak ada kedaluwarsa · {docType}",
+  "@documentNoExpiryMeta": {
+    "placeholders": {
+      "docType": {
+        "type": "String"
+      }
+    }
+  },
+  "documentExpiresMeta": "Kedaluwarsa {date}",
+  "@documentExpiresMeta": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "documentAddTitle": "Tambah dokumen",
+  "documentFieldType": "Jenis",
+  "documentFieldTitle": "Judul",
+  "documentFieldTitleHint": "STNK",
+  "documentFieldExpiry": "Tanggal kedaluwarsa (opsional)",
+  "documentFieldFileUrl": "URL file (opsional)",
+  "documentFieldFileUrlHint": "https://…",
+  "documentFieldNotes": "Catatan (opsional)",
+  "documentFieldNotesHint": "Tulis catatan apa pun",
+  "documentSave": "Simpan dokumen",
+  "documentErrorEnterTitle": "Masukkan judul dokumen.",
+  "docTypeStnk": "STNK",
+  "docTypeBpkb": "BPKB",
+  "docTypeInsurance": "Asuransi",
+  "docTypeOther": "Lainnya"
 }
