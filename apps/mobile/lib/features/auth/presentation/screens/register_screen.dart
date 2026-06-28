@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:veyra_mobile/core/error/failure_l10n.dart';
 import 'package:veyra_mobile/core/theme/app_theme.dart';
 import 'package:veyra_mobile/core/widgets/app_background.dart';
 import 'package:veyra_mobile/features/auth/domain/value_objects/email.dart';
 import 'package:veyra_mobile/features/auth/domain/value_objects/password.dart';
 import 'package:veyra_mobile/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:veyra_mobile/l10n/app_localizations.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -29,18 +31,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context);
     if (_name.text.trim().isEmpty) {
-      setState(() => _error = 'Enter your name.');
+      setState(() => _error = l10n.authEnterName);
       return;
     }
     final email = Email.create(_email.text).toNullable();
     final password = Password.create(_password.text).toNullable();
     if (email == null) {
-      setState(() => _error = 'Enter a valid email address.');
+      setState(() => _error = l10n.errorInvalidEmail);
       return;
     }
     if (password == null) {
-      setState(() => _error = 'Password must be at least 8 characters.');
+      setState(() => _error = l10n.errorPasswordTooShort);
       return;
     }
     setState(() => _error = null);
@@ -48,12 +51,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         .read(authControllerProvider.notifier)
         .register(email, password, _name.text.trim());
     if (failure != null && mounted) {
-      setState(() => _error = failure.message);
+      final postL10n = AppLocalizations.of(context);
+      setState(() => _error = localizedFailure(postL10n, failure));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final loading = ref.watch(authControllerProvider).isLoading;
     return Scaffold(
       appBar: AppBar(backgroundColor: Colors.transparent),
@@ -65,24 +70,27 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Create your account', style: soraDisplay(size: 26)),
+                Text(l10n.authCreateTitle, style: soraDisplay(size: 26)),
                 const SizedBox(height: 8),
-                const Text(
-                  'One account keeps every vehicle, log, and reminder in sync.',
-                  style: TextStyle(color: VeyraColors.textMuted, fontSize: 15),
+                Text(
+                  l10n.authCreateSubtitle,
+                  style: const TextStyle(
+                    color: VeyraColors.textMuted,
+                    fontSize: 15,
+                  ),
                 ),
                 const SizedBox(height: 24),
-                const _Label('Name'),
+                _Label(l10n.authNameLabel),
                 TextField(
                   controller: _name,
                   textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
-                    hintText: 'Your name',
-                    prefixIcon: Icon(Icons.person_outline, size: 20),
+                  decoration: InputDecoration(
+                    hintText: l10n.authNameHint,
+                    prefixIcon: const Icon(Icons.person_outline, size: 20),
                   ),
                 ),
                 const SizedBox(height: 14),
-                const _Label('Email'),
+                _Label(l10n.authEmailLabel),
                 TextField(
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
@@ -93,19 +101,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                const _Label('Password'),
+                _Label(l10n.authPasswordLabel),
                 TextField(
                   controller: _password,
                   obscureText: true,
-                  decoration: const InputDecoration(
-                    hintText: 'At least 8 characters',
-                    prefixIcon: Icon(Icons.lock_outline, size: 20),
+                  decoration: InputDecoration(
+                    hintText: l10n.authPasswordHint,
+                    prefixIcon: const Icon(Icons.lock_outline, size: 20),
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Use 8 or more characters.',
-                  style: TextStyle(color: VeyraColors.textMuted, fontSize: 12),
+                Text(
+                  l10n.authPasswordHelp,
+                  style: const TextStyle(
+                    color: VeyraColors.textMuted,
+                    fontSize: 12,
+                  ),
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 12),
@@ -129,15 +140,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             color: VeyraColors.bg,
                           ),
                         )
-                      : const Text('Create account'),
+                      : Text(l10n.authCreateAccount),
                 ),
                 const SizedBox(height: 16),
                 Center(
                   child: GestureDetector(
                     onTap: () => context.pop(),
-                    child: const Text(
-                      'Already have an account? Log in',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.authAlreadyHaveAccount,
+                      style: const TextStyle(
                         color: VeyraColors.textMuted,
                         fontSize: 15,
                       ),

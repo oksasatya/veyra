@@ -253,6 +253,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose a valid document type.'**
   String get errorInvalidDocType;
+
+  /// No description provided for @authWelcomeBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back'**
+  String get authWelcomeBack;
+
+  /// No description provided for @authSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to track your vehicles, fuel, and services.'**
+  String get authSubtitle;
+
+  /// No description provided for @authEmailHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get authEmailHint;
+
+  /// No description provided for @authEmailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get authEmailLabel;
+
+  /// No description provided for @authPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get authPasswordHint;
+
+  /// No description provided for @authPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get authPasswordLabel;
+
+  /// No description provided for @authShow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get authShow;
+
+  /// No description provided for @authHide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide'**
+  String get authHide;
+
+  /// No description provided for @authForgotPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot password?'**
+  String get authForgotPassword;
+
+  /// No description provided for @authLogIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Log in'**
+  String get authLogIn;
+
+  /// No description provided for @authNewToVeyra.
+  ///
+  /// In en, this message translates to:
+  /// **'New to Veyra? '**
+  String get authNewToVeyra;
+
+  /// No description provided for @authCreateAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account'**
+  String get authCreateAccount;
+
+  /// No description provided for @authCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your account'**
+  String get authCreateTitle;
+
+  /// No description provided for @authCreateSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'One account keeps every vehicle, log, and reminder in sync.'**
+  String get authCreateSubtitle;
+
+  /// No description provided for @authNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get authNameLabel;
+
+  /// No description provided for @authNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your name'**
+  String get authNameHint;
+
+  /// No description provided for @authPasswordHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Use 8 or more characters.'**
+  String get authPasswordHelp;
+
+  /// No description provided for @authAlreadyHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account? Log in'**
+  String get authAlreadyHaveAccount;
+
+  /// No description provided for @authEnterName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your name.'**
+  String get authEnterName;
 }
 
 class _AppLocalizationsDelegate

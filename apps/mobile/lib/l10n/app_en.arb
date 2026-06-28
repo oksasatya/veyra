@@ -27,5 +27,25 @@
   "errorMissingDueDate": "A due date is required for this reminder.",
   "errorMissingDueOdometer": "A due odometer is required for this reminder.",
   "errorInvalidCategory": "Choose a valid category.",
-  "errorInvalidDocType": "Choose a valid document type."
+  "errorInvalidDocType": "Choose a valid document type.",
+
+  "authWelcomeBack": "Welcome back",
+  "authSubtitle": "Sign in to track your vehicles, fuel, and services.",
+  "authEmailHint": "Email",
+  "authEmailLabel": "Email",
+  "authPasswordHint": "Password",
+  "authPasswordLabel": "Password",
+  "authShow": "Show",
+  "authHide": "Hide",
+  "authForgotPassword": "Forgot password?",
+  "authLogIn": "Log in",
+  "authNewToVeyra": "New to Veyra? ",
+  "authCreateAccount": "Create account",
+  "authCreateTitle": "Create your account",
+  "authCreateSubtitle": "One account keeps every vehicle, log, and reminder in sync.",
+  "authNameLabel": "Name",
+  "authNameHint": "Your name",
+  "authPasswordHelp": "Use 8 or more characters.",
+  "authAlreadyHaveAccount": "Already have an account? Log in",
+  "authEnterName": "Enter your name."
 }

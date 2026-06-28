@@ -90,4 +90,63 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get errorInvalidDocType => 'Pilih jenis dokumen yang valid.';
+
+  @override
+  String get authWelcomeBack => 'Selamat datang kembali';
+
+  @override
+  String get authSubtitle =>
+      'Masuk untuk melacak kendaraan, bahan bakar, dan servis Anda.';
+
+  @override
+  String get authEmailHint => 'Email';
+
+  @override
+  String get authEmailLabel => 'Email';
+
+  @override
+  String get authPasswordHint => 'Kata sandi';
+
+  @override
+  String get authPasswordLabel => 'Kata sandi';
+
+  @override
+  String get authShow => 'Tampilkan';
+
+  @override
+  String get authHide => 'Sembunyikan';
+
+  @override
+  String get authForgotPassword => 'Lupa kata sandi?';
+
+  @override
+  String get authLogIn => 'Masuk';
+
+  @override
+  String get authNewToVeyra => 'Baru di Veyra? ';
+
+  @override
+  String get authCreateAccount => 'Buat akun';
+
+  @override
+  String get authCreateTitle => 'Buat akun Anda';
+
+  @override
+  String get authCreateSubtitle =>
+      'Satu akun menyimpan semua kendaraan, catatan, dan pengingat Anda.';
+
+  @override
+  String get authNameLabel => 'Nama';
+
+  @override
+  String get authNameHint => 'Nama Anda';
+
+  @override
+  String get authPasswordHelp => 'Gunakan 8 karakter atau lebih.';
+
+  @override
+  String get authAlreadyHaveAccount => 'Sudah punya akun? Masuk';
+
+  @override
+  String get authEnterName => 'Masukkan nama Anda.';
 }

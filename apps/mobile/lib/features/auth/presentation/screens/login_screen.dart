@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:veyra_mobile/core/error/failure_l10n.dart';
 import 'package:veyra_mobile/core/theme/app_theme.dart';
 import 'package:veyra_mobile/core/widgets/app_background.dart';
 import 'package:veyra_mobile/core/widgets/veyra_mark.dart';
 import 'package:veyra_mobile/features/auth/domain/value_objects/email.dart';
 import 'package:veyra_mobile/features/auth/domain/value_objects/password.dart';
 import 'package:veyra_mobile/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:veyra_mobile/l10n/app_localizations.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -29,16 +31,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context);
     final emailR = Email.create(_email.text);
     final passwordR = Password.create(_password.text);
     final email = emailR.toNullable();
     final password = passwordR.toNullable();
     if (email == null) {
-      setState(() => _error = 'Enter a valid email address.');
+      setState(() => _error = l10n.errorInvalidEmail);
       return;
     }
     if (password == null) {
-      setState(() => _error = 'Password must be at least 8 characters.');
+      setState(() => _error = l10n.errorPasswordTooShort);
       return;
     }
     setState(() => _error = null);
@@ -46,12 +49,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         .read(authControllerProvider.notifier)
         .login(email, password);
     if (failure != null && mounted) {
-      setState(() => _error = failure.message);
+      final postL10n = AppLocalizations.of(context);
+      setState(() => _error = localizedFailure(postL10n, failure));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final loading = ref.watch(authControllerProvider).isLoading;
     return Scaffold(
       body: AppBackground(
@@ -71,11 +76,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ],
                 ),
                 const SizedBox(height: 36),
-                Text('Welcome back', style: soraDisplay(size: 26)),
+                Text(l10n.authWelcomeBack, style: soraDisplay(size: 26)),
                 const SizedBox(height: 8),
-                const Text(
-                  'Sign in to track your vehicles, fuel, and services.',
-                  style: TextStyle(
+                Text(
+                  l10n.authSubtitle,
+                  style: const TextStyle(
                     color: VeyraColors.textMuted,
                     fontSize: 15,
                   ),
@@ -85,9 +90,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
                   autocorrect: false,
-                  decoration: const InputDecoration(
-                    hintText: 'Email',
-                    prefixIcon: Icon(Icons.mail_outline, size: 20),
+                  decoration: InputDecoration(
+                    hintText: l10n.authEmailHint,
+                    prefixIcon: const Icon(Icons.mail_outline, size: 20),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -95,11 +100,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   controller: _password,
                   obscureText: _obscure,
                   decoration: InputDecoration(
-                    hintText: 'Password',
+                    hintText: l10n.authPasswordHint,
                     prefixIcon: const Icon(Icons.lock_outline, size: 20),
                     suffixIcon: TextButton(
                       onPressed: () => setState(() => _obscure = !_obscure),
-                      child: Text(_obscure ? 'Show' : 'Hide'),
+                      child: Text(_obscure ? l10n.authShow : l10n.authHide),
                     ),
                   ),
                 ),
@@ -108,9 +113,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   alignment: Alignment.centerRight,
                   child: GestureDetector(
                     onTap: () {},
-                    child: const Text(
-                      'Forgot password?',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.authForgotPassword,
+                      style: const TextStyle(
                         color: VeyraColors.textMuted,
                         fontSize: 14,
                       ),
@@ -139,7 +144,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             color: VeyraColors.bg,
                           ),
                         )
-                      : const Text('Log in'),
+                      : Text(l10n.authLogIn),
                 ),
                 const Spacer(),
                 Padding(
@@ -147,18 +152,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        'New to Veyra? ',
-                        style: TextStyle(
+                      Text(
+                        l10n.authNewToVeyra,
+                        style: const TextStyle(
                           color: VeyraColors.textMuted,
                           fontSize: 15,
                         ),
                       ),
                       GestureDetector(
                         onTap: () => context.push('/register'),
-                        child: const Text(
-                          'Create account',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.authCreateAccount,
+                          style: const TextStyle(
                             color: VeyraColors.accent,
                             fontSize: 15,
                             fontWeight: FontWeight.w600,

@@ -89,4 +89,63 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorInvalidDocType => 'Choose a valid document type.';
+
+  @override
+  String get authWelcomeBack => 'Welcome back';
+
+  @override
+  String get authSubtitle =>
+      'Sign in to track your vehicles, fuel, and services.';
+
+  @override
+  String get authEmailHint => 'Email';
+
+  @override
+  String get authEmailLabel => 'Email';
+
+  @override
+  String get authPasswordHint => 'Password';
+
+  @override
+  String get authPasswordLabel => 'Password';
+
+  @override
+  String get authShow => 'Show';
+
+  @override
+  String get authHide => 'Hide';
+
+  @override
+  String get authForgotPassword => 'Forgot password?';
+
+  @override
+  String get authLogIn => 'Log in';
+
+  @override
+  String get authNewToVeyra => 'New to Veyra? ';
+
+  @override
+  String get authCreateAccount => 'Create account';
+
+  @override
+  String get authCreateTitle => 'Create your account';
+
+  @override
+  String get authCreateSubtitle =>
+      'One account keeps every vehicle, log, and reminder in sync.';
+
+  @override
+  String get authNameLabel => 'Name';
+
+  @override
+  String get authNameHint => 'Your name';
+
+  @override
+  String get authPasswordHelp => 'Use 8 or more characters.';
+
+  @override
+  String get authAlreadyHaveAccount => 'Already have an account? Log in';
+
+  @override
+  String get authEnterName => 'Enter your name.';
 }

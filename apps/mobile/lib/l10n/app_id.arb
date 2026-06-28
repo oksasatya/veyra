@@ -27,5 +27,25 @@
   "errorMissingDueDate": "Tanggal jatuh tempo wajib diisi untuk pengingat ini.",
   "errorMissingDueOdometer": "Odometer jatuh tempo wajib diisi untuk pengingat ini.",
   "errorInvalidCategory": "Pilih kategori yang valid.",
-  "errorInvalidDocType": "Pilih jenis dokumen yang valid."
+  "errorInvalidDocType": "Pilih jenis dokumen yang valid.",
+
+  "authWelcomeBack": "Selamat datang kembali",
+  "authSubtitle": "Masuk untuk melacak kendaraan, bahan bakar, dan servis Anda.",
+  "authEmailHint": "Email",
+  "authEmailLabel": "Email",
+  "authPasswordHint": "Kata sandi",
+  "authPasswordLabel": "Kata sandi",
+  "authShow": "Tampilkan",
+  "authHide": "Sembunyikan",
+  "authForgotPassword": "Lupa kata sandi?",
+  "authLogIn": "Masuk",
+  "authNewToVeyra": "Baru di Veyra? ",
+  "authCreateAccount": "Buat akun",
+  "authCreateTitle": "Buat akun Anda",
+  "authCreateSubtitle": "Satu akun menyimpan semua kendaraan, catatan, dan pengingat Anda.",
+  "authNameLabel": "Nama",
+  "authNameHint": "Nama Anda",
+  "authPasswordHelp": "Gunakan 8 karakter atau lebih.",
+  "authAlreadyHaveAccount": "Sudah punya akun? Masuk",
+  "authEnterName": "Masukkan nama Anda."
 }
