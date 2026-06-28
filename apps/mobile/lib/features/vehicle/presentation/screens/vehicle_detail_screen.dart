@@ -107,7 +107,7 @@ class _StatsGrid extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        childAspectRatio: 2.4,
+        childAspectRatio: 2.0,
         children: [
           _StatCell(label: 'Services', value: '${summary.totalServices}'),
           _StatCell(
@@ -212,7 +212,7 @@ class _StatsSkeleton extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        childAspectRatio: 2.4,
+        childAspectRatio: 2.0,
         children: [
           for (var i = 0; i < 4; i++)
             DecoratedBox(
