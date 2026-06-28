@@ -546,6 +546,52 @@ class AppLocalizationsEn extends AppLocalizations {
   String get docTypeOther => 'Other';
 
   @override
+  String get fuelLogTitle => 'Log fuel';
+
+  @override
+  String get fuelLogFieldDate => 'Date';
+
+  @override
+  String get fuelLogFieldOdometer => 'Odometer';
+
+  @override
+  String get fuelLogFieldLiters => 'Liters';
+
+  @override
+  String get fuelLogFieldPricePerLiter => 'Price / liter';
+
+  @override
+  String get fuelLogFieldStation => 'Station (optional)';
+
+  @override
+  String get fuelLogFieldTotalCost => 'Total cost';
+
+  @override
+  String get fuelLogFieldFullTank => 'Full tank';
+
+  @override
+  String get fuelLogFieldFullTankHint => 'Used to compute consumption';
+
+  @override
+  String get fuelLogSave => 'Save fuel log';
+
+  @override
+  String get fuelLogErrorOdometer => 'Enter a valid odometer reading.';
+
+  @override
+  String get fuelLogErrorLiters => 'Enter the liters filled.';
+
+  @override
+  String get fuelLogErrorPricePerLiter => 'Enter the price per liter.';
+
+  @override
+  String get fuelLogEmpty =>
+      'No fuel logs yet. Tap \"Log fuel\" to add your first fill-up.';
+
+  @override
+  String get fuelLogLoadError => 'Could not load fuel logs.';
+
+  @override
   String get expenseAddTitle => 'Add expense';
 
   @override

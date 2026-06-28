@@ -548,6 +548,52 @@ class AppLocalizationsId extends AppLocalizations {
   String get docTypeOther => 'Lainnya';
 
   @override
+  String get fuelLogTitle => 'Catat BBM';
+
+  @override
+  String get fuelLogFieldDate => 'Tanggal';
+
+  @override
+  String get fuelLogFieldOdometer => 'Odometer';
+
+  @override
+  String get fuelLogFieldLiters => 'Liter';
+
+  @override
+  String get fuelLogFieldPricePerLiter => 'Harga / liter';
+
+  @override
+  String get fuelLogFieldStation => 'SPBU (opsional)';
+
+  @override
+  String get fuelLogFieldTotalCost => 'Total biaya';
+
+  @override
+  String get fuelLogFieldFullTank => 'Tangki penuh';
+
+  @override
+  String get fuelLogFieldFullTankHint => 'Digunakan untuk menghitung konsumsi';
+
+  @override
+  String get fuelLogSave => 'Simpan catatan BBM';
+
+  @override
+  String get fuelLogErrorOdometer => 'Masukkan pembacaan odometer yang valid.';
+
+  @override
+  String get fuelLogErrorLiters => 'Masukkan jumlah liter yang diisi.';
+
+  @override
+  String get fuelLogErrorPricePerLiter => 'Masukkan harga per liter.';
+
+  @override
+  String get fuelLogEmpty =>
+      'Belum ada catatan BBM. Ketuk \"Catat BBM\" untuk menambahkan.';
+
+  @override
+  String get fuelLogLoadError => 'Gagal memuat catatan BBM.';
+
+  @override
   String get expenseAddTitle => 'Tambah pengeluaran';
 
   @override
