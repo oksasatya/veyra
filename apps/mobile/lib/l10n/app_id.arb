@@ -1,0 +1,31 @@
+{
+  "@@locale": "id",
+  "appTitle": "Veyra",
+  "settingsTitle": "Pengaturan",
+  "settingsLanguage": "Bahasa",
+  "languageSystem": "Ikuti sistem",
+  "languageEnglish": "Inggris",
+  "languageIndonesian": "Indonesia",
+
+  "errorNetwork": "Tidak ada koneksi. Periksa jaringan Anda.",
+  "errorServer": "Terjadi kesalahan di server.",
+  "errorUnauthorized": "Sesi Anda telah berakhir. Silakan masuk kembali.",
+  "errorForbidden": "Anda tidak memiliki akses ke ini.",
+  "errorNotFound": "Tidak ditemukan.",
+  "errorConflict": "Data tersebut sudah ada.",
+  "errorValidation": "Periksa kembali masukan Anda.",
+  "errorServiceUnavailable": "Layanan sedang tidak tersedia. Coba lagi.",
+
+  "errorInvalidEmail": "Masukkan alamat email yang valid.",
+  "errorPasswordTooShort": "Kata sandi minimal 8 karakter.",
+  "errorEmailAlreadyExists": "Email tersebut sudah terdaftar.",
+  "errorInvalidLanguage": "Bahasa tidak didukung.",
+  "errorInvalidPlateNumber": "Masukkan nomor pelat yang valid.",
+  "errorOdometerDecreased": "Odometer tidak boleh lebih kecil dari nilai saat ini.",
+  "errorInvalidFuelType": "Pilih jenis bahan bakar yang valid.",
+  "errorInvalidReminderType": "Pilih jenis pengingat yang valid.",
+  "errorMissingDueDate": "Tanggal jatuh tempo wajib diisi untuk pengingat ini.",
+  "errorMissingDueOdometer": "Odometer jatuh tempo wajib diisi untuk pengingat ini.",
+  "errorInvalidCategory": "Pilih kategori yang valid.",
+  "errorInvalidDocType": "Pilih jenis dokumen yang valid."
+}

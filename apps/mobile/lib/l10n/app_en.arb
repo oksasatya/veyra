@@ -1,0 +1,31 @@
+{
+  "@@locale": "en",
+  "appTitle": "Veyra",
+  "settingsTitle": "Settings",
+  "settingsLanguage": "Language",
+  "languageSystem": "System default",
+  "languageEnglish": "English",
+  "languageIndonesian": "Indonesian",
+
+  "errorNetwork": "No connection. Check your network.",
+  "errorServer": "Something went wrong on the server.",
+  "errorUnauthorized": "Your session has expired. Please sign in again.",
+  "errorForbidden": "You do not have access to this.",
+  "errorNotFound": "Not found.",
+  "errorConflict": "That already exists.",
+  "errorValidation": "Please check your input.",
+  "errorServiceUnavailable": "Service temporarily unavailable. Please try again.",
+
+  "errorInvalidEmail": "Enter a valid email address.",
+  "errorPasswordTooShort": "Password must be at least 8 characters.",
+  "errorEmailAlreadyExists": "That email is already registered.",
+  "errorInvalidLanguage": "Unsupported language.",
+  "errorInvalidPlateNumber": "Enter a valid plate number.",
+  "errorOdometerDecreased": "Odometer cannot be lower than the current value.",
+  "errorInvalidFuelType": "Choose a valid fuel type.",
+  "errorInvalidReminderType": "Choose a valid reminder type.",
+  "errorMissingDueDate": "A due date is required for this reminder.",
+  "errorMissingDueOdometer": "A due odometer is required for this reminder.",
+  "errorInvalidCategory": "Choose a valid category.",
+  "errorInvalidDocType": "Choose a valid document type."
+}
