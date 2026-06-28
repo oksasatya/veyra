@@ -10,14 +10,39 @@
   |___|  |_______|  |___|  |___|  |_||__| |__|
 ```
 
-**Open-source vehicle management API built with Rust.**
+**Open-source vehicle management platform — a Rust API and a Flutter mobile app.**
 
-![Rust](https://img.shields.io/badge/rust-1.82+-orange?style=flat-square)
+![Rust](https://img.shields.io/badge/rust-1.82+-orange?style=flat-square&logo=rust)
+![Flutter](https://img.shields.io/badge/flutter-iOS%20%2B%20Android-02569B?style=flat-square&logo=flutter)
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 ![CI](https://img.shields.io/github/actions/workflow/status/oksasatya/veyra/ci.yml?style=flat-square)
+![Coverage](https://img.shields.io/codecov/c/github/oksasatya/veyra?style=flat-square)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)
 
-Track your vehicles, services, fuel, and expenses — all in one clean API.
+Track your vehicles, services, fuel, expenses, reminders, and documents — a clean
+Rust API with a Flutter app for iOS and Android.
+
+---
+
+## Repository layout
+
+A monorepo: a Rust backend and a Flutter mobile client, sharing one set of ADRs.
+
+```
+veyra/
+├─ apps/
+│  ├─ backend/   # Rust API — axum, hexagonal DDD (most of this README)
+│  └─ mobile/    # Flutter app (iOS + Android) — Riverpod · dio · go_router
+├─ docs/
+│  ├─ adr/                     # architecture decision records (0001–0008)
+│  └─ superpowers/{specs,plans}/
+├─ docker-compose.yml          # Postgres + Redis for local dev
+└─ railway.toml                # backend deploy config
+```
+
+Backend and client share one contract: a standardized response envelope and
+machine-readable error codes ([ADR-0008](docs/adr/0008-response-envelope-error-codes-i18n.md))
+— the API returns stable codes, the app localizes them (en/id).
 
 ---
 
@@ -134,7 +159,10 @@ curl http://localhost:8080/health
 | Cache / Session | Redis + fred 10 |
 | Auth | JWT (jsonwebtoken 9) + Argon2id + rotating refresh tokens (cookie + bearer) |
 | Config | figment |
-| Testing | cargo nextest + testcontainers (Postgres + Redis) |
+| Testing | cargo nextest + testcontainers (Postgres + Redis); coverage via cargo-llvm-cov → Codecov |
+| Supply chain | cargo-deny (advisories · licenses · sources) |
+| API contract | Standardized `{ meta, data \| error }` envelope + machine-readable error codes (ADR-0008) |
+| i18n | English + Indonesian — backend returns codes, the app localizes (ARB) |
 | Mobile client | Flutter (Dart) — iOS + Android, in `apps/mobile/` |
 
 ---
@@ -145,13 +173,31 @@ curl http://localhost:8080/health
 > authenticates with `Authorization: Bearer` + `X-Auth-Mode: bearer` and does **not** send CSRF —
 > see [Authentication](#authentication).
 
+### Response format
+
+Every JSON response is enveloped ([ADR-0008](docs/adr/0008-response-envelope-error-codes-i18n.md)):
+
+```jsonc
+// success
+{ "meta": { "request_id": "…" }, "data": { … } }
+
+// error
+{ "meta": { "request_id": "…" }, "error": { "code": "INVALID_PLATE_NUMBER", "message": "…" } }
+```
+
+`data` and `error` are mutually exclusive; the HTTP status line is authoritative (no `status_code`
+in the body). `error.code` is a stable `SCREAMING_SNAKE_CASE` identifier the client maps to a
+localized message (en/id); `message` is English developer text. Collections return a bare array
+under `data`. Every response echoes an `X-Request-Id` header.
+
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | POST | /auth/register | — | Register; sets access, refresh, and CSRF cookies |
 | POST | /auth/login | — | Login; sets access, refresh, and CSRF cookies |
 | POST | /auth/refresh | refresh cookie + CSRF | Rotate refresh token; issues new access token |
 | POST | /auth/logout | access cookie + CSRF | Revoke session; clears all cookies |
-| GET | /me | access cookie | Current user info |
+| GET | /me | access cookie | Current user info (incl. `preferred_language`) |
+| PATCH | /me | access cookie + CSRF | Update preferred language (`en` / `id`) |
 | GET / POST | /vehicles | access cookie + CSRF | List / create vehicles |
 | GET / PUT / DELETE | /vehicles/{id} | access cookie + CSRF | Get / update / delete |
 | GET | /vehicles/{id}/summary | access cookie | Dashboard aggregation (cached) |
@@ -173,7 +219,7 @@ Veyra runs **short-lived access tokens + rotating refresh tokens** over one shar
 - **Cookie + CSRF** (browsers) — tokens as HttpOnly cookies; the double-submit CSRF flow below. *Shipped.*
 - **Bearer** (native mobile) — opt-in via the `X-Auth-Mode: bearer` request header; tokens are returned
   in the JSON body and replayed as `Authorization: Bearer <access>`. CSRF is skipped (no cookie surface).
-  Specified in [ADR-0007](docs/adr/0007-dual-mode-auth-bearer-mobile.md); in progress for the Flutter client.
+  Specified in [ADR-0007](docs/adr/0007-dual-mode-auth-bearer-mobile.md) and consumed by the Flutter client.
 
 The token model and rotation below are identical across both modes — only delivery and extraction differ.
 
@@ -214,6 +260,29 @@ Cookie name prefix is derived from the environment — not configured directly:
 
 Cookie names: `[prefix]veyra_access`, `[prefix]veyra_refresh` (always `Path=/auth`),
 `[prefix]veyra_csrf`.
+
+---
+
+## Mobile app
+
+A Flutter client (iOS + Android) in `apps/mobile/`, with clean architecture mirroring the backend
+(domain · data · presentation per feature).
+
+- **Built:** auth (register / login / splash; bearer tokens in the platform secure store), garage +
+  vehicle detail, service records, fuel logs, expenses, reminders, and documents — every screen
+  consuming the standardized `{ meta, data }` response envelope.
+- **i18n:** English + Indonesian. The app owns all UI copy and maps the backend's `error.code` to a
+  localized message (`flutter_localizations` + ARB). The localized-error layer + language toggle are
+  landing in phases — see [the plan](docs/superpowers/plans/2026-06-28-mobile-i18n-phase-cd.md).
+- **Stack:** Flutter · Riverpod · dio · go_router · fpdart · flutter_secure_storage · very_good_analysis.
+- **Design:** [`docs/superpowers/specs/2026-06-27-veyra-mobile-app-design.md`](docs/superpowers/specs/2026-06-27-veyra-mobile-app-design.md).
+
+```bash
+cd apps/mobile
+flutter pub get
+flutter analyze        # lints (very_good_analysis) — keep clean
+flutter run            # against a running backend (set the API base URL)
+```
 
 ---
 
@@ -296,11 +365,10 @@ Steps:
 
 ### Mobile client (Flutter)
 
-The Veyra client is a Flutter app (iOS + Android) in `apps/mobile/`, built against the API at
-`api.veyra.dev` and distributed via TestFlight / Play Store (or a self-host build). It authenticates
-with `Authorization: Bearer` tokens (`X-Auth-Mode: bearer`), storing them in the platform secure store
-(Keychain / Keystore); native clients are not subject to CORS. Design: see
-`docs/superpowers/specs/2026-06-27-veyra-mobile-app-design.md`.
+The Flutter app (see [Mobile app](#mobile-app)) targets the API at `api.veyra.dev`, distributed via
+TestFlight / Play Store (or a self-host build). It uses `Authorization: Bearer` tokens stored in the
+platform secure store (Keychain / Keystore); native clients are not subject to CORS, so no allowlist
+entry is required.
 
 ---
 
@@ -314,7 +382,9 @@ with `Authorization: Bearer` tokens (`X-Auth-Mode: bearer`), storing them in the
 - [x] v0.6 — Reminders
 - [x] v0.7 — Dashboard summary
 - [x] v0.8 — Redis auth (access + refresh cookies, CSRF, session revocation, read cache)
-- [ ] v0.9 — Bearer-mode auth for native clients (ADR-0007) + Flutter mobile app (iOS + Android)
+- [x] v0.9 — Bearer-mode auth (ADR-0007) + Flutter app (auth, garage, all feature screens)
+- [x] v0.10 — Standardized response envelope + machine-readable error codes (ADR-0008)
+- [ ] v0.11 — Full mobile i18n (en/id) — localized errors, language toggle, per-screen strings
 - [ ] v1.0 — OpenAPI 3.1 spec + stable MVP
 
 ---
