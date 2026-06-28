@@ -138,6 +138,7 @@
   "reminderSectionDueSoon": "Segera Jatuh Tempo",
   "reminderSectionUpcoming": "Mendatang",
   "reminderSectionCompleted": "Selesai",
+  "reminderMarkComplete": "Tandai selesai",
   "reminderDaysLate": "{count,plural, =1{1 hari terlambat} other{{count} hari terlambat}}",
   "@reminderDaysLate": {
     "placeholders": {

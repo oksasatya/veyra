@@ -189,8 +189,9 @@ class _Check extends StatelessWidget {
         child: CircularProgressIndicator(strokeWidth: 2.2),
       );
     }
+    final l10n = AppLocalizations.of(context);
     return Semantics(
-      label: done ? 'Completed' : 'Mark complete',
+      label: done ? l10n.reminderSectionCompleted : l10n.reminderMarkComplete,
       button: !done,
       child: GestureDetector(
         onTap: done ? null : onTap,

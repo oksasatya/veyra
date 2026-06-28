@@ -740,6 +740,12 @@ abstract class AppLocalizations {
   /// **'Completed'**
   String get reminderSectionCompleted;
 
+  /// No description provided for @reminderMarkComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark complete'**
+  String get reminderMarkComplete;
+
   /// No description provided for @reminderDaysLate.
   ///
   /// In en, this message translates to:

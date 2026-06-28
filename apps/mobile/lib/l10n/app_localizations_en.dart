@@ -357,6 +357,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reminderSectionCompleted => 'Completed';
 
   @override
+  String get reminderMarkComplete => 'Mark complete';
+
+  @override
   String reminderDaysLate(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

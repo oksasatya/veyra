@@ -138,6 +138,7 @@
   "reminderSectionDueSoon": "Due Soon",
   "reminderSectionUpcoming": "Upcoming",
   "reminderSectionCompleted": "Completed",
+  "reminderMarkComplete": "Mark complete",
   "reminderDaysLate": "{count,plural, =1{1 day late} other{{count} days late}}",
   "@reminderDaysLate": {
     "placeholders": {
