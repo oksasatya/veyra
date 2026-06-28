@@ -1021,6 +1021,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Other'**
   String get docTypeOther;
+
+  /// No description provided for @expenseAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add expense'**
+  String get expenseAddTitle;
+
+  /// No description provided for @expenseCategoryBattery.
+  ///
+  /// In en, this message translates to:
+  /// **'Battery'**
+  String get expenseCategoryBattery;
+
+  /// No description provided for @expenseCategoryInsurance.
+  ///
+  /// In en, this message translates to:
+  /// **'Insurance'**
+  String get expenseCategoryInsurance;
+
+  /// No description provided for @expenseCategoryOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get expenseCategoryOther;
+
+  /// No description provided for @expenseCategoryTax.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax'**
+  String get expenseCategoryTax;
+
+  /// No description provided for @expenseCategoryTire.
+  ///
+  /// In en, this message translates to:
+  /// **'Tire'**
+  String get expenseCategoryTire;
+
+  /// No description provided for @expenseEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No expenses yet. Add your first one.'**
+  String get expenseEmpty;
+
+  /// No description provided for @expenseErrorEnterDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a description.'**
+  String get expenseErrorEnterDescription;
+
+  /// No description provided for @expenseErrorInvalidAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid amount.'**
+  String get expenseErrorInvalidAmount;
+
+  /// No description provided for @expenseFieldAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount (Rp)'**
+  String get expenseFieldAmount;
+
+  /// No description provided for @expenseFieldCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get expenseFieldCategory;
+
+  /// No description provided for @expenseFieldDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get expenseFieldDate;
+
+  /// No description provided for @expenseFieldDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get expenseFieldDescription;
+
+  /// No description provided for @expenseFieldDescriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Annual premium'**
+  String get expenseFieldDescriptionHint;
+
+  /// No description provided for @expenseLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load expenses.'**
+  String get expenseLoadError;
+
+  /// No description provided for @expenseSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save expense'**
+  String get expenseSave;
 }
 
 class _AppLocalizationsDelegate

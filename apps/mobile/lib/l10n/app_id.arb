@@ -269,5 +269,22 @@
   "docTypeStnk": "STNK",
   "docTypeBpkb": "BPKB",
   "docTypeInsurance": "Asuransi",
-  "docTypeOther": "Lainnya"
+  "docTypeOther": "Lainnya",
+
+  "expenseAddTitle": "Tambah pengeluaran",
+  "expenseCategoryBattery": "Aki",
+  "expenseCategoryInsurance": "Asuransi",
+  "expenseCategoryOther": "Lainnya",
+  "expenseCategoryTax": "Pajak",
+  "expenseCategoryTire": "Ban",
+  "expenseEmpty": "Belum ada pengeluaran. Tambahkan yang pertama.",
+  "expenseErrorEnterDescription": "Masukkan deskripsi.",
+  "expenseErrorInvalidAmount": "Masukkan jumlah yang valid.",
+  "expenseFieldAmount": "Jumlah (Rp)",
+  "expenseFieldCategory": "Kategori",
+  "expenseFieldDate": "Tanggal",
+  "expenseFieldDescription": "Deskripsi",
+  "expenseFieldDescriptionHint": "Premi tahunan",
+  "expenseLoadError": "Gagal memuat pengeluaran.",
+  "expenseSave": "Simpan pengeluaran"
 }

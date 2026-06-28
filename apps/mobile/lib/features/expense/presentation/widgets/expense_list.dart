@@ -2,10 +2,12 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:veyra_mobile/core/error/failure.dart';
+import 'package:veyra_mobile/core/error/failure_l10n.dart';
 import 'package:veyra_mobile/core/theme/app_theme.dart';
 import 'package:veyra_mobile/features/expense/domain/entities/expense.dart';
 import 'package:veyra_mobile/features/expense/domain/value_objects/expense_category.dart';
 import 'package:veyra_mobile/features/expense/presentation/controllers/expense_list_controller.dart';
+import 'package:veyra_mobile/l10n/app_localizations.dart';
 
 /// Renders a vehicle's expenses (category icon/label · date · description,
 /// trailing `Rp amount`) with loading/empty/error states.
@@ -15,17 +17,22 @@ class ExpenseList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final expenses = ref.watch(expenseListProvider(vehicleId));
     return expenses.when(
       loading: () => const _ExpenseSkeleton(),
       error: (e, _) => _ExpenseError(
-        message: e is Failure ? e.message : 'Could not load expenses.',
+        message: e is Failure
+            ? localizedFailure(l10n, e)
+            : l10n.expenseLoadError,
         onRetry: () => ref.invalidate(expenseListProvider(vehicleId)),
       ),
       data: (rows) => rows.isEmpty
-          ? const _ExpenseEmpty()
+          ? _ExpenseEmpty(l10n: l10n)
           : Column(
-              children: [for (final e in rows) _ExpenseRow(expense: e)],
+              children: [
+                for (final e in rows) _ExpenseRow(expense: e),
+              ],
             ),
     );
   }
@@ -36,45 +43,48 @@ class _ExpenseRow extends StatelessWidget {
   final Expense expense;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(vertical: 13),
-    decoration: const BoxDecoration(
-      border: Border(bottom: BorderSide(color: VeyraColors.border)),
-    ),
-    child: Row(
-      children: [
-        _CategoryIcon(category: expense.category),
-        const SizedBox(width: 13),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                expense.category.label,
-                style: const TextStyle(
-                  color: VeyraColors.text,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 13),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: VeyraColors.border)),
+      ),
+      child: Row(
+        children: [
+          _CategoryIcon(category: expense.category),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _localizedCategory(l10n, expense.category),
+                  style: const TextStyle(
+                    color: VeyraColors.text,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                '${_formatDate(expense.expenseDate)} · ${expense.description}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: plexMono(size: 12),
-              ),
-            ],
+                const SizedBox(height: 3),
+                Text(
+                  '${_formatDate(expense.expenseDate)} · ${expense.description}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: plexMono(size: 12),
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Text(
-          _money(expense.amount),
-          style: plexMono(size: 14, color: VeyraColors.text),
-        ),
-      ],
-    ),
-  );
+          const SizedBox(width: 10),
+          Text(
+            _money(expense.amount),
+            style: plexMono(size: 14, color: VeyraColors.text),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _CategoryIcon extends StatelessWidget {
@@ -95,15 +105,16 @@ class _CategoryIcon extends StatelessWidget {
 }
 
 class _ExpenseEmpty extends StatelessWidget {
-  const _ExpenseEmpty();
+  const _ExpenseEmpty({required this.l10n});
+  final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(vertical: 32),
     alignment: Alignment.center,
-    child: const Text(
-      'No expenses yet. Add your first one.',
-      style: TextStyle(color: VeyraColors.textMuted, fontSize: 14),
+    child: Text(
+      l10n.expenseEmpty,
+      style: const TextStyle(color: VeyraColors.textMuted, fontSize: 14),
     ),
   );
 }
@@ -132,29 +143,41 @@ class _ExpenseError extends StatelessWidget {
   final VoidCallback onRetry;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: VeyraColors.surface,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: VeyraColors.border),
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: Text(
-            message,
-            style: const TextStyle(
-              color: VeyraColors.textMuted,
-              fontSize: 13,
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VeyraColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: VeyraColors.border),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: VeyraColors.textMuted,
+                fontSize: 13,
+              ),
             ),
           ),
-        ),
-        TextButton(onPressed: onRetry, child: const Text('Retry')),
-      ],
-    ),
-  );
+          TextButton(onPressed: onRetry, child: Text(l10n.commonRetry)),
+        ],
+      ),
+    );
+  }
 }
+
+String _localizedCategory(AppLocalizations l10n, ExpenseCategory cat) =>
+    switch (cat) {
+      ExpenseCategory.tire => l10n.expenseCategoryTire,
+      ExpenseCategory.battery => l10n.expenseCategoryBattery,
+      ExpenseCategory.tax => l10n.expenseCategoryTax,
+      ExpenseCategory.insurance => l10n.expenseCategoryInsurance,
+      ExpenseCategory.other => l10n.expenseCategoryOther,
+    };
 
 IconData _iconFor(ExpenseCategory category) => switch (category) {
   ExpenseCategory.tire => Icons.trip_origin,

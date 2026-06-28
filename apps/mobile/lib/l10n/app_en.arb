@@ -269,5 +269,22 @@
   "docTypeStnk": "STNK",
   "docTypeBpkb": "BPKB",
   "docTypeInsurance": "Insurance",
-  "docTypeOther": "Other"
+  "docTypeOther": "Other",
+
+  "expenseAddTitle": "Add expense",
+  "expenseCategoryBattery": "Battery",
+  "expenseCategoryInsurance": "Insurance",
+  "expenseCategoryOther": "Other",
+  "expenseCategoryTax": "Tax",
+  "expenseCategoryTire": "Tire",
+  "expenseEmpty": "No expenses yet. Add your first one.",
+  "expenseErrorEnterDescription": "Enter a description.",
+  "expenseErrorInvalidAmount": "Enter a valid amount.",
+  "expenseFieldAmount": "Amount (Rp)",
+  "expenseFieldCategory": "Category",
+  "expenseFieldDate": "Date",
+  "expenseFieldDescription": "Description",
+  "expenseFieldDescriptionHint": "Annual premium",
+  "expenseLoadError": "Could not load expenses.",
+  "expenseSave": "Save expense"
 }

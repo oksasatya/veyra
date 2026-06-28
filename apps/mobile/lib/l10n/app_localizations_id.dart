@@ -546,4 +546,52 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get docTypeOther => 'Lainnya';
+
+  @override
+  String get expenseAddTitle => 'Tambah pengeluaran';
+
+  @override
+  String get expenseCategoryBattery => 'Aki';
+
+  @override
+  String get expenseCategoryInsurance => 'Asuransi';
+
+  @override
+  String get expenseCategoryOther => 'Lainnya';
+
+  @override
+  String get expenseCategoryTax => 'Pajak';
+
+  @override
+  String get expenseCategoryTire => 'Ban';
+
+  @override
+  String get expenseEmpty => 'Belum ada pengeluaran. Tambahkan yang pertama.';
+
+  @override
+  String get expenseErrorEnterDescription => 'Masukkan deskripsi.';
+
+  @override
+  String get expenseErrorInvalidAmount => 'Masukkan jumlah yang valid.';
+
+  @override
+  String get expenseFieldAmount => 'Jumlah (Rp)';
+
+  @override
+  String get expenseFieldCategory => 'Kategori';
+
+  @override
+  String get expenseFieldDate => 'Tanggal';
+
+  @override
+  String get expenseFieldDescription => 'Deskripsi';
+
+  @override
+  String get expenseFieldDescriptionHint => 'Premi tahunan';
+
+  @override
+  String get expenseLoadError => 'Gagal memuat pengeluaran.';
+
+  @override
+  String get expenseSave => 'Simpan pengeluaran';
 }

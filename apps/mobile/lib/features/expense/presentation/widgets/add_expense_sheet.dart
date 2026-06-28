@@ -1,11 +1,13 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:veyra_mobile/core/error/failure_l10n.dart';
 import 'package:veyra_mobile/core/theme/app_theme.dart';
 import 'package:veyra_mobile/features/expense/data/repositories/expense_repository_impl.dart';
 import 'package:veyra_mobile/features/expense/domain/repositories/expense_repository.dart';
 import 'package:veyra_mobile/features/expense/domain/value_objects/expense_category.dart';
 import 'package:veyra_mobile/features/expense/presentation/controllers/expense_list_controller.dart';
+import 'package:veyra_mobile/l10n/app_localizations.dart';
 
 /// Bottom-sheet form for logging an expense: date, category chips, description,
 /// amount. Validates, calls create, pops on success.
@@ -45,13 +47,14 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context);
     if (_description.text.trim().isEmpty) {
-      setState(() => _error = 'Enter a description.');
+      setState(() => _error = l10n.expenseErrorEnterDescription);
       return;
     }
     final amount = Decimal.tryParse(_amount.text.trim());
     if (amount == null || amount <= Decimal.zero) {
-      setState(() => _error = 'Enter a valid amount.');
+      setState(() => _error = l10n.expenseErrorInvalidAmount);
       return;
     }
 
@@ -69,9 +72,10 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
       ),
     );
     if (!mounted) return;
+    final l10nAfter = AppLocalizations.of(context);
     result.fold(
       (failure) => setState(() {
-        _error = failure.message;
+        _error = localizedFailure(l10nAfter, failure);
         _saving = false;
       }),
       (_) {
@@ -83,6 +87,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
@@ -101,7 +106,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
               const _Grab(),
               Row(
                 children: [
-                  Text('Add expense', style: soraDisplay(size: 21)),
+                  Text(l10n.expenseAddTitle, style: soraDisplay(size: 21)),
                   const Spacer(),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
@@ -110,22 +115,24 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                 ],
               ),
               const SizedBox(height: 8),
-              const _Label('Date'),
+              _Label(l10n.expenseFieldDate),
               _DateField(date: _date, onTap: _pickDate),
               const SizedBox(height: 14),
-              const _Label('Category'),
+              _Label(l10n.expenseFieldCategory),
               _CategorySelector(
                 value: _category,
                 onChanged: (c) => setState(() => _category = c),
               ),
               const SizedBox(height: 14),
-              const _Label('Description'),
+              _Label(l10n.expenseFieldDescription),
               TextField(
                 controller: _description,
-                decoration: const InputDecoration(hintText: 'Annual premium'),
+                decoration: InputDecoration(
+                  hintText: l10n.expenseFieldDescriptionHint,
+                ),
               ),
               const SizedBox(height: 14),
-              const _Label('Amount (Rp)'),
+              _Label(l10n.expenseFieldAmount),
               TextField(
                 controller: _amount,
                 keyboardType: const TextInputType.numberWithOptions(
@@ -155,7 +162,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                           color: VeyraColors.bg,
                         ),
                       )
-                    : const Text('Save expense'),
+                    : Text(l10n.expenseSave),
               ),
             ],
           ),
@@ -230,26 +237,38 @@ class _CategorySelector extends StatelessWidget {
   final ValueChanged<ExpenseCategory> onChanged;
 
   @override
-  Widget build(BuildContext context) => Wrap(
-    spacing: 8,
-    runSpacing: 8,
-    children: [
-      for (final c in ExpenseCategory.values)
-        ChoiceChip(
-          label: Text(c.label),
-          selected: c == value,
-          onSelected: (_) => onChanged(c),
-          backgroundColor: VeyraColors.surface,
-          selectedColor: VeyraColors.accent,
-          labelStyle: TextStyle(
-            color: c == value ? VeyraColors.bg : VeyraColors.text,
-            fontWeight: FontWeight.w500,
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final c in ExpenseCategory.values)
+          ChoiceChip(
+            label: Text(_localizedCategory(l10n, c)),
+            selected: c == value,
+            onSelected: (_) => onChanged(c),
+            backgroundColor: VeyraColors.surface,
+            selectedColor: VeyraColors.accent,
+            labelStyle: TextStyle(
+              color: c == value ? VeyraColors.bg : VeyraColors.text,
+              fontWeight: FontWeight.w500,
+            ),
+            side: const BorderSide(color: VeyraColors.border),
           ),
-          side: const BorderSide(color: VeyraColors.border),
-        ),
-    ],
-  );
+      ],
+    );
+  }
 }
+
+String _localizedCategory(AppLocalizations l10n, ExpenseCategory cat) =>
+    switch (cat) {
+      ExpenseCategory.tire => l10n.expenseCategoryTire,
+      ExpenseCategory.battery => l10n.expenseCategoryBattery,
+      ExpenseCategory.tax => l10n.expenseCategoryTax,
+      ExpenseCategory.insurance => l10n.expenseCategoryInsurance,
+      ExpenseCategory.other => l10n.expenseCategoryOther,
+    };
 
 const _months = [
   'Jan',

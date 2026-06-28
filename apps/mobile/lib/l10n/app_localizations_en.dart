@@ -544,4 +544,52 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get docTypeOther => 'Other';
+
+  @override
+  String get expenseAddTitle => 'Add expense';
+
+  @override
+  String get expenseCategoryBattery => 'Battery';
+
+  @override
+  String get expenseCategoryInsurance => 'Insurance';
+
+  @override
+  String get expenseCategoryOther => 'Other';
+
+  @override
+  String get expenseCategoryTax => 'Tax';
+
+  @override
+  String get expenseCategoryTire => 'Tire';
+
+  @override
+  String get expenseEmpty => 'No expenses yet. Add your first one.';
+
+  @override
+  String get expenseErrorEnterDescription => 'Enter a description.';
+
+  @override
+  String get expenseErrorInvalidAmount => 'Enter a valid amount.';
+
+  @override
+  String get expenseFieldAmount => 'Amount (Rp)';
+
+  @override
+  String get expenseFieldCategory => 'Category';
+
+  @override
+  String get expenseFieldDate => 'Date';
+
+  @override
+  String get expenseFieldDescription => 'Description';
+
+  @override
+  String get expenseFieldDescriptionHint => 'Annual premium';
+
+  @override
+  String get expenseLoadError => 'Could not load expenses.';
+
+  @override
+  String get expenseSave => 'Save expense';
 }
