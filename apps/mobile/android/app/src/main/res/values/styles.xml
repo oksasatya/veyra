@@ -5,6 +5,11 @@
         <!-- Show a splash screen on the activity. Automatically removed when
              the Flutter engine draws its first frame -->
         <item name="android:windowBackground">@drawable/launch_background</item>
+        <!-- Android 12+ (API 31+) SplashScreen API: it ignores windowBackground
+             and shows these instead — brand-dark bg + the V monogram, NOT the
+             default Flutter launcher icon. -->
+        <item name="android:windowSplashScreenBackground">@color/veyra_bg</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/veyra_logo</item>
     </style>
     <!-- Theme applied to the Android Window as soon as the process has started.
          This theme determines the color of the Android Window while your

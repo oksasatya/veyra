@@ -1,0 +1,9 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Adaptive-icon foreground: transparent, V monogram sized for the inner
+       safe zone (~44%) so the launcher mask never clips it. Background colour is
+       set separately (adaptive_icon_background = #0D1119). -->
+  <g transform="translate(218,198) scale(4.9)">
+    <path d="M14 22 L41 22 L60 68 L79 22 L106 22 L60 106 Z" fill="#F26A21"/>
+    <path d="M41 22 L60 68 L60 106 Z" fill="#0D1119" opacity="0.16"/>
+  </g>
+</svg>

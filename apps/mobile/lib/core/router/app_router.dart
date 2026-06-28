@@ -23,8 +23,11 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final auth = ref.read(authControllerProvider);
       final loc = state.matchedLocation;
-      // While the saved session is being restored, hold on the splash.
-      if (auth.isLoading) return loc == '/splash' ? null : '/splash';
+      // Hold wherever we are while auth is in flight. This covers both the
+      // initial session restore (starts on /splash) and interactive
+      // login/register (which also set AsyncLoading). Redirecting to /splash
+      // here would tear down the auth screen mid-submit and lose its error.
+      if (auth.isLoading) return null;
       final loggedIn = auth.asData?.value != null;
       final atAuth = loc == '/login' || loc == '/register';
       if (loc == '/splash') return loggedIn ? '/' : '/login';

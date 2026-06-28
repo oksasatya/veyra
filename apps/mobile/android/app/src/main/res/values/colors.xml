@@ -2,4 +2,5 @@
 <resources>
     <color name="veyra_bg">#FF0D1119</color>
     <color name="veyra_accent">#FFF26A21</color>
+	<color name="ic_launcher_background">#0D1119</color>
 </resources>
