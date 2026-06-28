@@ -325,5 +325,22 @@
   "expenseFieldDescription": "Description",
   "expenseFieldDescriptionHint": "Annual premium",
   "expenseLoadError": "Could not load expenses.",
-  "expenseSave": "Save expense"
+  "expenseSave": "Save expense",
+  "expenseTotalThisYear": "Total this year",
+  "expenseSummaryCount": "{count,plural, =1{Across 1 expense} other{Across {count} expenses}}",
+  "@expenseSummaryCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "expenseSummaryHighest": "highest: {category}",
+  "@expenseSummaryHighest": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -704,4 +704,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expenseSave => 'Save expense';
+
+  @override
+  String get expenseTotalThisYear => 'Total this year';
+
+  @override
+  String expenseSummaryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Across $count expenses',
+      one: 'Across 1 expense',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String expenseSummaryHighest(String category) {
+    return 'highest: $category';
+  }
 }

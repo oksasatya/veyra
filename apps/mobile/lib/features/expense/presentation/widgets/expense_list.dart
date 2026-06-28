@@ -8,6 +8,7 @@ import 'package:veyra_mobile/features/expense/domain/entities/expense.dart';
 import 'package:veyra_mobile/features/expense/domain/value_objects/expense_category.dart';
 import 'package:veyra_mobile/features/expense/presentation/controllers/expense_list_controller.dart';
 import 'package:veyra_mobile/features/expense/presentation/expense_l10n.dart';
+import 'package:veyra_mobile/features/expense/presentation/expense_summary.dart';
 import 'package:veyra_mobile/l10n/app_localizations.dart';
 
 /// Renders a vehicle's expenses (category icon/label · date · description,
@@ -30,13 +31,127 @@ class ExpenseList extends ConsumerWidget {
       ),
       data: (rows) => rows.isEmpty
           ? _ExpenseEmpty(l10n: l10n)
-          : Column(
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
               children: [
+                _ExpenseSummaryCard(summary: computeExpenseSummary(rows)),
+                const SizedBox(height: 18),
                 for (final e in rows) _ExpenseRow(expense: e),
               ],
             ),
     );
   }
+}
+
+/// Total-this-year card with a category breakdown bar + legend (design
+/// `expenses.html`). Built from the in-memory expense list.
+class _ExpenseSummaryCard extends StatelessWidget {
+  const _ExpenseSummaryCard({required this.summary});
+  final ExpenseSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final slices = summary.slices;
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: VeyraColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: VeyraColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.expenseTotalThisYear,
+            style: const TextStyle(color: VeyraColors.textMuted, fontSize: 13),
+          ),
+          const SizedBox(height: 6),
+          Text(_compactRp(summary.total), style: soraDisplay(size: 32)),
+          if (summary.highest != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              '${l10n.expenseSummaryCount(summary.count)} · '
+              '${l10n.expenseSummaryHighest(localizedExpenseCategory(l10n, summary.highest!))}',
+              style: const TextStyle(color: VeyraColors.textMuted, fontSize: 12),
+            ),
+          ],
+          const SizedBox(height: 16),
+          _BreakdownBar(slices: slices),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 16,
+            runSpacing: 10,
+            children: [
+              for (final s in slices)
+                _LegendItem(
+                  category: s.category,
+                  label: localizedExpenseCategory(l10n, s.category),
+                  pct: (s.fraction * 100).round(),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BreakdownBar extends StatelessWidget {
+  const _BreakdownBar({required this.slices});
+  final List<CategorySlice> slices;
+
+  @override
+  Widget build(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(6),
+    child: SizedBox(
+      height: 10,
+      child: Row(
+        children: [
+          for (var i = 0; i < slices.length; i++) ...[
+            if (i > 0) const SizedBox(width: 2),
+            Expanded(
+              // Floor at 1 so a tiny slice still shows a sliver.
+              flex: (slices[i].fraction * 1000).round().clamp(1, 1000),
+              child: ColoredBox(color: _colorFor(slices[i].category)),
+            ),
+          ],
+        ],
+      ),
+    ),
+  );
+}
+
+class _LegendItem extends StatelessWidget {
+  const _LegendItem({
+    required this.category,
+    required this.label,
+    required this.pct,
+  });
+  final ExpenseCategory category;
+  final String label;
+  final int pct;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 9,
+        height: 9,
+        decoration: BoxDecoration(
+          color: _colorFor(category),
+          borderRadius: BorderRadius.circular(3),
+        ),
+      ),
+      const SizedBox(width: 7),
+      Text(
+        '$label · $pct%',
+        style: const TextStyle(color: VeyraColors.textMuted, fontSize: 12),
+      ),
+    ],
+  );
 }
 
 class _ExpenseRow extends StatelessWidget {
@@ -179,11 +294,14 @@ IconData _iconFor(ExpenseCategory category) => switch (category) {
   ExpenseCategory.other => Icons.payments_outlined,
 };
 
+/// Distinct colour per category, shared by the row icon, breakdown bar, and
+/// legend so a category reads the same everywhere.
 Color _colorFor(ExpenseCategory category) => switch (category) {
   ExpenseCategory.insurance => VeyraColors.accent,
   ExpenseCategory.tax => VeyraColors.info,
-  ExpenseCategory.tire => VeyraColors.accentHover,
-  _ => VeyraColors.textMuted,
+  ExpenseCategory.tire => VeyraColors.chartViolet,
+  ExpenseCategory.battery => VeyraColors.ok,
+  ExpenseCategory.other => VeyraColors.chartSlate,
 };
 
 const _months = [
@@ -214,3 +332,12 @@ String _grouped(int n) {
 }
 
 String _money(Decimal d) => 'Rp ${_grouped(d.round().toBigInt().toInt())}';
+
+/// Compact rupiah for the summary headline: Rp 8.4M, Rp 920k, Rp 500.
+String _compactRp(Decimal d) {
+  final v = d.round().toBigInt().toDouble();
+  if (v >= 1e9) return 'Rp ${(v / 1e9).toStringAsFixed(1)}B';
+  if (v >= 1e6) return 'Rp ${(v / 1e6).toStringAsFixed(1)}M';
+  if (v >= 1e3) return 'Rp ${(v / 1e3).toStringAsFixed(0)}k';
+  return 'Rp ${v.toStringAsFixed(0)}';
+}

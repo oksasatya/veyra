@@ -325,5 +325,22 @@
   "expenseFieldDescription": "Deskripsi",
   "expenseFieldDescriptionHint": "Premi tahunan",
   "expenseLoadError": "Gagal memuat pengeluaran.",
-  "expenseSave": "Simpan pengeluaran"
+  "expenseSave": "Simpan pengeluaran",
+  "expenseTotalThisYear": "Total tahun ini",
+  "expenseSummaryCount": "{count,plural, =1{Dari 1 pengeluaran} other{Dari {count} pengeluaran}}",
+  "@expenseSummaryCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "expenseSummaryHighest": "tertinggi: {category}",
+  "@expenseSummaryHighest": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  }
 }

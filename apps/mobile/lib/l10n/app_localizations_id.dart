@@ -708,4 +708,23 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get expenseSave => 'Simpan pengeluaran';
+
+  @override
+  String get expenseTotalThisYear => 'Total tahun ini';
+
+  @override
+  String expenseSummaryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Dari $count pengeluaran',
+      one: 'Dari 1 pengeluaran',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String expenseSummaryHighest(String category) {
+    return 'tertinggi: $category';
+  }
 }

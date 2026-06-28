@@ -1339,6 +1339,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save expense'**
   String get expenseSave;
+
+  /// No description provided for @expenseTotalThisYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Total this year'**
+  String get expenseTotalThisYear;
+
+  /// No description provided for @expenseSummaryCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count,plural, =1{Across 1 expense} other{Across {count} expenses}}'**
+  String expenseSummaryCount(int count);
+
+  /// No description provided for @expenseSummaryHighest.
+  ///
+  /// In en, this message translates to:
+  /// **'highest: {category}'**
+  String expenseSummaryHighest(String category);
 }
 
 class _AppLocalizationsDelegate
