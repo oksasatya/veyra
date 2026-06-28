@@ -17,7 +17,12 @@ const _kLocaleKey = 'veyra_locale';
 /// the backend (`PATCH /me`) is the settings layer's responsibility, keeping
 /// `core` decoupled from `auth` (mirrors `auth_events`).
 class LocaleController extends Notifier<Locale?> {
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  /// Optional storage override — defaults to [FlutterSecureStorage] at runtime;
+  /// injected in tests to avoid platform-channel dependencies.
+  LocaleController({FlutterSecureStorage? storage})
+    : _storage = storage ?? const FlutterSecureStorage();
+
+  final FlutterSecureStorage _storage;
 
   @override
   Locale? build() {
@@ -41,6 +46,22 @@ class LocaleController extends Notifier<Locale?> {
     } else {
       await _storage.write(key: _kLocaleKey, value: locale.languageCode);
     }
+  }
+
+  /// Adopt the server-side preferred language for a returning user.
+  ///
+  /// Rules:
+  /// - [code] not in [supportedLanguageCodes] → no-op.
+  /// - A persisted local override exists → local override wins, no-op.
+  /// - Otherwise, set the active locale to [code] WITHOUT persisting (a backend
+  ///   default is not a user override; only explicit [setLocale] persists).
+  ///
+  /// Reads the stored value directly to avoid a race with the async [_restore].
+  Future<void> adoptBackendLanguage(String code) async {
+    if (!supportedLanguageCodes.contains(code)) return;
+    final persisted = await _storage.read(key: _kLocaleKey);
+    if (persisted != null) return; // local override wins
+    state = Locale(code);
   }
 }
 

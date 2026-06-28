@@ -1,5 +1,8 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:veyra_mobile/core/error/failure.dart';
+import 'package:veyra_mobile/core/i18n/locale_controller.dart';
 import 'package:veyra_mobile/core/network/auth_events.dart';
 import 'package:veyra_mobile/core/storage/token_store.dart';
 import 'package:veyra_mobile/features/auth/data/repositories/auth_repository_impl.dart';
@@ -30,7 +33,10 @@ class AuthController extends AsyncNotifier<User?> {
     final tokens = await ref.read(tokenStoreProvider).read();
     if (tokens == null) return null;
     final result = await ref.read(getMeUseCaseProvider)();
-    return result.fold((_) => null, (user) => user);
+    return result.fold((_) => null, (user) {
+      _adoptLanguage(user);
+      return user;
+    });
   }
 
   /// Returns the [Failure] to show inline, or null on success.
@@ -43,10 +49,23 @@ class AuthController extends AsyncNotifier<User?> {
         return failure;
       },
       (user) {
+        _adoptLanguage(user);
         state = AsyncData(user);
         return null;
       },
     );
+  }
+
+  /// Fire-and-forget: adopt the server language for the user if set.
+  void _adoptLanguage(User user) {
+    final lang = user.preferredLanguage;
+    if (lang != null) {
+      unawaited(
+        ref
+            .read(localeControllerProvider.notifier)
+            .adoptBackendLanguage(lang),
+      );
+    }
   }
 
   Future<Failure?> register(Email email, Password password, String name) async {
