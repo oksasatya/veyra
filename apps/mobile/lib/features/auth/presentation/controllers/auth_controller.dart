@@ -10,6 +10,10 @@ import 'package:veyra_mobile/features/auth/domain/value_objects/password.dart';
 /// Holds the authenticated [User] (or null = logged out). `AsyncValue` carries
 /// the loading state during the initial session check and during login.
 class AuthController extends AsyncNotifier<User?> {
+  /// Keep the branded splash on screen at least this long so its open-animation
+  /// (~1.05s) always plays in full, then holds briefly before navigating.
+  static const _minSplash = Duration(milliseconds: 1500);
+
   @override
   Future<User?> build() async {
     // Network layer signals a hard session expiry → flip to logged out.
@@ -17,6 +21,12 @@ class AuthController extends AsyncNotifier<User?> {
       state = const AsyncData(null);
     });
 
+    final (user, _) =
+        await (_restoreSession(), Future<void>.delayed(_minSplash)).wait;
+    return user;
+  }
+
+  Future<User?> _restoreSession() async {
     final tokens = await ref.read(tokenStoreProvider).read();
     if (tokens == null) return null;
     final result = await ref.read(getMeUseCaseProvider)();

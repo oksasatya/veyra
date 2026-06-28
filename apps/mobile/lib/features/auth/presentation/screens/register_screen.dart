@@ -58,6 +58,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     return Scaffold(
       appBar: AppBar(backgroundColor: Colors.transparent),
       body: AppBackground(
+        variant: AmbientVariant.auth,
         child: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -75,7 +76,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 TextField(
                   controller: _name,
                   textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(hintText: 'Your name'),
+                  decoration: const InputDecoration(
+                    hintText: 'Your name',
+                    prefixIcon: Icon(Icons.person_outline, size: 20),
+                  ),
                 ),
                 const SizedBox(height: 14),
                 const _Label('Email'),
@@ -85,6 +89,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   autocorrect: false,
                   decoration: const InputDecoration(
                     hintText: 'you@example.com',
+                    prefixIcon: Icon(Icons.mail_outline, size: 20),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -94,7 +99,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   obscureText: true,
                   decoration: const InputDecoration(
                     hintText: 'At least 8 characters',
+                    prefixIcon: Icon(Icons.lock_outline, size: 20),
                   ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Use 8 or more characters.',
+                  style: TextStyle(color: VeyraColors.textMuted, fontSize: 12),
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 12),

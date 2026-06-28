@@ -55,6 +55,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final loading = ref.watch(authControllerProvider).isLoading;
     return Scaffold(
       body: AppBackground(
+        variant: AmbientVariant.auth,
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),

@@ -13,6 +13,12 @@ abstract class VeyraColors {
   static const accentHover = Color(0xFFFF8338);
   static const info = Color(0xFF34D1C4);
   static const danger = Color(0xFFF2555A);
+  static const ok = Color(0xFF4FD08A);
+  static const hintText = Color(0xFF5A6472);
+
+  // Expense-breakdown chart roles (design `--c3` / `--c4`).
+  static const chartViolet = Color(0xFF7C83FF);
+  static const chartSlate = Color(0xFF586072);
 }
 
 /// Sora display style for screen titles and the wordmark.

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:veyra_mobile/core/theme/app_theme.dart';
 
-/// The Veyra V monogram, painted from the brand SVG path.
+/// The Veyra V monogram, painted from the brand SVG (`assets/logo-mark.svg`):
+/// a solid V plus a faint fold triangle, matching the lockup exactly.
 class VeyraMark extends StatelessWidget {
   const VeyraMark({super.key, this.size = 40, this.color = VeyraColors.accent});
   final double size;
@@ -16,11 +17,14 @@ class _MarkPainter extends CustomPainter {
   _MarkPainter(this.color);
   final Color color;
 
+  // The fold sits over the V; on the brand bg it reads as a soft crease.
+  static const _fold = Color(0xFF0D1119);
+
   @override
   void paint(Canvas canvas, Size size) {
     final s = size.width / 120.0;
     Offset p(double x, double y) => Offset(x * s, y * s);
-    final path = Path()
+    final outer = Path()
       ..moveTo(p(14, 22).dx, p(14, 22).dy)
       ..lineTo(p(41, 22).dx, p(41, 22).dy)
       ..lineTo(p(60, 68).dx, p(60, 68).dy)
@@ -28,13 +32,19 @@ class _MarkPainter extends CustomPainter {
       ..lineTo(p(106, 22).dx, p(106, 22).dy)
       ..lineTo(p(60, 106).dx, p(60, 106).dy)
       ..close();
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = color
-        ..style = PaintingStyle.fill
-        ..isAntiAlias = true,
-    );
+    final fold = Path()
+      ..moveTo(p(41, 22).dx, p(41, 22).dy)
+      ..lineTo(p(60, 68).dx, p(60, 68).dy)
+      ..lineTo(p(60, 106).dx, p(60, 106).dy)
+      ..close();
+    canvas
+      ..drawPath(outer, Paint()..color = color..isAntiAlias = true)
+      ..drawPath(
+        fold,
+        Paint()
+          ..color = _fold.withValues(alpha: 0.16)
+          ..isAntiAlias = true,
+      );
   }
 
   @override

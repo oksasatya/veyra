@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Veyra V monogram, from assets/logo-mark.svg (solid V + faint fold). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+    <path
+        android:fillColor="#F26A21"
+        android:pathData="M14,22 L41,22 L60,68 L79,22 L106,22 L60,106 Z" />
+    <path
+        android:fillColor="#0D1119"
+        android:fillAlpha="0.16"
+        android:pathData="M41,22 L60,68 L60,106 Z" />
+</vector>

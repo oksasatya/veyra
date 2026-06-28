@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:veyra_mobile/core/error/failure.dart';
 import 'package:veyra_mobile/core/theme/app_theme.dart';
 import 'package:veyra_mobile/core/widgets/app_background.dart';
+import 'package:veyra_mobile/core/widgets/segmented_tabs.dart';
 import 'package:veyra_mobile/features/document/presentation/widgets/add_document_sheet.dart';
 import 'package:veyra_mobile/features/document/presentation/widgets/document_list.dart';
 import 'package:veyra_mobile/features/expense/presentation/widgets/add_expense_sheet.dart';
@@ -90,12 +91,10 @@ class _VehicleDetailScreenState extends ConsumerState<VehicleDetailScreen> {
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _TabRow(
-                  selected: _tab,
-                  onSelect: (i) => setState(() => _tab = i),
-                ),
+              SegmentedTabs(
+                labels: _tabs,
+                index: _tab,
+                onChanged: (i) => setState(() => _tab = i),
               ),
               const SizedBox(height: 14),
               Expanded(child: _content(summary)),
@@ -190,33 +189,83 @@ class _OdometerCard extends StatelessWidget {
   }
 }
 
+/// 2x2 stat grid as a single connected card with 1px hairline dividers
+/// (design `.grid` — border bg showing through 1px gaps, rounded + clipped).
 class _StatsGrid extends StatelessWidget {
   const _StatsGrid({required this.summary});
   final VehicleSummary summary;
 
   @override
-  Widget build(BuildContext context) => GridView.count(
-    crossAxisCount: 2,
-    shrinkWrap: true,
-    physics: const NeverScrollableScrollPhysics(),
-    mainAxisSpacing: 12,
-    crossAxisSpacing: 12,
-    childAspectRatio: 2,
-    children: [
-      _StatCell(label: 'Services', value: '${summary.totalServices}'),
-      _StatCell(
-        label: 'Service cost',
-        value: _money(summary.totalServiceCost),
-        color: VeyraColors.accent,
+  Widget build(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(14),
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border.all(color: VeyraColors.border),
+        borderRadius: BorderRadius.circular(14),
       ),
-      _StatCell(label: 'Refuels', value: '${summary.totalRefuels}'),
-      _StatCell(
-        label: 'Fuel cost',
-        value: _money(summary.totalFuelCost),
-        color: VeyraColors.info,
+      child: Column(
+        children: [
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _StatCell(
+                    label: 'Services',
+                    value: '${summary.totalServices}',
+                  ),
+                ),
+                const _VDivider(),
+                Expanded(
+                  child: _StatCell(
+                    label: 'Service cost',
+                    value: _money(summary.totalServiceCost),
+                    color: VeyraColors.accent,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const _HDivider(),
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _StatCell(
+                    label: 'Refuels',
+                    value: '${summary.totalRefuels}',
+                  ),
+                ),
+                const _VDivider(),
+                Expanded(
+                  child: _StatCell(
+                    label: 'Fuel cost',
+                    value: _money(summary.totalFuelCost),
+                    color: VeyraColors.info,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
-    ],
+    ),
   );
+}
+
+class _VDivider extends StatelessWidget {
+  const _VDivider();
+  @override
+  Widget build(BuildContext context) =>
+      const ColoredBox(color: VeyraColors.border, child: SizedBox(width: 1));
+}
+
+class _HDivider extends StatelessWidget {
+  const _HDivider();
+  @override
+  Widget build(BuildContext context) =>
+      const ColoredBox(color: VeyraColors.border, child: SizedBox(height: 1));
 }
 
 class _StatCell extends StatelessWidget {
@@ -226,72 +275,28 @@ class _StatCell extends StatelessWidget {
   final Color? color;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
-    decoration: BoxDecoration(
-      color: VeyraColors.surface,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: VeyraColors.border),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          label.toUpperCase(),
-          style: const TextStyle(
-            color: VeyraColors.textMuted,
-            fontSize: 11,
-            letterSpacing: 0.4,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          value,
-          style: soraDisplay(size: 18, color: color ?? VeyraColors.text),
-        ),
-      ],
-    ),
-  );
-}
-
-class _TabRow extends StatelessWidget {
-  const _TabRow({required this.selected, required this.onSelect});
-  final int selected;
-  final ValueChanged<int> onSelect;
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-    height: 38,
-    child: ListView.separated(
-      scrollDirection: Axis.horizontal,
-      itemCount: _tabs.length,
-      separatorBuilder: (_, _) => const SizedBox(width: 8),
-      itemBuilder: (context, i) {
-        final active = i == selected;
-        return GestureDetector(
-          onTap: () => onSelect(i),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: active ? VeyraColors.accent : VeyraColors.surface,
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: active ? VeyraColors.accent : VeyraColors.border,
-              ),
-            ),
-            child: Text(
-              _tabs[i],
-              style: TextStyle(
-                color: active ? VeyraColors.bg : VeyraColors.textMuted,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
+  Widget build(BuildContext context) => ColoredBox(
+    color: VeyraColors.surface,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: const TextStyle(
+              color: VeyraColors.textMuted,
+              fontSize: 11,
+              letterSpacing: 0.4,
             ),
           ),
-        );
-      },
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: soraDisplay(size: 18, color: color ?? VeyraColors.text),
+          ),
+        ],
+      ),
     ),
   );
 }

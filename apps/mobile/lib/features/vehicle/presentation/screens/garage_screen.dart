@@ -5,8 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:veyra_mobile/core/error/failure.dart';
 import 'package:veyra_mobile/core/theme/app_theme.dart';
 import 'package:veyra_mobile/core/widgets/app_background.dart';
+import 'package:veyra_mobile/core/widgets/skeleton.dart';
 import 'package:veyra_mobile/core/widgets/veyra_mark.dart';
 import 'package:veyra_mobile/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:veyra_mobile/features/document/presentation/screens/documents_overview.dart';
+import 'package:veyra_mobile/features/reminder/presentation/screens/reminders_overview.dart';
 import 'package:veyra_mobile/features/vehicle/presentation/controllers/garage_dashboard_controller.dart';
 
 class GarageScreen extends ConsumerStatefulWidget {
@@ -28,8 +31,12 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // The design shows the add affordance only on the empty garage; on a
+    // populated list we still offer a FAB so a second vehicle can be added.
+    final hasVehicles =
+        ref.watch(garageDashboardProvider).asData?.value.isEmpty == false;
     return Scaffold(
-      floatingActionButton: _nav == 0
+      floatingActionButton: _nav == 0 && hasVehicles
           ? FloatingActionButton.extended(
               onPressed: () => context.push('/vehicles/new'),
               backgroundColor: VeyraColors.accent,
@@ -48,8 +55,8 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
           bottom: false,
           child: switch (_nav) {
             0 => const _DashboardTab(),
-            1 => const _SoonTab(title: 'Reminders'),
-            2 => const _SoonTab(title: 'Documents'),
+            1 => const RemindersOverview(),
+            2 => const DocumentsOverview(),
             _ => const _SettingsTab(),
           },
         ),
@@ -87,7 +94,7 @@ class _DashboardTab extends ConsumerWidget {
               onRetry: () => ref.invalidate(garageDashboardProvider),
             ),
             data: (d) => d.isEmpty
-                ? const _EmptyGarage()
+                ? _EmptyGarage(onAdd: () => context.push('/vehicles/new'))
                 : RefreshIndicator(
                     color: VeyraColors.accent,
                     backgroundColor: VeyraColors.surface,
@@ -367,30 +374,6 @@ class _StatDivider extends StatelessWidget {
 
 // ── Other tabs (placeholders) ────────────────────────────────────────────────
 
-class _SoonTab extends StatelessWidget {
-  const _SoonTab({required this.title});
-  final String title;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-        child: Text(title, style: soraDisplay(size: 32)),
-      ),
-      const Expanded(
-        child: Center(
-          child: Text(
-            'Coming soon',
-            style: TextStyle(color: VeyraColors.textMuted, fontSize: 15),
-          ),
-        ),
-      ),
-    ],
-  );
-}
-
 class _SettingsTab extends ConsumerWidget {
   const _SettingsTab();
 
@@ -492,7 +475,8 @@ class _BottomNav extends StatelessWidget {
 // ── States ───────────────────────────────────────────────────────────────────
 
 class _EmptyGarage extends StatelessWidget {
-  const _EmptyGarage();
+  const _EmptyGarage({required this.onAdd});
+  final VoidCallback onAdd;
 
   @override
   Widget build(BuildContext context) => Center(
@@ -501,18 +485,29 @@ class _EmptyGarage extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 108,
-            height: 108,
+          DecoratedBox(
             decoration: BoxDecoration(
-              color: VeyraColors.surface,
               borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: VeyraColors.border),
+              boxShadow: [
+                BoxShadow(
+                  color: VeyraColors.accent.withValues(alpha: 0.18),
+                  blurRadius: 60,
+                ),
+              ],
             ),
-            alignment: Alignment.center,
-            child: const VeyraMark(size: 52),
+            child: Container(
+              width: 108,
+              height: 108,
+              decoration: BoxDecoration(
+                color: VeyraColors.surface,
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: VeyraColors.border),
+              ),
+              alignment: Alignment.center,
+              child: const VeyraMark(size: 52),
+            ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 26),
           Text('Add your first vehicle', style: soraDisplay(size: 21)),
           const SizedBox(height: 10),
           const Text(
@@ -522,7 +517,17 @@ class _EmptyGarage extends StatelessWidget {
             style: TextStyle(
               color: VeyraColors.textMuted,
               fontSize: 15,
-              height: 1.5,
+              height: 1.55,
+            ),
+          ),
+          const SizedBox(height: 26),
+          FilledButton.icon(
+            onPressed: onAdd,
+            icon: const Icon(Icons.add, size: 20),
+            label: const Text('Add vehicle'),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(0, 52),
+              padding: const EdgeInsets.symmetric(horizontal: 26),
             ),
           ),
         ],
@@ -539,25 +544,79 @@ class _ErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Center(
     child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
+      padding: const EdgeInsets.symmetric(horizontal: 36),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.cloud_off, color: VeyraColors.danger, size: 40),
-          const SizedBox(height: 16),
-          Text("Can't load your garage", style: soraDisplay(size: 20)),
-          const SizedBox(height: 10),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: VeyraColors.textMuted,
-              fontSize: 15,
-              height: 1.5,
+          Container(
+            width: 96,
+            height: 96,
+            decoration: BoxDecoration(
+              color: VeyraColors.surface,
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(color: VeyraColors.border),
+            ),
+            alignment: Alignment.center,
+            child: const Icon(
+              Icons.cloud_off_outlined,
+              color: VeyraColors.danger,
+              size: 40,
             ),
           ),
-          const SizedBox(height: 22),
-          FilledButton(onPressed: onRetry, child: const Text('Try again')),
+          const SizedBox(height: 24),
+          Text("Can't reach Veyra", style: soraDisplay(size: 21)),
+          const SizedBox(height: 10),
+          const Text(
+            "We couldn't load your garage. Check your connection, then try "
+            'again.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: VeyraColors.textMuted,
+              fontSize: 15,
+              height: 1.55,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+            decoration: BoxDecoration(
+              color: VeyraColors.surface2,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: VeyraColors.border),
+            ),
+            child: Text(message, style: plexMono(size: 12)),
+          ),
+          const SizedBox(height: 26),
+          SizedBox(
+            width: 280,
+            child: Column(
+              children: [
+                FilledButton.icon(
+                  onPressed: onRetry,
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: const Text('Try again'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                  ),
+                ),
+                const SizedBox(height: 11),
+                SizedBox(
+                  height: 50,
+                  child: OutlinedButton(
+                    onPressed: () {},
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: VeyraColors.text,
+                      side: const BorderSide(color: VeyraColors.border),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text('Check server settings'),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     ),
@@ -574,25 +633,117 @@ class _DashboardSkeleton extends StatelessWidget {
       Row(
         children: [
           for (var i = 0; i < 3; i++) ...[
-            Expanded(child: _box(64)),
+            const Expanded(child: _OverviewSkeleton()),
             if (i < 2) const SizedBox(width: 10),
           ],
         ],
       ),
       const SizedBox(height: 18),
-      for (var i = 0; i < 3; i++) ...[
-        _box(150),
+      for (var i = 0; i < 2; i++) ...[
+        const _CardSkeleton(),
         const SizedBox(height: 14),
       ],
     ],
   );
+}
 
-  Widget _box(double h) => Container(
-    height: h,
+class _OverviewSkeleton extends StatelessWidget {
+  const _OverviewSkeleton();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    height: 70,
+    padding: const EdgeInsets.all(13),
     decoration: BoxDecoration(
       color: VeyraColors.surface,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(14),
       border: Border.all(color: VeyraColors.border),
+    ),
+    child: const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SkeletonBox(width: 46, height: 11),
+        SizedBox(height: 10),
+        SkeletonBox(width: 28, height: 18),
+      ],
+    ),
+  );
+}
+
+class _CardSkeleton extends StatelessWidget {
+  const _CardSkeleton();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: VeyraColors.surface,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: VeyraColors.border),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            SkeletonBox(width: 44, height: 44, radius: 12),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  FractionallySizedBox(
+                    widthFactor: 0.55,
+                    alignment: Alignment.centerLeft,
+                    child: SkeletonBox(height: 14),
+                  ),
+                  SizedBox(height: 9),
+                  FractionallySizedBox(
+                    widthFactor: 0.38,
+                    alignment: Alignment.centerLeft,
+                    child: SkeletonBox(height: 11),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        const FractionallySizedBox(
+          widthFactor: 0.75,
+          alignment: Alignment.centerLeft,
+          child: SkeletonBox(height: 11),
+        ),
+        const SizedBox(height: 14),
+        Padding(
+          padding: const EdgeInsets.only(top: 14),
+          child: DecoratedBox(
+            decoration: const BoxDecoration(
+              border: Border(top: BorderSide(color: VeyraColors.border)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 14),
+              child: Row(
+                children: [
+                  for (var i = 0; i < 3; i++) ...[
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SkeletonBox(width: 44, height: 10),
+                          SizedBox(height: 8),
+                          SkeletonBox(width: 40, height: 14),
+                        ],
+                      ),
+                    ),
+                    if (i < 2) const SizedBox(width: 14),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     ),
   );
 }

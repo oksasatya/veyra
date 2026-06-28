@@ -1,14 +1,26 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:veyra_mobile/core/theme/app_theme.dart';
 
-/// Shared screen backdrop — carbon base plus a painted Veyra texture: a soft
-/// amber glow at the top, faint concentric gauge arcs, and a large low-opacity
-/// V monogram. Decorative + non-interactive; sits behind every screen's content.
+/// Which ambient treatment a screen uses, mirroring the Claude Design folder:
+/// - [app]: amber glow top-right + large V monogram + bottom arc lines
+///   (`home-ios`, `vehicle-detail`, `reminders`, `documents`, states).
+/// - [auth]: amber glow top-center + V monogram + arcs (`login`, `register`).
+/// - [sheet]: glow top-right only — the bottom sheet covers the lower texture
+///   (`add-fuel-sheet`).
+enum AmbientVariant { app, auth, sheet }
+
+/// Shared screen backdrop, ported 1:1 from the Claude Design ambient layer
+/// (`.veyra-amb` / `.glow` + `.veyra-tex`). Painted in the design's 390x844
+/// reference frame and scaled to fill. Decorative + non-interactive.
 class AppBackground extends StatelessWidget {
-  const AppBackground({required this.child, super.key});
+  const AppBackground({
+    required this.child,
+    this.variant = AmbientVariant.app,
+    super.key,
+  });
+
   final Widget child;
+  final AmbientVariant variant;
 
   @override
   Widget build(BuildContext context) => Stack(
@@ -16,7 +28,7 @@ class AppBackground extends StatelessWidget {
           const Positioned.fill(child: ColoredBox(color: VeyraColors.bg)),
           Positioned.fill(
             child: IgnorePointer(
-              child: CustomPaint(painter: _BackdropPainter()),
+              child: CustomPaint(painter: _AmbientPainter(variant)),
             ),
           ),
           child,
@@ -24,70 +36,125 @@ class AppBackground extends StatelessWidget {
       );
 }
 
-class _BackdropPainter extends CustomPainter {
+class _AmbientPainter extends CustomPainter {
+  _AmbientPainter(this.variant);
+
+  final AmbientVariant variant;
+
+  // Design reference frame (iPhone logical points). All coordinates below are
+  // expressed in this space, then scaled to the actual canvas size.
+  static const _refWidth = 390.0;
+  static const _refHeight = 844.0;
+
   static const _amber = Color(0xFFF26A21);
-  static const _teal = Color(0xFF34D1C4);
+  static const _ink = Color(0xFFE6EAF0);
 
   @override
   void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
+    canvas
+      ..save()
+      ..scale(size.width / _refWidth, size.height / _refHeight);
 
-    // 1. Ambient amber glow at the top.
-    final glowRect = Rect.fromCircle(center: Offset(w * 0.5, -h * 0.04), radius: w);
-    canvas.drawRect(
-      Offset.zero & size,
-      Paint()
-        ..shader = RadialGradient(
-          radius: 0.6,
-          colors: [_amber.withValues(alpha: 0.20), _amber.withValues(alpha: 0)],
-        ).createShader(glowRect),
-    );
-
-    // 2. Cool wash, lower-left.
-    final washRect = Rect.fromCircle(center: Offset(0, h * 0.92), radius: w * 0.9);
-    canvas.drawRect(
-      Offset.zero & size,
-      Paint()
-        ..shader = RadialGradient(
-          radius: 0.5,
-          colors: [_teal.withValues(alpha: 0.07), _teal.withValues(alpha: 0)],
-        ).createShader(washRect),
-    );
-
-    // 3. Concentric gauge arcs sweeping from the top-right (speedometer motif).
-    final arcCenter = Offset(w * 0.92, h * 0.18);
-    final arcPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.4
-      ..color = _amber.withValues(alpha: 0.07);
-    for (var i = 0; i < 4; i++) {
-      final r = w * (0.42 + i * 0.17);
-      canvas.drawArc(
-        Rect.fromCircle(center: arcCenter, radius: r),
-        math.pi * 0.55,
-        math.pi * 0.72,
-        false,
-        arcPaint,
-      );
+    if (variant == AmbientVariant.auth) {
+      _paintAuthGlow(canvas);
+    } else {
+      _paintAppGlow(canvas);
+    }
+    if (variant != AmbientVariant.sheet) {
+      _paintMonogram(canvas);
+      _paintArcs(canvas);
     }
 
-    // 4. Large faint V monogram texture, lower area.
-    final s = (w * 0.92) / 120.0;
-    final dx = w * 0.16;
-    final dy = h * 0.60;
-    Offset p(double x, double y) => Offset(dx + x * s, dy + y * s);
-    final v = Path()
-      ..moveTo(p(14, 22).dx, p(14, 22).dy)
-      ..lineTo(p(41, 22).dx, p(41, 22).dy)
-      ..lineTo(p(60, 68).dx, p(60, 68).dy)
-      ..lineTo(p(79, 22).dx, p(79, 22).dy)
-      ..lineTo(p(106, 22).dx, p(106, 22).dy)
-      ..lineTo(p(60, 106).dx, p(60, 106).dy)
+    canvas.restore();
+  }
+
+  // App glow: amber ellipse top-right (cx372 cy70 rx220 ry200); radial stops
+  // 0.16 -> 0.05 @55% -> 0.
+  void _paintAppGlow(Canvas canvas) {
+    final rect = Rect.fromCenter(
+      center: const Offset(372, 70),
+      width: 440,
+      height: 400,
+    );
+    canvas.drawOval(
+      rect,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [
+            _amber.withValues(alpha: 0.16),
+            _amber.withValues(alpha: 0.05),
+            _amber.withValues(alpha: 0),
+          ],
+          stops: const [0, 0.55, 1],
+        ).createShader(rect),
+    );
+  }
+
+  // Auth glow: amber circle top-center (cx195 cy60 r180); radial 0.22 -> 0 @70%.
+  void _paintAuthGlow(Canvas canvas) {
+    final rect = Rect.fromCircle(center: const Offset(195, 60), radius: 180);
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [
+            _amber.withValues(alpha: 0.22),
+            _amber.withValues(alpha: 0),
+          ],
+          stops: const [0, 0.7],
+        ).createShader(rect),
+    );
+  }
+
+  // One large faint V monogram at translate(58,470) scale(2.35). Stroke width
+  // 2.4 is pre-scale, so it thickens with the group exactly like the SVG.
+  void _paintMonogram(Canvas canvas) {
+    final outer = Path()
+      ..moveTo(14, 22)
+      ..lineTo(41, 22)
+      ..lineTo(60, 68)
+      ..lineTo(79, 22)
+      ..lineTo(106, 22)
+      ..lineTo(60, 106)
       ..close();
-    canvas.drawPath(v, Paint()..color = _amber.withValues(alpha: 0.05));
+    final fold = Path()
+      ..moveTo(41, 22)
+      ..lineTo(60, 68)
+      ..lineTo(60, 106);
+    Paint stroke(double alpha) => Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.4
+      ..strokeJoin = StrokeJoin.round
+      ..color = _ink.withValues(alpha: alpha);
+    canvas
+      ..save()
+      ..translate(58, 470)
+      ..scale(2.35)
+      ..drawPath(outer, stroke(0.05))
+      ..drawPath(fold, stroke(0.03))
+      ..restore();
+  }
+
+  // Three concentric arc lines near the bottom (SVG sweep-flag 1 -> clockwise).
+  void _paintArcs(Canvas canvas) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4
+      ..strokeCap = StrokeCap.round
+      ..color = _ink.withValues(alpha: 0.045);
+    Path arc(double y, double radius, double endX) => Path()
+      ..moveTo(-40, y)
+      ..arcToPoint(
+        Offset(endX, y),
+        radius: Radius.circular(radius),
+      );
+    canvas
+      ..drawPath(arc(690, 150, 250), paint)
+      ..drawPath(arc(740, 200, 300), paint)
+      ..drawPath(arc(792, 250, 348), paint);
   }
 
   @override
-  bool shouldRepaint(covariant _BackdropPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _AmbientPainter oldDelegate) =>
+      oldDelegate.variant != variant;
 }
