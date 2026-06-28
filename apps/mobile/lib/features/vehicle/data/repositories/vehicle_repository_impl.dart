@@ -6,8 +6,10 @@ import 'package:veyra_mobile/core/error/failure.dart';
 import 'package:veyra_mobile/core/network/dio_client.dart';
 import 'package:veyra_mobile/features/vehicle/data/datasources/vehicle_remote_data_source.dart';
 import 'package:veyra_mobile/features/vehicle/domain/entities/vehicle.dart';
+import 'package:veyra_mobile/features/vehicle/domain/entities/vehicle_summary.dart';
 import 'package:veyra_mobile/features/vehicle/domain/repositories/vehicle_repository.dart';
 import 'package:veyra_mobile/features/vehicle/domain/usecases/create_vehicle_usecase.dart';
+import 'package:veyra_mobile/features/vehicle/domain/usecases/get_summary_usecase.dart';
 import 'package:veyra_mobile/features/vehicle/domain/usecases/list_vehicles_usecase.dart';
 
 class VehicleRepositoryImpl implements VehicleRepository {
@@ -42,6 +44,16 @@ class VehicleRepositoryImpl implements VehicleRepository {
       return Left(mapDioError(e));
     }
   }
+
+  @override
+  Future<Either<Failure, VehicleSummary>> summary(String vehicleId) async {
+    try {
+      final dto = await remote.summary(vehicleId);
+      return Right(dto.toDomain());
+    } on DioException catch (e) {
+      return Left(mapDioError(e));
+    }
+  }
 }
 
 // ── Providers (DI) ───────────────────────────────────────────────────────────
@@ -57,3 +69,14 @@ final listVehiclesUseCaseProvider = Provider<ListVehiclesUseCase>(
 final createVehicleUseCaseProvider = Provider<CreateVehicleUseCase>(
   (ref) => CreateVehicleUseCase(ref.watch(vehicleRepositoryProvider)),
 );
+
+final getSummaryUseCaseProvider = Provider<GetSummaryUseCase>(
+  (ref) => GetSummaryUseCase(ref.watch(vehicleRepositoryProvider)),
+);
+
+/// Per-vehicle summary, keyed by vehicle id.
+final vehicleSummaryProvider =
+    FutureProvider.family<VehicleSummary, String>((ref, vehicleId) async {
+  final result = await ref.read(getSummaryUseCaseProvider)(vehicleId);
+  return result.fold((failure) => throw failure, (summary) => summary);
+});

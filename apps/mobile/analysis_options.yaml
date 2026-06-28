@@ -14,3 +14,4 @@ linter:
     avoid_redundant_argument_values: false
     one_member_abstracts: false
     sort_pub_dependencies: false
+    specify_nonobvious_property_types: false

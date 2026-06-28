@@ -1,6 +1,7 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:veyra_mobile/core/error/failure.dart';
 import 'package:veyra_mobile/features/vehicle/domain/entities/vehicle.dart';
+import 'package:veyra_mobile/features/vehicle/domain/entities/vehicle_summary.dart';
 import 'package:veyra_mobile/features/vehicle/domain/value_objects/fuel_type.dart';
 
 /// Validated input for creating a vehicle (the use case builds this from VOs).
@@ -30,4 +31,5 @@ class CreateVehicleInput {
 abstract interface class VehicleRepository {
   Future<Either<Failure, List<Vehicle>>> list();
   Future<Either<Failure, Vehicle>> create(CreateVehicleInput input);
+  Future<Either<Failure, VehicleSummary>> summary(String vehicleId);
 }

@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:veyra_mobile/features/vehicle/data/models/vehicle_dto.dart';
+import 'package:veyra_mobile/features/vehicle/data/models/vehicle_summary_dto.dart';
 
 /// Raw HTTP calls for vehicles. Throws [DioException] on failure (mapped to a
 /// Failure in the repository). Auth header is added by the dio interceptor.
@@ -18,5 +19,11 @@ class VehicleRemoteDataSource {
   Future<VehicleDto> create(Map<String, dynamic> body) async {
     final res = await _dio.post<Map<String, dynamic>>('/vehicles', data: body);
     return VehicleDto.fromJson(res.data!);
+  }
+
+  Future<VehicleSummaryDto> summary(String vehicleId) async {
+    final res =
+        await _dio.get<Map<String, dynamic>>('/vehicles/$vehicleId/summary');
+    return VehicleSummaryDto.fromJson(res.data!);
   }
 }

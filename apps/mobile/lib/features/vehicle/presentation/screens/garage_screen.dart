@@ -52,6 +52,7 @@ class GarageScreen extends ConsumerWidget {
                         vehicles: list,
                         onRefresh: () =>
                             ref.read(garageControllerProvider.notifier).refresh(),
+                        onTap: (v) => context.push('/vehicles/${v.id}', extra: v),
                       ),
               ),
             ),
@@ -63,9 +64,14 @@ class GarageScreen extends ConsumerWidget {
 }
 
 class _VehicleList extends StatelessWidget {
-  const _VehicleList({required this.vehicles, required this.onRefresh});
+  const _VehicleList({
+    required this.vehicles,
+    required this.onRefresh,
+    required this.onTap,
+  });
   final List<Vehicle> vehicles;
   final Future<void> Function() onRefresh;
+  final void Function(Vehicle) onTap;
 
   @override
   Widget build(BuildContext context) => RefreshIndicator(
@@ -78,7 +84,7 @@ class _VehicleList extends StatelessWidget {
             _Overview(count: vehicles.length),
             const SizedBox(height: 18),
             for (final v in vehicles) ...[
-              _VehicleCard(vehicle: v),
+              _VehicleCard(vehicle: v, onTap: () => onTap(v)),
               const SizedBox(height: 14),
             ],
           ],
@@ -112,18 +118,24 @@ class _Overview extends StatelessWidget {
 }
 
 class _VehicleCard extends StatelessWidget {
-  const _VehicleCard({required this.vehicle});
+  const _VehicleCard({required this.vehicle, required this.onTap});
   final Vehicle vehicle;
+  final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: VeyraColors.surface,
+  Widget build(BuildContext context) => Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: VeyraColors.border),
-        ),
-        child: Column(
+          child: Ink(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: VeyraColors.surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: VeyraColors.border),
+            ),
+            child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
@@ -163,7 +175,9 @@ class _VehicleCard extends StatelessWidget {
               'Odometer ${_formatKm(vehicle.odometer)} km',
               style: const TextStyle(color: VeyraColors.textMuted, fontSize: 13),
             ),
-          ],
+              ],
+            ),
+          ),
         ),
       );
 
