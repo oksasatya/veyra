@@ -271,9 +271,9 @@ A Flutter client (iOS + Android) in `apps/mobile/`, with clean architecture mirr
 - **Built:** auth (register / login / splash; bearer tokens in the platform secure store), garage +
   vehicle detail, service records, fuel logs, expenses, reminders, and documents — every screen
   consuming the standardized `{ meta, data }` response envelope.
-- **i18n:** English + Indonesian. The app owns all UI copy and maps the backend's `error.code` to a
-  localized message (`flutter_localizations` + ARB). The localized-error layer + language toggle are
-  landing in phases — see [the plan](docs/superpowers/plans/2026-06-28-mobile-i18n-phase-cd.md).
+- **i18n:** English + Indonesian, complete across every screen. The app owns all UI copy and maps the
+  backend's `error.code` to a localized message (`flutter_localizations` + ARB), with a device-default
+  language plus an in-app override. Plan: [Phase C+D](docs/superpowers/plans/2026-06-28-mobile-i18n-phase-cd.md).
 - **Stack:** Flutter · Riverpod · dio · go_router · fpdart · flutter_secure_storage · very_good_analysis.
 - **Design:** [`docs/superpowers/specs/2026-06-27-veyra-mobile-app-design.md`](docs/superpowers/specs/2026-06-27-veyra-mobile-app-design.md).
 
@@ -384,7 +384,7 @@ entry is required.
 - [x] v0.8 — Redis auth (access + refresh cookies, CSRF, session revocation, read cache)
 - [x] v0.9 — Bearer-mode auth (ADR-0007) + Flutter app (auth, garage, all feature screens)
 - [x] v0.10 — Standardized response envelope + machine-readable error codes (ADR-0008)
-- [ ] v0.11 — Full mobile i18n (en/id) — localized errors, language toggle, per-screen strings
+- [x] v0.11 — Full mobile i18n (en/id) — localized errors, language toggle, per-screen strings
 - [ ] v1.0 — OpenAPI 3.1 spec + stable MVP
 
 ---
