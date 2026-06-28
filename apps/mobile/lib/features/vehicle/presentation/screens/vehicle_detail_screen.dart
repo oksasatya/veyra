@@ -8,6 +8,7 @@ import 'package:veyra_mobile/core/widgets/app_background.dart';
 import 'package:veyra_mobile/core/widgets/segmented_tabs.dart';
 import 'package:veyra_mobile/features/document/presentation/widgets/add_document_sheet.dart';
 import 'package:veyra_mobile/features/document/presentation/widgets/document_list.dart';
+import 'package:veyra_mobile/features/expense/presentation/expense_l10n.dart';
 import 'package:veyra_mobile/features/expense/presentation/widgets/add_expense_sheet.dart';
 import 'package:veyra_mobile/features/expense/presentation/widgets/expense_list.dart';
 import 'package:veyra_mobile/features/fuel_log/presentation/widgets/add_fuel_log_sheet.dart';
@@ -17,6 +18,7 @@ import 'package:veyra_mobile/features/service_record/presentation/widgets/servic
 import 'package:veyra_mobile/features/vehicle/data/repositories/vehicle_repository_impl.dart';
 import 'package:veyra_mobile/features/vehicle/domain/entities/vehicle.dart';
 import 'package:veyra_mobile/features/vehicle/domain/entities/vehicle_summary.dart';
+import 'package:veyra_mobile/features/vehicle/presentation/vehicle_activity.dart';
 import 'package:veyra_mobile/features/vehicle/presentation/vehicle_l10n.dart';
 import 'package:veyra_mobile/l10n/app_localizations.dart';
 
@@ -145,7 +147,7 @@ class _Overview extends ConsumerWidget {
           data: (s) => _StatsGrid(summary: s),
         ),
         const SizedBox(height: 20),
-        const _ActivityHint(),
+        _ActivityFeed(vehicleId: vehicleId),
       ],
     );
   }
@@ -319,23 +321,181 @@ class _StatCell extends StatelessWidget {
   );
 }
 
-class _ActivityHint extends StatelessWidget {
-  const _ActivityHint();
+/// Cross-type recent activity (fuel + service + expense) for the Overview tab.
+class _ActivityFeed extends ConsumerWidget {
+  const _ActivityFeed({required this.vehicleId});
+  final String vehicleId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final activity = ref.watch(vehicleActivityProvider(vehicleId));
+    return activity.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+          child: SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.2,
+              color: VeyraColors.accent,
+            ),
+          ),
+        ),
+      ),
+      error: (_, _) => _ActivityNote(l10n.errorServer),
+      data: (items) => items.isEmpty
+          ? _ActivityNote(l10n.vehicleActivityEmpty)
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.vehicleActivityTitle, style: soraDisplay(size: 16)),
+                const SizedBox(height: 6),
+                for (final item in items) _ActivityRow(item: item),
+              ],
+            ),
+    );
+  }
+}
+
+class _ActivityNote extends StatelessWidget {
+  const _ActivityNote(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(vertical: 24),
+    alignment: Alignment.center,
+    child: Text(
+      text,
+      textAlign: TextAlign.center,
+      style: const TextStyle(color: VeyraColors.textMuted, fontSize: 14),
+    ),
+  );
+}
+
+class _ActivityRow extends StatelessWidget {
+  const _ActivityRow({required this.item});
+  final ActivityItem item;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final v = _present(l10n, item);
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 24),
-      alignment: Alignment.center,
-      child: Text(
-        l10n.vehicleDetailActivityHint,
-        textAlign: TextAlign.center,
-        style: const TextStyle(color: VeyraColors.textMuted, fontSize: 14),
+      padding: const EdgeInsets.symmetric(vertical: 13),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: VeyraColors.border)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: VeyraColors.surface2,
+              borderRadius: BorderRadius.circular(11),
+              border: Border.all(color: VeyraColors.border),
+            ),
+            child: Icon(v.icon, size: 20, color: v.color),
+          ),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  v.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: VeyraColors.text,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  v.meta,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: plexMono(size: 12),
+                ),
+              ],
+            ),
+          ),
+          if (v.amount != null) ...[
+            const SizedBox(width: 10),
+            Text(
+              v.amount!,
+              style: plexMono(
+                size: 14,
+                color: v.amountAccent ? VeyraColors.accent : VeyraColors.text,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
 }
+
+typedef _Presented = ({
+  IconData icon,
+  Color color,
+  String title,
+  String meta,
+  String? amount,
+  bool amountAccent,
+});
+
+_Presented _present(AppLocalizations l10n, ActivityItem item) => switch (item) {
+  FuelActivity(:final log) => (
+    icon: Icons.local_gas_station_outlined,
+    color: VeyraColors.accent,
+    title: '${l10n.vehicleDetailTabFuel} · ${log.station ?? '—'}',
+    meta:
+        '${_shortDate(log.logDate)} · ${_grouped(log.odometer)} km · ${log.liters} L',
+    amount: _money(log.totalCost),
+    amountAccent: true,
+  ),
+  ServiceActivity(:final record) => (
+    icon: Icons.build_outlined,
+    color: VeyraColors.textMuted,
+    title: '${l10n.vehicleDetailTabService} · ${record.workshop ?? '—'}',
+    meta:
+        '${_shortDate(record.serviceDate)} · ${_grouped(record.odometer)} km · ${record.description}',
+    amount: record.cost != null ? _money(record.cost!) : null,
+    amountAccent: false,
+  ),
+  ExpenseActivity(:final expense) => (
+    icon: Icons.payments_outlined,
+    color: VeyraColors.info,
+    title:
+        '${l10n.vehicleActivityExpense} · ${localizedExpenseCategory(l10n, expense.category)}',
+    meta: '${_shortDate(expense.expenseDate)} · ${expense.description}',
+    amount: _money(expense.amount),
+    amountAccent: false,
+  ),
+};
+
+const _months = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
+String _shortDate(DateTime d) => '${d.day} ${_months[d.month - 1]}';
 
 class _StatsSkeleton extends StatelessWidget {
   const _StatsSkeleton();

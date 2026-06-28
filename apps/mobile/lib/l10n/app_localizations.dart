@@ -608,6 +608,24 @@ abstract class AppLocalizations {
   /// **'Retry'**
   String get vehicleDetailErrorRetry;
 
+  /// No description provided for @vehicleActivityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent activity'**
+  String get vehicleActivityTitle;
+
+  /// No description provided for @vehicleActivityExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get vehicleActivityExpense;
+
+  /// No description provided for @vehicleActivityEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No activity yet. Log fuel, a service, or an expense.'**
+  String get vehicleActivityEmpty;
+
   /// No description provided for @vehicleAddTitle.
   ///
   /// In en, this message translates to:

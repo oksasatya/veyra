@@ -113,6 +113,9 @@
   "vehicleDetailAddDocument": "Tambah dokumen",
   "vehicleDetailActivityHint": "Buka tab BBM, Servis, Pengeluaran, atau Dokumen untuk melihat catatan.",
   "vehicleDetailErrorRetry": "Coba lagi",
+  "vehicleActivityTitle": "Aktivitas terbaru",
+  "vehicleActivityExpense": "Pengeluaran",
+  "vehicleActivityEmpty": "Belum ada aktivitas. Catat BBM, servis, atau pengeluaran.",
 
   "vehicleAddTitle": "Tambah kendaraan",
   "vehicleAddFieldBrand": "Merek",

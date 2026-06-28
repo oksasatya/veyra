@@ -113,6 +113,9 @@
   "vehicleDetailAddDocument": "Add document",
   "vehicleDetailActivityHint": "Open the Fuel, Service, Expenses, or Docs tab to see entries.",
   "vehicleDetailErrorRetry": "Retry",
+  "vehicleActivityTitle": "Recent activity",
+  "vehicleActivityExpense": "Expense",
+  "vehicleActivityEmpty": "No activity yet. Log fuel, a service, or an expense.",
 
   "vehicleAddTitle": "Add vehicle",
   "vehicleAddFieldBrand": "Brand",

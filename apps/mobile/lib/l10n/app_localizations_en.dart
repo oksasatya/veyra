@@ -291,6 +291,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vehicleDetailErrorRetry => 'Retry';
 
   @override
+  String get vehicleActivityTitle => 'Recent activity';
+
+  @override
+  String get vehicleActivityExpense => 'Expense';
+
+  @override
+  String get vehicleActivityEmpty =>
+      'No activity yet. Log fuel, a service, or an expense.';
+
+  @override
   String get vehicleAddTitle => 'Add vehicle';
 
   @override

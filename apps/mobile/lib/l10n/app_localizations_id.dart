@@ -292,6 +292,16 @@ class AppLocalizationsId extends AppLocalizations {
   String get vehicleDetailErrorRetry => 'Coba lagi';
 
   @override
+  String get vehicleActivityTitle => 'Aktivitas terbaru';
+
+  @override
+  String get vehicleActivityExpense => 'Pengeluaran';
+
+  @override
+  String get vehicleActivityEmpty =>
+      'Belum ada aktivitas. Catat BBM, servis, atau pengeluaran.';
+
+  @override
   String get vehicleAddTitle => 'Tambah kendaraan';
 
   @override
