@@ -13,13 +13,13 @@ class DocumentDto {
   });
 
   factory DocumentDto.fromJson(Map<String, dynamic> json) => DocumentDto(
-        id: json['id'] as String,
-        vehicleId: json['vehicle_id'] as String,
-        docType: json['doc_type'] as String,
-        title: json['title'] as String,
-        expiryDate: json['expiry_date'] as String?,
-        fileUrl: json['file_url'] as String?,
-      );
+    id: json['id'] as String,
+    vehicleId: json['vehicle_id'] as String,
+    docType: json['doc_type'] as String,
+    title: json['title'] as String,
+    expiryDate: json['expiry_date'] as String?,
+    fileUrl: json['file_url'] as String?,
+  );
 
   final String id;
   final String vehicleId;
@@ -29,11 +29,11 @@ class DocumentDto {
   final String? fileUrl;
 
   Document toDomain() => Document(
-        id: id,
-        vehicleId: vehicleId,
-        docType: DocType.fromApi(docType),
-        title: title,
-        expiryDate: expiryDate == null ? null : DateTime.parse(expiryDate!),
-        fileUrl: fileUrl,
-      );
+    id: id,
+    vehicleId: vehicleId,
+    docType: DocType.fromApi(docType),
+    title: title,
+    expiryDate: expiryDate == null ? null : DateTime.parse(expiryDate!),
+    fileUrl: fileUrl,
+  );
 }

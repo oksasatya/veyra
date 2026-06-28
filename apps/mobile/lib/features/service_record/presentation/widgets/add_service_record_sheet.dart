@@ -72,8 +72,7 @@ class _AddServiceRecordSheetState extends ConsumerState<AddServiceRecordSheet> {
     });
     final workshop = _workshop.text.trim();
     final notes = _notes.text.trim();
-    final result =
-        await ref.read(createServiceRecordUseCaseProvider)(
+    final result = await ref.read(createServiceRecordUseCaseProvider)(
       CreateServiceRecordInput(
         vehicleId: widget.vehicleId,
         serviceDate: _date,
@@ -156,19 +155,18 @@ class _AddServiceRecordSheetState extends ConsumerState<AddServiceRecordSheet> {
     TextEditingController controller, {
     String? hint,
     bool number = false,
-  }) =>
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _Label(label),
-          TextField(
-            controller: controller,
-            keyboardType: number ? TextInputType.number : TextInputType.text,
-            decoration: InputDecoration(hintText: hint),
-          ),
-          const SizedBox(height: 14),
-        ],
-      );
+  }) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _Label(label),
+      TextField(
+        controller: controller,
+        keyboardType: number ? TextInputType.number : TextInputType.text,
+        decoration: InputDecoration(hintText: hint),
+      ),
+      const SizedBox(height: 14),
+    ],
+  );
 }
 
 class _Label extends StatelessWidget {
@@ -177,16 +175,16 @@ class _Label extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: VeyraColors.textMuted,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      );
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(
+      text,
+      style: const TextStyle(
+        color: VeyraColors.textMuted,
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+      ),
+    ),
+  );
 }
 
 class _DateField extends StatelessWidget {
@@ -196,24 +194,31 @@ class _DateField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => InkWell(
-        onTap: onTap,
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(14),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: BoxDecoration(
+        color: VeyraColors.surface,
         borderRadius: BorderRadius.circular(14),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          decoration: BoxDecoration(
-            color: VeyraColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: VeyraColors.border),
+        border: Border.all(color: VeyraColors.border),
+      ),
+      child: Row(
+        children: [
+          Text(
+            _format(date),
+            style: plexMono(size: 14, color: VeyraColors.text),
           ),
-          child: Row(
-            children: [
-              Text(_format(date), style: plexMono(size: 14, color: VeyraColors.text)),
-              const Spacer(),
-              const Icon(Icons.calendar_today, size: 16, color: VeyraColors.textMuted),
-            ],
+          const Spacer(),
+          const Icon(
+            Icons.calendar_today,
+            size: 16,
+            color: VeyraColors.textMuted,
           ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
 
   static String _format(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-'

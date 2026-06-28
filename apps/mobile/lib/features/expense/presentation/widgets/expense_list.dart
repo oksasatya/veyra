@@ -37,44 +37,44 @@ class _ExpenseRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 13),
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: VeyraColors.border)),
-        ),
-        child: Row(
-          children: [
-            _CategoryIcon(category: expense.category),
-            const SizedBox(width: 13),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    expense.category.label,
-                    style: const TextStyle(
-                      color: VeyraColors.text,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    '${_formatDate(expense.expenseDate)} · ${expense.description}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: plexMono(size: 12),
-                  ),
-                ],
+    padding: const EdgeInsets.symmetric(vertical: 13),
+    decoration: const BoxDecoration(
+      border: Border(bottom: BorderSide(color: VeyraColors.border)),
+    ),
+    child: Row(
+      children: [
+        _CategoryIcon(category: expense.category),
+        const SizedBox(width: 13),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                expense.category.label,
+                style: const TextStyle(
+                  color: VeyraColors.text,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              _money(expense.amount),
-              style: plexMono(size: 14, color: VeyraColors.text),
-            ),
-          ],
+              const SizedBox(height: 3),
+              Text(
+                '${_formatDate(expense.expenseDate)} · ${expense.description}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: plexMono(size: 12),
+              ),
+            ],
+          ),
         ),
-      );
+        const SizedBox(width: 10),
+        Text(
+          _money(expense.amount),
+          style: plexMono(size: 14, color: VeyraColors.text),
+        ),
+      ],
+    ),
+  );
 }
 
 class _CategoryIcon extends StatelessWidget {
@@ -83,15 +83,15 @@ class _CategoryIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: VeyraColors.surface2,
-          borderRadius: BorderRadius.circular(11),
-          border: Border.all(color: VeyraColors.border),
-        ),
-        child: Icon(_iconFor(category), size: 20, color: _colorFor(category)),
-      );
+    width: 40,
+    height: 40,
+    decoration: BoxDecoration(
+      color: VeyraColors.surface2,
+      borderRadius: BorderRadius.circular(11),
+      border: Border.all(color: VeyraColors.border),
+    ),
+    child: Icon(_iconFor(category), size: 20, color: _colorFor(category)),
+  );
 }
 
 class _ExpenseEmpty extends StatelessWidget {
@@ -99,13 +99,13 @@ class _ExpenseEmpty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 32),
-        alignment: Alignment.center,
-        child: const Text(
-          'No expenses yet. Add your first one.',
-          style: TextStyle(color: VeyraColors.textMuted, fontSize: 14),
-        ),
-      );
+    padding: const EdgeInsets.symmetric(vertical: 32),
+    alignment: Alignment.center,
+    child: const Text(
+      'No expenses yet. Add your first one.',
+      style: TextStyle(color: VeyraColors.textMuted, fontSize: 14),
+    ),
+  );
 }
 
 class _ExpenseSkeleton extends StatelessWidget {
@@ -113,17 +113,17 @@ class _ExpenseSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        children: [
-          for (var i = 0; i < 3; i++)
-            Container(
-              height: 66,
-              margin: const EdgeInsets.only(bottom: 1),
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: VeyraColors.border)),
-              ),
-            ),
-        ],
-      );
+    children: [
+      for (var i = 0; i < 3; i++)
+        Container(
+          height: 66,
+          margin: const EdgeInsets.only(bottom: 1),
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: VeyraColors.border)),
+          ),
+        ),
+    ],
+  );
 }
 
 class _ExpenseError extends StatelessWidget {
@@ -133,43 +133,43 @@ class _ExpenseError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: VeyraColors.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: VeyraColors.border),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(
-                  color: VeyraColors.textMuted,
-                  fontSize: 13,
-                ),
-              ),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: VeyraColors.surface,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: VeyraColors.border),
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            message,
+            style: const TextStyle(
+              color: VeyraColors.textMuted,
+              fontSize: 13,
             ),
-            TextButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
+          ),
         ),
-      );
+        TextButton(onPressed: onRetry, child: const Text('Retry')),
+      ],
+    ),
+  );
 }
 
 IconData _iconFor(ExpenseCategory category) => switch (category) {
-      ExpenseCategory.tire => Icons.trip_origin,
-      ExpenseCategory.battery => Icons.battery_charging_full,
-      ExpenseCategory.tax => Icons.receipt_long,
-      ExpenseCategory.insurance => Icons.shield_outlined,
-      ExpenseCategory.other => Icons.payments_outlined,
-    };
+  ExpenseCategory.tire => Icons.trip_origin,
+  ExpenseCategory.battery => Icons.battery_charging_full,
+  ExpenseCategory.tax => Icons.receipt_long,
+  ExpenseCategory.insurance => Icons.shield_outlined,
+  ExpenseCategory.other => Icons.payments_outlined,
+};
 
 Color _colorFor(ExpenseCategory category) => switch (category) {
-      ExpenseCategory.insurance => VeyraColors.accent,
-      ExpenseCategory.tax => VeyraColors.info,
-      ExpenseCategory.tire => VeyraColors.accentHover,
-      _ => VeyraColors.textMuted,
-    };
+  ExpenseCategory.insurance => VeyraColors.accent,
+  ExpenseCategory.tax => VeyraColors.info,
+  ExpenseCategory.tire => VeyraColors.accentHover,
+  _ => VeyraColors.textMuted,
+};
 
 const _months = [
   'Jan',

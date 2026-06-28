@@ -6,16 +6,16 @@ enum ReminderType {
   both;
 
   static ReminderType fromApi(String raw) => switch (raw) {
-        'odometer' => ReminderType.odometer,
-        'both' => ReminderType.both,
-        _ => ReminderType.date,
-      };
+    'odometer' => ReminderType.odometer,
+    'both' => ReminderType.both,
+    _ => ReminderType.date,
+  };
 
   String get apiValue => name;
 
   String get label => switch (this) {
-        ReminderType.date => 'By date',
-        ReminderType.odometer => 'By odometer',
-        ReminderType.both => 'Date & odometer',
-      };
+    ReminderType.date => 'By date',
+    ReminderType.odometer => 'By odometer',
+    ReminderType.both => 'Date & odometer',
+  };
 }

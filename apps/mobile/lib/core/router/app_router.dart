@@ -33,7 +33,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/', builder: (_, _) => const GarageScreen()),
       GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
       GoRoute(path: '/register', builder: (_, _) => const RegisterScreen()),
-      GoRoute(path: '/vehicles/new', builder: (_, _) => const AddVehicleScreen()),
+      GoRoute(
+        path: '/vehicles/new',
+        builder: (_, _) => const AddVehicleScreen(),
+      ),
       GoRoute(
         path: '/vehicles/:id',
         builder: (context, state) {

@@ -8,8 +8,9 @@ class FuelLogRemoteDataSource {
   final Dio _dio;
 
   Future<List<FuelLogDto>> list(String vehicleId) async {
-    final res = await _dio
-        .get<Map<String, dynamic>>('/vehicles/$vehicleId/fuel-logs');
+    final res = await _dio.get<Map<String, dynamic>>(
+      '/vehicles/$vehicleId/fuel-logs',
+    );
     final rows = res.data!['logs'] as List<dynamic>;
     return rows
         .map((e) => FuelLogDto.fromJson(e as Map<String, dynamic>))

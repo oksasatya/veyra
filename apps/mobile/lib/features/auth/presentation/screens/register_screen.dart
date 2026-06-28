@@ -96,7 +96,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 const SizedBox(height: 12),
                 Text(
                   _error!,
-                  style: const TextStyle(color: VeyraColors.danger, fontSize: 13),
+                  style: const TextStyle(
+                    color: VeyraColors.danger,
+                    fontSize: 13,
+                  ),
                 ),
               ],
               const SizedBox(height: 24),
@@ -119,7 +122,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   onTap: () => context.pop(),
                   child: const Text(
                     'Already have an account? Log in',
-                    style: TextStyle(color: VeyraColors.textMuted, fontSize: 15),
+                    style: TextStyle(
+                      color: VeyraColors.textMuted,
+                      fontSize: 15,
+                    ),
                   ),
                 ),
               ),
@@ -137,14 +143,14 @@ class _Label extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: VeyraColors.textMuted,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      );
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(
+      text,
+      style: const TextStyle(
+        color: VeyraColors.textMuted,
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+      ),
+    ),
+  );
 }

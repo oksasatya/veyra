@@ -59,7 +59,8 @@ class VehicleRepositoryImpl implements VehicleRepository {
 // ── Providers (DI) ───────────────────────────────────────────────────────────
 
 final vehicleRepositoryProvider = Provider<VehicleRepository>(
-  (ref) => VehicleRepositoryImpl(VehicleRemoteDataSource(ref.watch(dioProvider))),
+  (ref) =>
+      VehicleRepositoryImpl(VehicleRemoteDataSource(ref.watch(dioProvider))),
 );
 
 final listVehiclesUseCaseProvider = Provider<ListVehiclesUseCase>(
@@ -75,8 +76,10 @@ final getSummaryUseCaseProvider = Provider<GetSummaryUseCase>(
 );
 
 /// Per-vehicle summary, keyed by vehicle id.
-final vehicleSummaryProvider =
-    FutureProvider.family<VehicleSummary, String>((ref, vehicleId) async {
+final vehicleSummaryProvider = FutureProvider.family<VehicleSummary, String>((
+  ref,
+  vehicleId,
+) async {
   final result = await ref.read(getSummaryUseCaseProvider)(vehicleId);
   return result.fold((failure) => throw failure, (summary) => summary);
 });

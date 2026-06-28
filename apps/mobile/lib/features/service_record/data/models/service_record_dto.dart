@@ -38,13 +38,13 @@ class ServiceRecordDto {
   final String? notes;
 
   ServiceRecord toDomain() => ServiceRecord(
-        id: id,
-        vehicleId: vehicleId,
-        serviceDate: DateTime.parse(serviceDate),
-        odometer: odometer,
-        description: description,
-        workshop: workshop,
-        cost: cost == null ? null : Decimal.parse(cost!),
-        notes: notes,
-      );
+    id: id,
+    vehicleId: vehicleId,
+    serviceDate: DateTime.parse(serviceDate),
+    odometer: odometer,
+    description: description,
+    workshop: workshop,
+    cost: cost == null ? null : Decimal.parse(cost!),
+    notes: notes,
+  );
 }

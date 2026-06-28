@@ -64,7 +64,9 @@ class _AddReminderSheetState extends ConsumerState<AddReminderSheet> {
   }
 
   Future<void> _submit() async {
-    final odometer = _needsOdometer ? int.tryParse(_odometer.text.trim()) : null;
+    final odometer = _needsOdometer
+        ? int.tryParse(_odometer.text.trim())
+        : null;
     final validated = validateReminder(
       vehicleId: widget.vehicleId,
       title: _title.text,
@@ -125,7 +127,9 @@ class _AddReminderSheetState extends ConsumerState<AddReminderSheet> {
                 const _Label('Title'),
                 TextField(
                   controller: _title,
-                  decoration: const InputDecoration(hintText: 'Road tax renewal'),
+                  decoration: const InputDecoration(
+                    hintText: 'Road tax renewal',
+                  ),
                 ),
                 const SizedBox(height: 16),
                 const _Label('Trigger'),
@@ -152,7 +156,9 @@ class _AddReminderSheetState extends ConsumerState<AddReminderSheet> {
                 TextField(
                   controller: _notes,
                   maxLines: 2,
-                  decoration: const InputDecoration(hintText: 'Anything to note'),
+                  decoration: const InputDecoration(
+                    hintText: 'Anything to note',
+                  ),
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 10),
@@ -179,7 +185,7 @@ class _AddReminderSheetState extends ConsumerState<AddReminderSheet> {
                       : const Text('Save reminder'),
                 ),
               ],
-          ),
+            ),
           ),
         ),
       ),
@@ -192,15 +198,15 @@ class _Grabber extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Container(
-          width: 40,
-          height: 4,
-          decoration: BoxDecoration(
-            color: VeyraColors.border,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-      );
+    child: Container(
+      width: 40,
+      height: 4,
+      decoration: BoxDecoration(
+        color: VeyraColors.border,
+        borderRadius: BorderRadius.circular(2),
+      ),
+    ),
+  );
 }
 
 class _Label extends StatelessWidget {
@@ -209,16 +215,16 @@ class _Label extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: VeyraColors.textMuted,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      );
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(
+      text,
+      style: const TextStyle(
+        color: VeyraColors.textMuted,
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+      ),
+    ),
+  );
 }
 
 class _TypeSelector extends StatelessWidget {
@@ -228,23 +234,23 @@ class _TypeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Wrap(
-        spacing: 8,
-        children: [
-          for (final t in ReminderType.values)
-            ChoiceChip(
-              label: Text(t.label),
-              selected: t == value,
-              onSelected: (_) => onChanged(t),
-              backgroundColor: VeyraColors.surface,
-              selectedColor: VeyraColors.accent,
-              labelStyle: TextStyle(
-                color: t == value ? VeyraColors.bg : VeyraColors.text,
-                fontWeight: FontWeight.w500,
-              ),
-              side: const BorderSide(color: VeyraColors.border),
-            ),
-        ],
-      );
+    spacing: 8,
+    children: [
+      for (final t in ReminderType.values)
+        ChoiceChip(
+          label: Text(t.label),
+          selected: t == value,
+          onSelected: (_) => onChanged(t),
+          backgroundColor: VeyraColors.surface,
+          selectedColor: VeyraColors.accent,
+          labelStyle: TextStyle(
+            color: t == value ? VeyraColors.bg : VeyraColors.text,
+            fontWeight: FontWeight.w500,
+          ),
+          side: const BorderSide(color: VeyraColors.border),
+        ),
+    ],
+  );
 }
 
 class _DateField extends StatelessWidget {
@@ -254,32 +260,35 @@ class _DateField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => InkWell(
-        onTap: onTap,
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(14),
+    child: Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: BoxDecoration(
+        color: VeyraColors.surface,
         borderRadius: BorderRadius.circular(14),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          decoration: BoxDecoration(
-            color: VeyraColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: VeyraColors.border),
+        border: Border.all(color: VeyraColors.border),
+      ),
+      child: Row(
+        children: [
+          Text(
+            value == null ? 'Pick a date' : _format(value!),
+            style: TextStyle(
+              color: value == null ? const Color(0xFF5A6472) : VeyraColors.text,
+              fontSize: 16,
+            ),
           ),
-          child: Row(
-            children: [
-              Text(
-                value == null ? 'Pick a date' : _format(value!),
-                style: TextStyle(
-                  color: value == null ? const Color(0xFF5A6472) : VeyraColors.text,
-                  fontSize: 16,
-                ),
-              ),
-              const Spacer(),
-              const Icon(Icons.calendar_today_outlined,
-                  size: 18, color: VeyraColors.textMuted),
-            ],
+          const Spacer(),
+          const Icon(
+            Icons.calendar_today_outlined,
+            size: 18,
+            color: VeyraColors.textMuted,
           ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
 
   String _format(DateTime d) => '${d.day} ${_months[d.month - 1]} ${d.year}';
 }

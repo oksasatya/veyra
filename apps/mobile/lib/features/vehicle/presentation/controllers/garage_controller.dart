@@ -32,4 +32,6 @@ class GarageController extends AsyncNotifier<List<Vehicle>> {
 }
 
 final garageControllerProvider =
-    AsyncNotifierProvider<GarageController, List<Vehicle>>(GarageController.new);
+    AsyncNotifierProvider<GarageController, List<Vehicle>>(
+      GarageController.new,
+    );

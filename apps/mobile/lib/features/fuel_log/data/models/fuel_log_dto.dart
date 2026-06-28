@@ -18,16 +18,16 @@ class FuelLogDto {
   });
 
   factory FuelLogDto.fromJson(Map<String, dynamic> json) => FuelLogDto(
-        id: json['id'] as String,
-        vehicleId: json['vehicle_id'] as String,
-        logDate: json['log_date'] as String,
-        odometer: json['odometer'] as int,
-        liters: json['liters'] as String,
-        pricePerLiter: json['price_per_liter'] as String,
-        totalCost: json['total_cost'] as String,
-        station: json['station'] as String?,
-        isFullTank: json['is_full_tank'] as bool,
-      );
+    id: json['id'] as String,
+    vehicleId: json['vehicle_id'] as String,
+    logDate: json['log_date'] as String,
+    odometer: json['odometer'] as int,
+    liters: json['liters'] as String,
+    pricePerLiter: json['price_per_liter'] as String,
+    totalCost: json['total_cost'] as String,
+    station: json['station'] as String?,
+    isFullTank: json['is_full_tank'] as bool,
+  );
 
   final String id;
   final String vehicleId;
@@ -40,14 +40,14 @@ class FuelLogDto {
   final bool isFullTank;
 
   FuelLog toDomain() => FuelLog(
-        id: id,
-        vehicleId: vehicleId,
-        logDate: DateTime.parse(logDate),
-        odometer: odometer,
-        liters: Decimal.parse(liters),
-        pricePerLiter: Decimal.parse(pricePerLiter),
-        totalCost: Decimal.parse(totalCost),
-        station: station,
-        isFullTank: isFullTank,
-      );
+    id: id,
+    vehicleId: vehicleId,
+    logDate: DateTime.parse(logDate),
+    odometer: odometer,
+    liters: Decimal.parse(liters),
+    pricePerLiter: Decimal.parse(pricePerLiter),
+    totalCost: Decimal.parse(totalCost),
+    station: station,
+    isFullTank: isFullTank,
+  );
 }

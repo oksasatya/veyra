@@ -62,7 +62,9 @@ Either<ValidationFailure, CreateReminderInput> validateReminder({
       type: type,
       dueDate: needsDate ? dueDate : null,
       dueOdometer: needsOdometer ? dueOdometer : null,
-      notes: (trimmedNotes == null || trimmedNotes.isEmpty) ? null : trimmedNotes,
+      notes: (trimmedNotes == null || trimmedNotes.isEmpty)
+          ? null
+          : trimmedNotes,
     ),
   );
 }

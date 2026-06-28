@@ -7,8 +7,18 @@ import 'package:veyra_mobile/features/fuel_log/data/repositories/fuel_log_reposi
 import 'package:veyra_mobile/features/fuel_log/domain/entities/fuel_log.dart';
 
 const _months = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 /// Renders the fuel logs for [vehicleId] with loading / empty / error states.
@@ -43,7 +53,8 @@ class _FuelLogRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final station = log.station;
-    final meta = '${_grouped(log.odometer)} km · '
+    final meta =
+        '${_grouped(log.odometer)} km · '
         '${log.liters} L${station != null && station.isNotEmpty ? ' · $station' : ''}';
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -88,14 +99,14 @@ class _FuelLogEmpty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
-        alignment: Alignment.center,
-        child: const Text(
-          'No fuel logs yet. Tap “Log fuel” to add your first fill-up.',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: VeyraColors.textMuted, fontSize: 14),
-        ),
-      );
+    padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
+    alignment: Alignment.center,
+    child: const Text(
+      'No fuel logs yet. Tap “Log fuel” to add your first fill-up.',
+      textAlign: TextAlign.center,
+      style: TextStyle(color: VeyraColors.textMuted, fontSize: 14),
+    ),
+  );
 }
 
 class _FuelLogSkeleton extends StatelessWidget {
@@ -103,19 +114,19 @@ class _FuelLogSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        children: [
-          for (var i = 0; i < 3; i++)
-            Container(
-              height: 64,
-              margin: const EdgeInsets.only(bottom: 10),
-              decoration: BoxDecoration(
-                color: VeyraColors.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: VeyraColors.border),
-              ),
-            ),
-        ],
-      );
+    children: [
+      for (var i = 0; i < 3; i++)
+        Container(
+          height: 64,
+          margin: const EdgeInsets.only(bottom: 10),
+          decoration: BoxDecoration(
+            color: VeyraColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: VeyraColors.border),
+          ),
+        ),
+    ],
+  );
 }
 
 class _FuelLogError extends StatelessWidget {
@@ -125,27 +136,27 @@ class _FuelLogError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: VeyraColors.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: VeyraColors.border),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(
-                  color: VeyraColors.textMuted,
-                  fontSize: 13,
-                ),
-              ),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: VeyraColors.surface,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: VeyraColors.border),
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            message,
+            style: const TextStyle(
+              color: VeyraColors.textMuted,
+              fontSize: 13,
             ),
-            TextButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
+          ),
         ),
-      );
+        TextButton(onPressed: onRetry, child: const Text('Retry')),
+      ],
+    ),
+  );
 }
 
 String _formatDate(DateTime d) => '${d.day} ${_months[d.month - 1]} ${d.year}';

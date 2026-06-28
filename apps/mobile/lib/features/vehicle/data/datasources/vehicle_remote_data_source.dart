@@ -22,8 +22,9 @@ class VehicleRemoteDataSource {
   }
 
   Future<VehicleSummaryDto> summary(String vehicleId) async {
-    final res =
-        await _dio.get<Map<String, dynamic>>('/vehicles/$vehicleId/summary');
+    final res = await _dio.get<Map<String, dynamic>>(
+      '/vehicles/$vehicleId/summary',
+    );
     return VehicleSummaryDto.fromJson(res.data!);
   }
 }

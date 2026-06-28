@@ -65,8 +65,7 @@ class _DocCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final status =
-        expiryStatusFor(expiry: document.expiryDate, today: today);
+    final status = expiryStatusFor(expiry: document.expiryDate, today: today);
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
@@ -145,11 +144,11 @@ class _ExpiryPill extends StatelessWidget {
   }
 
   Color _color(ExpiryStatus status) => switch (status) {
-        ExpiryStatus.expired => VeyraColors.danger,
-        ExpiryStatus.expiringSoon => VeyraColors.accent,
-        ExpiryStatus.valid => VeyraColors.info,
-        ExpiryStatus.onFile => VeyraColors.textMuted,
-      };
+    ExpiryStatus.expired => VeyraColors.danger,
+    ExpiryStatus.expiringSoon => VeyraColors.accent,
+    ExpiryStatus.valid => VeyraColors.info,
+    ExpiryStatus.onFile => VeyraColors.textMuted,
+  };
 }
 
 class _EmptyDocs extends StatelessWidget {
@@ -157,33 +156,33 @@ class _EmptyDocs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.folder_open_outlined,
-                color: VeyraColors.textMuted,
-                size: 40,
-              ),
-              const SizedBox(height: 16),
-              Text('No documents yet', style: soraDisplay(size: 18)),
-              const SizedBox(height: 10),
-              const Text(
-                'Add the STNK, BPKB, insurance, or any document you want to '
-                'keep with this vehicle.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: VeyraColors.textMuted,
-                  fontSize: 14,
-                  height: 1.5,
-                ),
-              ),
-            ],
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.folder_open_outlined,
+            color: VeyraColors.textMuted,
+            size: 40,
           ),
-        ),
-      );
+          const SizedBox(height: 16),
+          Text('No documents yet', style: soraDisplay(size: 18)),
+          const SizedBox(height: 10),
+          const Text(
+            'Add the STNK, BPKB, insurance, or any document you want to '
+            'keep with this vehicle.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: VeyraColors.textMuted,
+              fontSize: 14,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _ErrorState extends StatelessWidget {
@@ -193,30 +192,30 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.cloud_off, color: VeyraColors.danger, size: 40),
-              const SizedBox(height: 16),
-              Text("Can't load documents", style: soraDisplay(size: 18)),
-              const SizedBox(height: 10),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: VeyraColors.textMuted,
-                  fontSize: 14,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 22),
-              FilledButton(onPressed: onRetry, child: const Text('Try again')),
-            ],
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.cloud_off, color: VeyraColors.danger, size: 40),
+          const SizedBox(height: 16),
+          Text("Can't load documents", style: soraDisplay(size: 18)),
+          const SizedBox(height: 10),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: VeyraColors.textMuted,
+              fontSize: 14,
+              height: 1.5,
+            ),
           ),
-        ),
-      );
+          const SizedBox(height: 22),
+          FilledButton(onPressed: onRetry, child: const Text('Try again')),
+        ],
+      ),
+    ),
+  );
 }
 
 class _DocsSkeleton extends StatelessWidget {
@@ -224,21 +223,21 @@ class _DocsSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-        children: [
-          for (var i = 0; i < 4; i++) ...[
-            Container(
-              height: 78,
-              decoration: BoxDecoration(
-                color: VeyraColors.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: VeyraColors.border),
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-        ],
-      );
+    padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+    children: [
+      for (var i = 0; i < 4; i++) ...[
+        Container(
+          height: 78,
+          decoration: BoxDecoration(
+            color: VeyraColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: VeyraColors.border),
+          ),
+        ),
+        const SizedBox(height: 12),
+      ],
+    ],
+  );
 }
 
 const _months = [

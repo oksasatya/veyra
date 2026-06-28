@@ -8,8 +8,18 @@ import 'package:veyra_mobile/features/fuel_log/domain/value_objects/positive_dec
 import 'package:veyra_mobile/features/vehicle/domain/value_objects/odometer.dart';
 
 const _months = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 /// Bottom-sheet form to log a fuel fill-up for [vehicleId]. Computes the total
@@ -69,8 +79,9 @@ class _AddFuelLogSheetState extends ConsumerState<AddFuelLogSheet> {
   }
 
   Future<void> _submit() async {
-    final odo = Odometer.create(int.tryParse(_odometer.text.trim()) ?? -1)
-        .toNullable();
+    final odo = Odometer.create(
+      int.tryParse(_odometer.text.trim()) ?? -1,
+    ).toNullable();
     if (odo == null) {
       setState(() => _error = 'Enter a valid odometer reading.');
       return;
@@ -146,7 +157,10 @@ class _AddFuelLogSheetState extends ConsumerState<AddFuelLogSheet> {
                     ),
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close, color: VeyraColors.textMuted),
+                      icon: const Icon(
+                        Icons.close,
+                        color: VeyraColors.textMuted,
+                      ),
                     ),
                   ],
                 ),
@@ -243,15 +257,15 @@ class _Grabber extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Container(
-          width: 40,
-          height: 5,
-          decoration: BoxDecoration(
-            color: const Color(0xFF39424F),
-            borderRadius: BorderRadius.circular(3),
-          ),
-        ),
-      );
+    child: Container(
+      width: 40,
+      height: 5,
+      decoration: BoxDecoration(
+        color: const Color(0xFF39424F),
+        borderRadius: BorderRadius.circular(3),
+      ),
+    ),
+  );
 }
 
 class _Label extends StatelessWidget {
@@ -260,16 +274,16 @@ class _Label extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 7),
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: VeyraColors.textMuted,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      );
+    padding: const EdgeInsets.only(bottom: 7),
+    child: Text(
+      text,
+      style: const TextStyle(
+        color: VeyraColors.textMuted,
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+      ),
+    ),
+  );
 }
 
 class _LabeledField extends StatelessWidget {
@@ -289,26 +303,26 @@ class _LabeledField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _Label(label),
-          TextField(
-            controller: controller,
-            keyboardType: number
-                ? const TextInputType.numberWithOptions(decimal: true)
-                : TextInputType.text,
-            style: number ? plexMono(size: 16, color: VeyraColors.text) : null,
-            decoration: InputDecoration(
-              hintText: hint,
-              suffixText: suffix,
-              suffixStyle: const TextStyle(
-                color: VeyraColors.textMuted,
-                fontSize: 13,
-              ),
-            ),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _Label(label),
+      TextField(
+        controller: controller,
+        keyboardType: number
+            ? const TextInputType.numberWithOptions(decimal: true)
+            : TextInputType.text,
+        style: number ? plexMono(size: 16, color: VeyraColors.text) : null,
+        decoration: InputDecoration(
+          hintText: hint,
+          suffixText: suffix,
+          suffixStyle: const TextStyle(
+            color: VeyraColors.textMuted,
+            fontSize: 13,
           ),
-        ],
-      );
+        ),
+      ),
+    ],
+  );
 }
 
 class _DateField extends StatelessWidget {
@@ -318,29 +332,29 @@ class _DateField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _Label('Date'),
-          InkWell(
-            onTap: onTap,
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const _Label('Date'),
+      InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          height: 54,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          alignment: Alignment.centerLeft,
+          decoration: BoxDecoration(
+            color: VeyraColors.surface,
             borderRadius: BorderRadius.circular(14),
-            child: Container(
-              height: 54,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              alignment: Alignment.centerLeft,
-              decoration: BoxDecoration(
-                color: VeyraColors.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: VeyraColors.border),
-              ),
-              child: Text(
-                '${date.day} ${_months[date.month - 1]} ${date.year}',
-                style: plexMono(size: 16, color: VeyraColors.text),
-              ),
-            ),
+            border: Border.all(color: VeyraColors.border),
           ),
-        ],
-      );
+          child: Text(
+            '${date.day} ${_months[date.month - 1]} ${date.year}',
+            style: plexMono(size: 16, color: VeyraColors.text),
+          ),
+        ),
+      ),
+    ],
+  );
 }
 
 class _TotalRow extends StatelessWidget {
@@ -349,27 +363,27 @@ class _TotalRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 15),
-        decoration: BoxDecoration(
-          color: VeyraColors.surface2,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: VeyraColors.border),
+    padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 15),
+    decoration: BoxDecoration(
+      color: VeyraColors.surface2,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: VeyraColors.border),
+    ),
+    child: Row(
+      children: [
+        const Expanded(
+          child: Text(
+            'Total cost',
+            style: TextStyle(color: VeyraColors.textMuted, fontSize: 13),
+          ),
         ),
-        child: Row(
-          children: [
-            const Expanded(
-              child: Text(
-                'Total cost',
-                style: TextStyle(color: VeyraColors.textMuted, fontSize: 13),
-              ),
-            ),
-            Text(
-              total == null ? 'Rp —' : _money(total!),
-              style: plexMono(size: 22, color: VeyraColors.accent),
-            ),
-          ],
+        Text(
+          total == null ? 'Rp —' : _money(total!),
+          style: plexMono(size: 22, color: VeyraColors.accent),
         ),
-      );
+      ],
+    ),
+  );
 }
 
 class _FullTankToggle extends StatelessWidget {
@@ -379,35 +393,35 @@ class _FullTankToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-        children: [
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Full tank',
-                  style: TextStyle(
-                    color: VeyraColors.text,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(height: 3),
-                Text(
-                  'Used to compute consumption',
-                  style: TextStyle(color: VeyraColors.textMuted, fontSize: 12),
-                ),
-              ],
+    children: [
+      const Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Full tank',
+              style: TextStyle(
+                color: VeyraColors.text,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-          ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: VeyraColors.bg,
-            activeTrackColor: VeyraColors.accent,
-          ),
-        ],
-      );
+            SizedBox(height: 3),
+            Text(
+              'Used to compute consumption',
+              style: TextStyle(color: VeyraColors.textMuted, fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+      Switch(
+        value: value,
+        onChanged: onChanged,
+        activeThumbColor: VeyraColors.bg,
+        activeTrackColor: VeyraColors.accent,
+      ),
+    ],
+  );
 }
 
 String _grouped(int n) {

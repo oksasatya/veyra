@@ -59,11 +59,11 @@ final serviceRecordRepositoryProvider = Provider<ServiceRecordRepository>(
 );
 
 final listServiceRecordsUseCaseProvider = Provider<ListServiceRecordsUseCase>(
-  (ref) => ListServiceRecordsUseCase(ref.watch(serviceRecordRepositoryProvider)),
+  (ref) =>
+      ListServiceRecordsUseCase(ref.watch(serviceRecordRepositoryProvider)),
 );
 
-final createServiceRecordUseCaseProvider =
-    Provider<CreateServiceRecordUseCase>(
+final createServiceRecordUseCaseProvider = Provider<CreateServiceRecordUseCase>(
   (ref) =>
       CreateServiceRecordUseCase(ref.watch(serviceRecordRepositoryProvider)),
 );
@@ -71,6 +71,8 @@ final createServiceRecordUseCaseProvider =
 /// Per-vehicle service records, keyed by vehicle id.
 final serviceRecordListProvider =
     FutureProvider.family<List<ServiceRecord>, String>((ref, vehicleId) async {
-  final result = await ref.read(listServiceRecordsUseCaseProvider)(vehicleId);
-  return result.fold((failure) => throw failure, (records) => records);
-});
+      final result = await ref.read(listServiceRecordsUseCaseProvider)(
+        vehicleId,
+      );
+      return result.fold((failure) => throw failure, (records) => records);
+    });

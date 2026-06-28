@@ -59,8 +59,10 @@ final createFuelLogUseCaseProvider = Provider<CreateFuelLogUseCase>(
 
 /// Per-vehicle fuel logs, keyed by vehicle id. The add-sheet invalidates this
 /// after a successful create so the list refreshes.
-final fuelLogListProvider =
-    FutureProvider.family<List<FuelLog>, String>((ref, vehicleId) async {
+final fuelLogListProvider = FutureProvider.family<List<FuelLog>, String>((
+  ref,
+  vehicleId,
+) async {
   final result = await ref.read(listFuelLogsUseCaseProvider)(vehicleId);
   return result.fold((failure) => throw failure, (logs) => logs);
 });

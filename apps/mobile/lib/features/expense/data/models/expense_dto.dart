@@ -15,13 +15,13 @@ class ExpenseDto {
   });
 
   factory ExpenseDto.fromJson(Map<String, dynamic> json) => ExpenseDto(
-        id: json['id'] as String,
-        vehicleId: json['vehicle_id'] as String,
-        expenseDate: json['expense_date'] as String,
-        category: json['category'] as String,
-        amount: json['amount'] as String,
-        description: json['description'] as String,
-      );
+    id: json['id'] as String,
+    vehicleId: json['vehicle_id'] as String,
+    expenseDate: json['expense_date'] as String,
+    category: json['category'] as String,
+    amount: json['amount'] as String,
+    description: json['description'] as String,
+  );
 
   final String id;
   final String vehicleId;
@@ -31,11 +31,11 @@ class ExpenseDto {
   final String description;
 
   Expense toDomain() => Expense(
-        id: id,
-        vehicleId: vehicleId,
-        expenseDate: DateTime.parse(expenseDate),
-        category: ExpenseCategory.fromApi(category),
-        description: description,
-        amount: Decimal.parse(amount),
-      );
+    id: id,
+    vehicleId: vehicleId,
+    expenseDate: DateTime.parse(expenseDate),
+    category: ExpenseCategory.fromApi(category),
+    description: description,
+    amount: Decimal.parse(amount),
+  );
 }

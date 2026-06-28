@@ -9,6 +9,5 @@ class CreateServiceRecordUseCase {
 
   Future<Either<Failure, ServiceRecord>> call(
     CreateServiceRecordInput input,
-  ) =>
-      _repo.create(input);
+  ) => _repo.create(input);
 }

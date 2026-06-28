@@ -41,8 +41,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
     setState(() => _error = null);
-    final failure =
-        await ref.read(authControllerProvider.notifier).login(email, password);
+    final failure = await ref
+        .read(authControllerProvider.notifier)
+        .login(email, password);
     if (failure != null && mounted) {
       setState(() => _error = failure.message);
     }
@@ -74,7 +75,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: 8),
                   const Text(
                     'Sign in to track your vehicles, fuel, and services.',
-                    style: TextStyle(color: VeyraColors.textMuted, fontSize: 15),
+                    style: TextStyle(
+                      color: VeyraColors.textMuted,
+                      fontSize: 15,
+                    ),
                   ),
                   const SizedBox(height: 28),
                   TextField(
@@ -103,7 +107,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const SizedBox(height: 12),
                     Text(
                       _error!,
-                      style: const TextStyle(color: VeyraColors.danger, fontSize: 13),
+                      style: const TextStyle(
+                        color: VeyraColors.danger,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                   const SizedBox(height: 24),
@@ -128,7 +135,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       children: [
                         const Text(
                           'New to Veyra? ',
-                          style: TextStyle(color: VeyraColors.textMuted, fontSize: 15),
+                          style: TextStyle(
+                            color: VeyraColors.textMuted,
+                            fontSize: 15,
+                          ),
                         ),
                         GestureDetector(
                           onTap: () => context.push('/register'),
@@ -159,20 +169,20 @@ class _TopGlow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Positioned(
-        top: -120,
-        left: 0,
-        right: 0,
-        child: Center(
-          child: Container(
-            width: 360,
-            height: 360,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [Color(0x38F26A21), Color(0x00F26A21)],
-              ),
-            ),
+    top: -120,
+    left: 0,
+    right: 0,
+    child: Center(
+      child: Container(
+        width: 360,
+        height: 360,
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: [Color(0x38F26A21), Color(0x00F26A21)],
           ),
         ),
-      );
+      ),
+    ),
+  );
 }

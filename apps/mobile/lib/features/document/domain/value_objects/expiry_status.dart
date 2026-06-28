@@ -9,11 +9,11 @@ enum ExpiryStatus {
   onFile;
 
   String get label => switch (this) {
-        ExpiryStatus.expired => 'Expired',
-        ExpiryStatus.expiringSoon => 'Expiring soon',
-        ExpiryStatus.valid => 'Valid',
-        ExpiryStatus.onFile => 'On file',
-      };
+    ExpiryStatus.expired => 'Expired',
+    ExpiryStatus.expiringSoon => 'Expiring soon',
+    ExpiryStatus.valid => 'Valid',
+    ExpiryStatus.onFile => 'On file',
+  };
 }
 
 /// Documents within this many days of expiry are flagged as expiring soon.

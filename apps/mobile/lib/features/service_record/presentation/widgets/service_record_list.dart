@@ -91,13 +91,13 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 28),
-        alignment: Alignment.center,
-        child: const Text(
-          'No service records yet. Log the first one.',
-          style: TextStyle(color: VeyraColors.textMuted, fontSize: 14),
-        ),
-      );
+    padding: const EdgeInsets.symmetric(vertical: 28),
+    alignment: Alignment.center,
+    child: const Text(
+      'No service records yet. Log the first one.',
+      style: TextStyle(color: VeyraColors.textMuted, fontSize: 14),
+    ),
+  );
 }
 
 class _ListSkeleton extends StatelessWidget {
@@ -105,20 +105,20 @@ class _ListSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        children: [
-          for (var i = 0; i < 3; i++) ...[
-            Container(
-              height: 64,
-              decoration: BoxDecoration(
-                color: VeyraColors.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: VeyraColors.border),
-              ),
-            ),
-            const SizedBox(height: 10),
-          ],
-        ],
-      );
+    children: [
+      for (var i = 0; i < 3; i++) ...[
+        Container(
+          height: 64,
+          decoration: BoxDecoration(
+            color: VeyraColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: VeyraColors.border),
+          ),
+        ),
+        const SizedBox(height: 10),
+      ],
+    ],
+  );
 }
 
 class _ListError extends StatelessWidget {
@@ -128,27 +128,27 @@ class _ListError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: VeyraColors.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: VeyraColors.border),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(
-                  color: VeyraColors.textMuted,
-                  fontSize: 13,
-                ),
-              ),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: VeyraColors.surface,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: VeyraColors.border),
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            message,
+            style: const TextStyle(
+              color: VeyraColors.textMuted,
+              fontSize: 13,
             ),
-            TextButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
+          ),
         ),
-      );
+        TextButton(onPressed: onRetry, child: const Text('Retry')),
+      ],
+    ),
+  );
 }
 
 String _date(DateTime d) =>

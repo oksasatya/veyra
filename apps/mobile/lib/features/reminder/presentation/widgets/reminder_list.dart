@@ -98,8 +98,9 @@ class _ReminderTileState extends ConsumerState<_ReminderTile> {
                         : VeyraColors.text,
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
-                    decoration:
-                        r.isCompleted ? TextDecoration.lineThrough : null,
+                    decoration: r.isCompleted
+                        ? TextDecoration.lineThrough
+                        : null,
                   ),
                 ),
                 const SizedBox(height: 3),
@@ -192,19 +193,19 @@ class _RemindersSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        children: [
-          for (var i = 0; i < 3; i++)
-            Container(
-              height: 64,
-              margin: const EdgeInsets.only(bottom: 10),
-              decoration: BoxDecoration(
-                color: VeyraColors.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: VeyraColors.border),
-              ),
-            ),
-        ],
-      );
+    children: [
+      for (var i = 0; i < 3; i++)
+        Container(
+          height: 64,
+          margin: const EdgeInsets.only(bottom: 10),
+          decoration: BoxDecoration(
+            color: VeyraColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: VeyraColors.border),
+          ),
+        ),
+    ],
+  );
 }
 
 class _RemindersEmpty extends StatelessWidget {
@@ -212,14 +213,14 @@ class _RemindersEmpty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 28),
-        alignment: Alignment.center,
-        child: const Text(
-          'No reminders yet. Add one to stay ahead of service & renewals.',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: VeyraColors.textMuted, fontSize: 14),
-        ),
-      );
+    padding: const EdgeInsets.symmetric(vertical: 28),
+    alignment: Alignment.center,
+    child: const Text(
+      'No reminders yet. Add one to stay ahead of service & renewals.',
+      textAlign: TextAlign.center,
+      style: TextStyle(color: VeyraColors.textMuted, fontSize: 14),
+    ),
+  );
 }
 
 class _RemindersError extends StatelessWidget {
@@ -229,27 +230,27 @@ class _RemindersError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: VeyraColors.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: VeyraColors.border),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(
-                  color: VeyraColors.textMuted,
-                  fontSize: 13,
-                ),
-              ),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: VeyraColors.surface,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: VeyraColors.border),
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            message,
+            style: const TextStyle(
+              color: VeyraColors.textMuted,
+              fontSize: 13,
             ),
-            TextButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
+          ),
         ),
-      );
+        TextButton(onPressed: onRetry, child: const Text('Retry')),
+      ],
+    ),
+  );
 }
 
 const _months = [
@@ -269,11 +270,11 @@ const _months = [
 
 /// Meta line: the reminder's type-appropriate due target.
 String _meta(Reminder r) => switch (r.type) {
-      ReminderType.date => 'By date · due ${_shortDate(r.dueDate)}',
-      ReminderType.odometer => 'By odometer · at ${_km(r.dueOdometer)}',
-      ReminderType.both =>
-        'Date & odometer · ${_shortDate(r.dueDate)} / ${_km(r.dueOdometer)}',
-    };
+  ReminderType.date => 'By date · due ${_shortDate(r.dueDate)}',
+  ReminderType.odometer => 'By odometer · at ${_km(r.dueOdometer)}',
+  ReminderType.both =>
+    'Date & odometer · ${_shortDate(r.dueDate)} / ${_km(r.dueOdometer)}',
+};
 
 /// Due pill label + colour, scaled by urgency for date-based reminders.
 (String, Color) _due(Reminder r) {

@@ -52,7 +52,9 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
       setState(() => _error = 'Enter a plate number.');
       return;
     }
-    final odo = Odometer.create(int.tryParse(_odometer.text.trim()) ?? -1).toNullable();
+    final odo = Odometer.create(
+      int.tryParse(_odometer.text.trim()) ?? -1,
+    ).toNullable();
     if (odo == null) {
       setState(() => _error = 'Enter a valid odometer reading.');
       return;
@@ -63,7 +65,9 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
       _saving = true;
     });
     final color = _color.text.trim();
-    final failure = await ref.read(garageControllerProvider.notifier).add(
+    final failure = await ref
+        .read(garageControllerProvider.notifier)
+        .add(
           CreateVehicleInput(
             brand: _brand.text.trim(),
             model: _model.text.trim(),
@@ -98,7 +102,10 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
             _field('Year', _year, hint: '2020', number: true),
             _field('Plate number', _plate, hint: 'B 1234 XYZ'),
             const _Label('Fuel type'),
-            _FuelSelector(value: _fuel, onChanged: (f) => setState(() => _fuel = f)),
+            _FuelSelector(
+              value: _fuel,
+              onChanged: (f) => setState(() => _fuel = f),
+            ),
             const SizedBox(height: 14),
             _field('Odometer (km)', _odometer, hint: '0', number: true),
             _field('Color (optional)', _color, hint: 'Silver'),
@@ -134,19 +141,18 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
     TextEditingController controller, {
     String? hint,
     bool number = false,
-  }) =>
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _Label(label),
-          TextField(
-            controller: controller,
-            keyboardType: number ? TextInputType.number : TextInputType.text,
-            decoration: InputDecoration(hintText: hint),
-          ),
-          const SizedBox(height: 14),
-        ],
-      );
+  }) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _Label(label),
+      TextField(
+        controller: controller,
+        keyboardType: number ? TextInputType.number : TextInputType.text,
+        decoration: InputDecoration(hintText: hint),
+      ),
+      const SizedBox(height: 14),
+    ],
+  );
 }
 
 class _Label extends StatelessWidget {
@@ -155,16 +161,16 @@ class _Label extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: VeyraColors.textMuted,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      );
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(
+      text,
+      style: const TextStyle(
+        color: VeyraColors.textMuted,
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+      ),
+    ),
+  );
 }
 
 class _FuelSelector extends StatelessWidget {
@@ -174,21 +180,21 @@ class _FuelSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Wrap(
-        spacing: 8,
-        children: [
-          for (final f in FuelType.values)
-            ChoiceChip(
-              label: Text(f.label),
-              selected: f == value,
-              onSelected: (_) => onChanged(f),
-              backgroundColor: VeyraColors.surface,
-              selectedColor: VeyraColors.accent,
-              labelStyle: TextStyle(
-                color: f == value ? VeyraColors.bg : VeyraColors.text,
-                fontWeight: FontWeight.w500,
-              ),
-              side: const BorderSide(color: VeyraColors.border),
-            ),
-        ],
-      );
+    spacing: 8,
+    children: [
+      for (final f in FuelType.values)
+        ChoiceChip(
+          label: Text(f.label),
+          selected: f == value,
+          onSelected: (_) => onChanged(f),
+          backgroundColor: VeyraColors.surface,
+          selectedColor: VeyraColors.accent,
+          labelStyle: TextStyle(
+            color: f == value ? VeyraColors.bg : VeyraColors.text,
+            fontWeight: FontWeight.w500,
+          ),
+          side: const BorderSide(color: VeyraColors.border),
+        ),
+    ],
+  );
 }

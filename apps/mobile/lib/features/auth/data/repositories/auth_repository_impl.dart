@@ -24,16 +24,14 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, User>> login({
     required Email email,
     required Password password,
-  }) =>
-      _authCall(() => remote.login(email.value, password.value));
+  }) => _authCall(() => remote.login(email.value, password.value));
 
   @override
   Future<Either<Failure, User>> register({
     required Email email,
     required Password password,
     required String name,
-  }) =>
-      _authCall(() => remote.register(email.value, password.value, name));
+  }) => _authCall(() => remote.register(email.value, password.value, name));
 
   @override
   Future<Either<Failure, Unit>> logout() async {

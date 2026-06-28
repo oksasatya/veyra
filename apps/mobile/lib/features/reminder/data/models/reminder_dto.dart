@@ -16,15 +16,15 @@ class ReminderDto {
   });
 
   factory ReminderDto.fromJson(Map<String, dynamic> json) => ReminderDto(
-        id: json['id'] as String,
-        vehicleId: json['vehicle_id'] as String,
-        title: json['title'] as String,
-        reminderType: json['reminder_type'] as String,
-        isCompleted: json['is_completed'] as bool,
-        dueDate: json['due_date'] as String?,
-        dueOdometer: json['due_odometer'] as int?,
-        notes: json['notes'] as String?,
-      );
+    id: json['id'] as String,
+    vehicleId: json['vehicle_id'] as String,
+    title: json['title'] as String,
+    reminderType: json['reminder_type'] as String,
+    isCompleted: json['is_completed'] as bool,
+    dueDate: json['due_date'] as String?,
+    dueOdometer: json['due_odometer'] as int?,
+    notes: json['notes'] as String?,
+  );
 
   final String id;
   final String vehicleId;
@@ -36,13 +36,13 @@ class ReminderDto {
   final String? notes;
 
   Reminder toDomain() => Reminder(
-        id: id,
-        vehicleId: vehicleId,
-        title: title,
-        type: ReminderType.fromApi(reminderType),
-        dueDate: dueDate == null ? null : DateTime.parse(dueDate!),
-        dueOdometer: dueOdometer,
-        isCompleted: isCompleted,
-        notes: notes,
-      );
+    id: id,
+    vehicleId: vehicleId,
+    title: title,
+    type: ReminderType.fromApi(reminderType),
+    dueDate: dueDate == null ? null : DateTime.parse(dueDate!),
+    dueOdometer: dueOdometer,
+    isCompleted: isCompleted,
+    notes: notes,
+  );
 }

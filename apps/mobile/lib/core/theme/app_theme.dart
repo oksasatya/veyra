@@ -20,33 +20,32 @@ TextStyle soraDisplay({
   double size = 24,
   FontWeight weight = FontWeight.w600,
   Color color = VeyraColors.text,
-}) =>
-    GoogleFonts.sora(
-      fontSize: size,
-      fontWeight: weight,
-      color: color,
-      letterSpacing: -0.4,
-    );
+}) => GoogleFonts.sora(
+  fontSize: size,
+  fontWeight: weight,
+  color: color,
+  letterSpacing: -0.4,
+);
 
 /// IBM Plex Mono style for data (odometer, money, plate, tokens).
 TextStyle plexMono({
   double size = 14,
   FontWeight weight = FontWeight.w500,
   Color color = VeyraColors.textMuted,
-}) =>
-    GoogleFonts.ibmPlexMono(fontSize: size, fontWeight: weight, color: color);
+}) => GoogleFonts.ibmPlexMono(fontSize: size, fontWeight: weight, color: color);
 
 ThemeData buildVeyraTheme() {
-  final scheme = ColorScheme.fromSeed(
-    seedColor: VeyraColors.accent,
-    brightness: Brightness.dark,
-    surface: VeyraColors.surface,
-  ).copyWith(
-    primary: VeyraColors.accent,
-    onPrimary: VeyraColors.bg,
-    error: VeyraColors.danger,
-    surface: VeyraColors.surface,
-  );
+  final scheme =
+      ColorScheme.fromSeed(
+        seedColor: VeyraColors.accent,
+        brightness: Brightness.dark,
+        surface: VeyraColors.surface,
+      ).copyWith(
+        primary: VeyraColors.accent,
+        onPrimary: VeyraColors.bg,
+        error: VeyraColors.danger,
+        surface: VeyraColors.surface,
+      );
 
   final textTheme = GoogleFonts.ibmPlexSansTextTheme(
     ThemeData(brightness: Brightness.dark).textTheme,

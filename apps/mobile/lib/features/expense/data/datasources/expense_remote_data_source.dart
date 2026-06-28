@@ -8,8 +8,9 @@ class ExpenseRemoteDataSource {
   final Dio _dio;
 
   Future<List<ExpenseDto>> list(String vehicleId) async {
-    final res = await _dio
-        .get<Map<String, dynamic>>('/vehicles/$vehicleId/expenses');
+    final res = await _dio.get<Map<String, dynamic>>(
+      '/vehicles/$vehicleId/expenses',
+    );
     final rows = res.data!['expenses'] as List<dynamic>;
     return rows
         .map((e) => ExpenseDto.fromJson(e as Map<String, dynamic>))

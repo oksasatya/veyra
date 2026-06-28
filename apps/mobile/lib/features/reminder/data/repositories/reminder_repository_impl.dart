@@ -85,8 +85,10 @@ final completeReminderUseCaseProvider = Provider<CompleteReminderUseCase>(
 /// Per-vehicle reminders, keyed by vehicle id. The add-sheet invalidates this
 /// after a successful create, and the check control after a complete, so the
 /// list refreshes.
-final reminderListProvider =
-    FutureProvider.family<List<Reminder>, String>((ref, vehicleId) async {
+final reminderListProvider = FutureProvider.family<List<Reminder>, String>((
+  ref,
+  vehicleId,
+) async {
   final result = await ref.read(listRemindersUseCaseProvider)(vehicleId);
   return result.fold((failure) => throw failure, (reminders) => reminders);
 });

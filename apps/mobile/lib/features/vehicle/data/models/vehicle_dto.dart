@@ -16,16 +16,16 @@ class VehicleDto {
   });
 
   factory VehicleDto.fromJson(Map<String, dynamic> json) => VehicleDto(
-        id: json['id'] as String,
-        brand: json['brand'] as String,
-        model: json['model'] as String,
-        year: json['year'] as int,
-        plateNumber: json['plate_number'] as String,
-        fuelType: json['fuel_type'] as String,
-        currentOdometer: json['current_odometer'] as int,
-        color: json['color'] as String?,
-        notes: json['notes'] as String?,
-      );
+    id: json['id'] as String,
+    brand: json['brand'] as String,
+    model: json['model'] as String,
+    year: json['year'] as int,
+    plateNumber: json['plate_number'] as String,
+    fuelType: json['fuel_type'] as String,
+    currentOdometer: json['current_odometer'] as int,
+    color: json['color'] as String?,
+    notes: json['notes'] as String?,
+  );
 
   final String id;
   final String brand;
@@ -38,14 +38,14 @@ class VehicleDto {
   final String? notes;
 
   Vehicle toDomain() => Vehicle(
-        id: id,
-        brand: brand,
-        model: model,
-        year: year,
-        plateNumber: plateNumber,
-        fuelType: FuelType.fromApi(fuelType),
-        odometer: currentOdometer,
-        color: color,
-        notes: notes,
-      );
+    id: id,
+    brand: brand,
+    model: model,
+    year: year,
+    plateNumber: plateNumber,
+    fuelType: FuelType.fromApi(fuelType),
+    odometer: currentOdometer,
+    color: color,
+    notes: notes,
+  );
 }

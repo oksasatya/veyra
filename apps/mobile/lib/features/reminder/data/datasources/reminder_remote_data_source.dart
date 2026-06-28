@@ -8,8 +8,9 @@ class ReminderRemoteDataSource {
   final Dio _dio;
 
   Future<List<ReminderDto>> list(String vehicleId) async {
-    final res = await _dio
-        .get<Map<String, dynamic>>('/vehicles/$vehicleId/reminders');
+    final res = await _dio.get<Map<String, dynamic>>(
+      '/vehicles/$vehicleId/reminders',
+    );
     final rows = res.data!['reminders'] as List<dynamic>;
     return rows
         .map((e) => ReminderDto.fromJson(e as Map<String, dynamic>))

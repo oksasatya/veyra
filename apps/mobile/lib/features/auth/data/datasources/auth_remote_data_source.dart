@@ -40,7 +40,7 @@ class AuthRemoteDataSource {
   }
 
   AuthPayload _parseAuth(Map<String, dynamic> data) => (
-        user: UserDto.fromJson(data['user'] as Map<String, dynamic>),
-        tokens: AuthTokensDto.fromJson(data['tokens'] as Map<String, dynamic>),
-      );
+    user: UserDto.fromJson(data['user'] as Map<String, dynamic>),
+    tokens: AuthTokensDto.fromJson(data['tokens'] as Map<String, dynamic>),
+  );
 }

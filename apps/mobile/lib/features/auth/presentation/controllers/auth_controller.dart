@@ -41,7 +41,11 @@ class AuthController extends AsyncNotifier<User?> {
 
   Future<Failure?> register(Email email, Password password, String name) async {
     state = const AsyncLoading();
-    final result = await ref.read(registerUseCaseProvider)(email, password, name);
+    final result = await ref.read(registerUseCaseProvider)(
+      email,
+      password,
+      name,
+    );
     return result.fold(
       (failure) {
         state = const AsyncData(null);
@@ -60,5 +64,6 @@ class AuthController extends AsyncNotifier<User?> {
   }
 }
 
-final authControllerProvider =
-    AsyncNotifierProvider<AuthController, User?>(AuthController.new);
+final authControllerProvider = AsyncNotifierProvider<AuthController, User?>(
+  AuthController.new,
+);

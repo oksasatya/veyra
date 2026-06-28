@@ -146,18 +146,17 @@ class _AddDocumentSheetState extends ConsumerState<AddDocumentSheet> {
     String label,
     TextEditingController controller, {
     String? hint,
-  }) =>
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _Label(label),
-          TextField(
-            controller: controller,
-            decoration: InputDecoration(hintText: hint),
-          ),
-          const SizedBox(height: 16),
-        ],
-      );
+  }) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _Label(label),
+      TextField(
+        controller: controller,
+        decoration: InputDecoration(hintText: hint),
+      ),
+      const SizedBox(height: 16),
+    ],
+  );
 }
 
 class _Grabber extends StatelessWidget {
@@ -165,15 +164,15 @@ class _Grabber extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Container(
-          width: 40,
-          height: 4,
-          decoration: BoxDecoration(
-            color: VeyraColors.border,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-      );
+    child: Container(
+      width: 40,
+      height: 4,
+      decoration: BoxDecoration(
+        color: VeyraColors.border,
+        borderRadius: BorderRadius.circular(2),
+      ),
+    ),
+  );
 }
 
 class _Label extends StatelessWidget {
@@ -182,16 +181,16 @@ class _Label extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: VeyraColors.textMuted,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      );
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(
+      text,
+      style: const TextStyle(
+        color: VeyraColors.textMuted,
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+      ),
+    ),
+  );
 }
 
 class _DocTypeSelector extends StatelessWidget {
@@ -201,24 +200,24 @@ class _DocTypeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          for (final t in DocType.values)
-            ChoiceChip(
-              label: Text(t.label),
-              selected: t == value,
-              onSelected: (_) => onChanged(t),
-              backgroundColor: VeyraColors.surface,
-              selectedColor: VeyraColors.accent,
-              labelStyle: TextStyle(
-                color: t == value ? VeyraColors.bg : VeyraColors.text,
-                fontWeight: FontWeight.w500,
-              ),
-              side: const BorderSide(color: VeyraColors.border),
-            ),
-        ],
-      );
+    spacing: 8,
+    runSpacing: 8,
+    children: [
+      for (final t in DocType.values)
+        ChoiceChip(
+          label: Text(t.label),
+          selected: t == value,
+          onSelected: (_) => onChanged(t),
+          backgroundColor: VeyraColors.surface,
+          selectedColor: VeyraColors.accent,
+          labelStyle: TextStyle(
+            color: t == value ? VeyraColors.bg : VeyraColors.text,
+            fontWeight: FontWeight.w500,
+          ),
+          side: const BorderSide(color: VeyraColors.border),
+        ),
+    ],
+  );
 }
 
 class _DateField extends StatelessWidget {
@@ -228,32 +227,32 @@ class _DateField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: InputDecorator(
-          decoration: const InputDecoration(),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  value == null ? 'No expiry' : _formatDate(value!),
-                  style: TextStyle(
-                    color: value == null
-                        ? const Color(0xFF5A6472)
-                        : VeyraColors.text,
-                    fontSize: 16,
-                  ),
-                ),
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(14),
+    child: InputDecorator(
+      decoration: const InputDecoration(),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              value == null ? 'No expiry' : _formatDate(value!),
+              style: TextStyle(
+                color: value == null
+                    ? const Color(0xFF5A6472)
+                    : VeyraColors.text,
+                fontSize: 16,
               ),
-              const Icon(
-                Icons.calendar_today_outlined,
-                color: VeyraColors.textMuted,
-                size: 18,
-              ),
-            ],
+            ),
           ),
-        ),
-      );
+          const Icon(
+            Icons.calendar_today_outlined,
+            color: VeyraColors.textMuted,
+            size: 18,
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 const _months = [

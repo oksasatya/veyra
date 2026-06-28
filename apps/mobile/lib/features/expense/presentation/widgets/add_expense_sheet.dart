@@ -170,14 +170,14 @@ class _Grab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: 40,
-        height: 5,
-        margin: const EdgeInsets.fromLTRB(0, 12, 0, 6),
-        decoration: BoxDecoration(
-          color: const Color(0xFF39424F),
-          borderRadius: BorderRadius.circular(3),
-        ),
-      );
+    width: 40,
+    height: 5,
+    margin: const EdgeInsets.fromLTRB(0, 12, 0, 6),
+    decoration: BoxDecoration(
+      color: const Color(0xFF39424F),
+      borderRadius: BorderRadius.circular(3),
+    ),
+  );
 }
 
 class _DateField extends StatelessWidget {
@@ -187,23 +187,23 @@ class _DateField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => InkWell(
-        onTap: onTap,
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(14),
+    child: Container(
+      height: 54,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: VeyraColors.surface,
         borderRadius: BorderRadius.circular(14),
-        child: Container(
-          height: 54,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: VeyraColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: VeyraColors.border),
-          ),
-          alignment: Alignment.centerLeft,
-          child: Text(
-            '${date.day} ${_months[date.month - 1]} ${date.year}',
-            style: plexMono(size: 16, color: VeyraColors.text),
-          ),
-        ),
-      );
+        border: Border.all(color: VeyraColors.border),
+      ),
+      alignment: Alignment.centerLeft,
+      child: Text(
+        '${date.day} ${_months[date.month - 1]} ${date.year}',
+        style: plexMono(size: 16, color: VeyraColors.text),
+      ),
+    ),
+  );
 }
 
 class _Label extends StatelessWidget {
@@ -212,16 +212,16 @@ class _Label extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: VeyraColors.textMuted,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      );
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(
+      text,
+      style: const TextStyle(
+        color: VeyraColors.textMuted,
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+      ),
+    ),
+  );
 }
 
 class _CategorySelector extends StatelessWidget {
@@ -231,24 +231,24 @@ class _CategorySelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          for (final c in ExpenseCategory.values)
-            ChoiceChip(
-              label: Text(c.label),
-              selected: c == value,
-              onSelected: (_) => onChanged(c),
-              backgroundColor: VeyraColors.surface,
-              selectedColor: VeyraColors.accent,
-              labelStyle: TextStyle(
-                color: c == value ? VeyraColors.bg : VeyraColors.text,
-                fontWeight: FontWeight.w500,
-              ),
-              side: const BorderSide(color: VeyraColors.border),
-            ),
-        ],
-      );
+    spacing: 8,
+    runSpacing: 8,
+    children: [
+      for (final c in ExpenseCategory.values)
+        ChoiceChip(
+          label: Text(c.label),
+          selected: c == value,
+          onSelected: (_) => onChanged(c),
+          backgroundColor: VeyraColors.surface,
+          selectedColor: VeyraColors.accent,
+          labelStyle: TextStyle(
+            color: c == value ? VeyraColors.bg : VeyraColors.text,
+            fontWeight: FontWeight.w500,
+          ),
+          side: const BorderSide(color: VeyraColors.border),
+        ),
+    ],
+  );
 }
 
 const _months = [

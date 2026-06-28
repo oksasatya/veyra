@@ -5,10 +5,10 @@ class UserDto {
   const UserDto({required this.id, required this.email, required this.name});
 
   factory UserDto.fromJson(Map<String, dynamic> json) => UserDto(
-        id: json['id'] as String,
-        email: json['email'] as String,
-        name: json['name'] as String,
-      );
+    id: json['id'] as String,
+    email: json['email'] as String,
+    name: json['name'] as String,
+  );
 
   final String id;
   final String email;

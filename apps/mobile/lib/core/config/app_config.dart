@@ -6,11 +6,11 @@ class AppConfig {
   const AppConfig({required this.apiBaseUrl});
 
   factory AppConfig.fromEnv() => const AppConfig(
-        apiBaseUrl: String.fromEnvironment(
-          'API_BASE_URL',
-          defaultValue: 'http://localhost:8080',
-        ),
-      );
+    apiBaseUrl: String.fromEnvironment(
+      'API_BASE_URL',
+      defaultValue: 'http://localhost:8080',
+    ),
+  );
 
   final String apiBaseUrl;
 }

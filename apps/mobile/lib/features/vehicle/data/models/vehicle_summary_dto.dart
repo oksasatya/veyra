@@ -33,12 +33,12 @@ class VehicleSummaryDto {
   final int upcomingReminders;
 
   VehicleSummary toDomain() => VehicleSummary(
-        currentOdometer: currentOdometer,
-        totalServices: totalServices,
-        totalServiceCost: Decimal.parse(totalServiceCost),
-        totalRefuels: totalRefuels,
-        totalFuelCost: Decimal.parse(totalFuelCost),
-        totalExpenses: Decimal.parse(totalExpenses),
-        upcomingReminders: upcomingReminders,
-      );
+    currentOdometer: currentOdometer,
+    totalServices: totalServices,
+    totalServiceCost: Decimal.parse(totalServiceCost),
+    totalRefuels: totalRefuels,
+    totalFuelCost: Decimal.parse(totalFuelCost),
+    totalExpenses: Decimal.parse(totalExpenses),
+    upcomingReminders: upcomingReminders,
+  );
 }

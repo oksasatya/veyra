@@ -9,20 +9,20 @@ enum ExpenseCategory {
   other;
 
   static ExpenseCategory fromApi(String raw) => switch (raw) {
-        'tire' => ExpenseCategory.tire,
-        'battery' => ExpenseCategory.battery,
-        'tax' => ExpenseCategory.tax,
-        'insurance' => ExpenseCategory.insurance,
-        _ => ExpenseCategory.other,
-      };
+    'tire' => ExpenseCategory.tire,
+    'battery' => ExpenseCategory.battery,
+    'tax' => ExpenseCategory.tax,
+    'insurance' => ExpenseCategory.insurance,
+    _ => ExpenseCategory.other,
+  };
 
   String get apiValue => name;
 
   String get label => switch (this) {
-        ExpenseCategory.tire => 'Tire',
-        ExpenseCategory.battery => 'Battery',
-        ExpenseCategory.tax => 'Tax',
-        ExpenseCategory.insurance => 'Insurance',
-        ExpenseCategory.other => 'Other',
-      };
+    ExpenseCategory.tire => 'Tire',
+    ExpenseCategory.battery => 'Battery',
+    ExpenseCategory.tax => 'Tax',
+    ExpenseCategory.insurance => 'Insurance',
+    ExpenseCategory.other => 'Other',
+  };
 }

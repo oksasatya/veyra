@@ -17,14 +17,14 @@ final dioProvider = Provider<Dio>((ref) {
       receiveTimeout: const Duration(seconds: 10),
       contentType: 'application/json',
     ),
-  )
-    ..interceptors.add(AuthInterceptor(store));
+  )..interceptors.add(AuthInterceptor(store));
 
   dio.interceptors.add(
     RefreshInterceptor(
       dio: dio,
       store: store,
-      onSessionExpired: () => ref.read(authEventsProvider.notifier).sessionExpired(),
+      onSessionExpired: () =>
+          ref.read(authEventsProvider.notifier).sessionExpired(),
     ),
   );
 

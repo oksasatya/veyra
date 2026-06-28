@@ -7,18 +7,18 @@ enum FuelType {
   hybrid;
 
   static FuelType fromApi(String raw) => switch (raw) {
-        'diesel' => FuelType.diesel,
-        'electric' => FuelType.electric,
-        'hybrid' => FuelType.hybrid,
-        _ => FuelType.petrol,
-      };
+    'diesel' => FuelType.diesel,
+    'electric' => FuelType.electric,
+    'hybrid' => FuelType.hybrid,
+    _ => FuelType.petrol,
+  };
 
   String get apiValue => name;
 
   String get label => switch (this) {
-        FuelType.petrol => 'Petrol',
-        FuelType.diesel => 'Diesel',
-        FuelType.electric => 'Electric',
-        FuelType.hybrid => 'Hybrid',
-      };
+    FuelType.petrol => 'Petrol',
+    FuelType.diesel => 'Diesel',
+    FuelType.electric => 'Electric',
+    FuelType.hybrid => 'Hybrid',
+  };
 }

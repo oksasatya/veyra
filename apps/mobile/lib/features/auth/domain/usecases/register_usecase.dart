@@ -13,6 +13,5 @@ class RegisterUseCase {
     Email email,
     Password password,
     String name,
-  ) =>
-      _repo.register(email: email, password: password, name: name);
+  ) => _repo.register(email: email, password: password, name: name);
 }

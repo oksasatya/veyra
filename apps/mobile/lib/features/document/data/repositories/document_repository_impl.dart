@@ -68,8 +68,10 @@ final createDocumentUseCaseProvider = Provider<CreateDocumentUseCase>(
 /// the `AsyncValue` error state for the UI. Creation goes through
 /// [CreateDocumentUseCase] directly from the sheet, which invalidates this on
 /// success to refetch.
-final documentListProvider =
-    FutureProvider.family<List<Document>, String>((ref, vehicleId) async {
+final documentListProvider = FutureProvider.family<List<Document>, String>((
+  ref,
+  vehicleId,
+) async {
   final result = await ref.read(listDocumentsUseCaseProvider)(vehicleId);
   return result.fold((failure) => throw failure, (docs) => docs);
 });
