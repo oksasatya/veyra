@@ -62,7 +62,7 @@ flowchart LR
     direction TB
 
     subgraph IN["Inbound (driving) adapter"]
-      H["adapters/inbound/http<br/>handlers · auth + CSRF middleware<br/>cookies · DTOs"]:::adapter
+      H["adapters/inbound/http<br/>handlers · bearer auth middleware<br/>DTOs"]:::adapter
     end
 
     A["application<br/>use cases"]:::app
@@ -81,7 +81,7 @@ flowchart LR
   PG[("PostgreSQL")]:::infra
   RD[("Redis")]:::infra
 
-  FE -->|"Authorization: Bearer · X-Auth-Mode"| H
+  FE -->|"Authorization: Bearer"| H
   H --> A
   A --> P
   A --> D
@@ -131,7 +131,7 @@ Dependency rule (CI-enforced): arrows point **inward** — inbound HTTP → appl
 - Maintenance reminders (by date, odometer, or both)
 - Document tracker (STNK, BPKB, insurance — expiry alerts)
 - Per-vehicle dashboard summary (cached in Redis)
-- Secure auth with rotating refresh tokens: bearer tokens for the Flutter mobile client (cookie + CSRF flow also supported for browsers)
+- Secure auth with rotating refresh tokens — bearer tokens for the Flutter mobile client
 
 ---
 
@@ -154,10 +154,10 @@ curl http://localhost:8080/health
 | Layer | Tech |
 |---|---|
 | Runtime | tokio |
-| Web | axum 0.8 + axum-extra 0.10 (cookie) |
+| Web | axum 0.8 |
 | Database | PostgreSQL 17 + sqlx 0.8 |
 | Cache / Session | Redis + fred 10 |
-| Auth | JWT (jsonwebtoken 9) + Argon2id + rotating refresh tokens (cookie + bearer) |
+| Auth | JWT (jsonwebtoken 9) + Argon2id + rotating refresh tokens (bearer) |
 | Config | figment |
 | Testing | cargo nextest + testcontainers (Postgres + Redis); coverage via cargo-llvm-cov → Codecov |
 | Supply chain | cargo-deny (advisories · licenses · sources) |
@@ -169,9 +169,9 @@ curl http://localhost:8080/health
 
 ## API Overview
 
-> The **Auth** column shows the cookie-flow requirement (shipped). The Flutter mobile client
-> authenticates with `Authorization: Bearer` + `X-Auth-Mode: bearer` and does **not** send CSRF —
-> see [Authentication](#authentication).
+> The **Auth** column shows what each route requires. The mobile client authenticates with an
+> `Authorization: Bearer <access>` header; `/auth/refresh` and `/auth/logout` carry the refresh
+> token in the JSON body — see [Authentication](#authentication).
 
 ### Response format
 
@@ -192,53 +192,52 @@ under `data`. Every response echoes an `X-Request-Id` header.
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| POST | /auth/register | — | Register; sets access, refresh, and CSRF cookies |
-| POST | /auth/login | — | Login; sets access, refresh, and CSRF cookies |
-| POST | /auth/refresh | refresh cookie + CSRF | Rotate refresh token; issues new access token |
-| POST | /auth/logout | access cookie + CSRF | Revoke session; clears all cookies |
-| GET | /me | access cookie | Current user info (incl. `preferred_language`) |
-| PATCH | /me | access cookie + CSRF | Update preferred language (`en` / `id`) |
-| GET / POST | /vehicles | access cookie + CSRF | List / create vehicles |
-| GET / PUT / DELETE | /vehicles/{id} | access cookie + CSRF | Get / update / delete |
-| GET | /vehicles/{id}/summary | access cookie | Dashboard aggregation (cached) |
-| GET / POST | /vehicles/{id}/services | access cookie + CSRF | Service history |
-| GET / POST | /vehicles/{id}/fuel-logs | access cookie + CSRF | Fuel logs |
-| GET / POST | /vehicles/{id}/expenses | access cookie + CSRF | Expenses |
-| GET / POST | /vehicles/{id}/reminders | access cookie + CSRF | Reminders |
-| PATCH | /vehicles/{id}/reminders/{rid} | access cookie + CSRF | Mark reminder complete |
-| GET / POST | /vehicles/{id}/documents | access cookie + CSRF | Documents |
+| POST | /auth/register | — | Register; returns user + access/refresh tokens |
+| POST | /auth/login | — | Login; returns user + access/refresh tokens |
+| POST | /auth/refresh | refresh token (body) | Rotate refresh token; issues new token pair |
+| POST | /auth/logout | refresh token (body) | Revoke the session family |
+| GET | /me | Bearer | Current user info (incl. `preferred_language`) |
+| PATCH | /me | Bearer | Update preferred language (`en` / `id`) |
+| GET / POST | /vehicles | Bearer | List / create vehicles |
+| GET / PUT / DELETE | /vehicles/{id} | Bearer | Get / update / delete |
+| GET | /vehicles/{id}/summary | Bearer | Dashboard aggregation (cached) |
+| GET / POST | /vehicles/{id}/services | Bearer | Service history |
+| GET / POST | /vehicles/{id}/fuel-logs | Bearer | Fuel logs |
+| GET / POST | /vehicles/{id}/expenses | Bearer | Expenses |
+| GET / POST | /vehicles/{id}/reminders | Bearer | Reminders |
+| PATCH | /vehicles/{id}/reminders/{rid} | Bearer | Mark reminder complete |
+| GET / POST | /vehicles/{id}/documents | Bearer | Documents |
 | GET | /health | — | Liveness probe |
 
 ---
 
 ## Authentication
 
-Veyra runs **short-lived access tokens + rotating refresh tokens** over one shared session core, with
-**two delivery modes**:
+Veyra runs **short-lived access tokens + rotating refresh tokens** over one shared session core,
+delivered as **bearer tokens** for the native mobile client. There is no cookie, CSRF, or CORS
+surface — the API is consumed only by the Flutter app
+([ADR-0007](docs/adr/0007-dual-mode-auth-bearer-mobile.md)).
 
-- **Cookie + CSRF** (browsers) — tokens as HttpOnly cookies; the double-submit CSRF flow below. *Shipped.*
-- **Bearer** (native mobile) — opt-in via the `X-Auth-Mode: bearer` request header; tokens are returned
-  in the JSON body and replayed as `Authorization: Bearer <access>`. CSRF is skipped (no cookie surface).
-  Specified in [ADR-0007](docs/adr/0007-dual-mode-auth-bearer-mobile.md) and consumed by the Flutter client.
+Register and login return the token pair in the JSON body:
 
-The token model and rotation below are identical across both modes — only delivery and extraction differ.
+```jsonc
+{ "meta": { "request_id": "…" },
+  "data": { "user": { … }, "tokens": { "access_token": "…", "refresh_token": "…" } } }
+```
+
+The client stores both in the platform secure store (Keychain / Keystore), replays the access token
+as `Authorization: Bearer <access>` on protected routes, and posts the refresh token to
+`/auth/refresh` / `/auth/logout`.
 
 ### Token model
 
 | Token | Form | Lifetime | Transport |
 |---|---|---|---|
-| Access | JWT HS256, claims `{ sub, sid, jti, iat, exp }` | 15 min (configurable) | HttpOnly cookie |
-| Refresh | Opaque `{family_id}.{raw_secret}` | 7 days (configurable) | HttpOnly cookie, `Path=/auth` |
-| CSRF | Random base64url, readable by JS | >= refresh lifetime | Non-HttpOnly cookie |
+| Access | JWT HS256, claims `{ sub, sid, jti, iat, exp }` | 15 min (configurable) | `Authorization: Bearer` header |
+| Refresh | Opaque `{family_id}.{raw_secret}` | 7 days (configurable) | JSON body (`refresh_token`) |
 
-The access JWT embeds `sid` — the refresh family ID. A single `revoked:{sid}` Redis key invalidates
+The access JWT embeds `sid` — the refresh family ID. A single `revoke:{sid}` Redis key invalidates
 all access tokens of a session simultaneously (reuse detected, logout, or explicit revoke).
-
-### CSRF protection
-
-All mutating protected routes require an `X-CSRF-Token` header that matches the `veyra_csrf` cookie
-value (double-submit pattern). The `/auth/register` and `/auth/login` endpoints are exempt (no session
-exists yet). The `/auth/refresh` and `/auth/logout` endpoints enforce CSRF.
 
 ### Refresh rotation
 
@@ -248,18 +247,8 @@ request or a lost-response network retry does not trigger false theft detection.
 grace window matching neither the current nor previous secret is classified as reuse — the family is
 revoked and all access tokens of that session become invalid.
 
-### Cookie prefix matrix
-
-Cookie name prefix is derived from the environment — not configured directly:
-
-| Config | `COOKIE_SECURE` | `COOKIE_SAMESITE` | `COOKIE_DOMAIN` | Resulting prefix |
-|---|---|---|---|---|
-| Local HTTP dev | `false` | `strict` | unset | none (no `Secure` over HTTP) |
-| Self-host HTTPS | `true` | `strict` | unset | `__Host-` |
-| Prod subdomain split | `true` | `lax` | `veyra.dev` | `__Secure-` |
-
-Cookie names: `[prefix]veyra_access`, `[prefix]veyra_refresh` (always `Path=/auth`),
-`[prefix]veyra_csrf`.
+`POST /auth/logout` derives the family from the refresh token (`sid == family_id`) and revokes it, so
+logout still works once the access token has expired.
 
 ---
 
@@ -299,10 +288,6 @@ All configuration is read from environment variables. Defaults are shown where a
 | `ACCESS_TTL_SECS` | `900` | Access token lifetime in seconds (15 min) |
 | `REFRESH_TTL_SECS` | `604800` | Refresh token lifetime in seconds (7 days) |
 | `REFRESH_GRACE_SECS` | `10` | Grace window for in-flight refresh retries |
-| `COOKIE_SECURE` | `true` | Set the `Secure` flag on cookies; set `false` for local plain-HTTP dev |
-| `COOKIE_SAMESITE` | `strict` | Cookie SameSite policy: `strict`, `lax`, or `none` |
-| `COOKIE_DOMAIN` | unset | Cookie `Domain` attribute; set to `veyra.dev` for the prod subdomain split |
-| `CORS_ALLOWED_ORIGINS` | optional | Comma-separated allowed origins for browser clients; wildcard `"*"` is rejected. Not used by the native mobile client (CORS does not apply). |
 
 ---
 
@@ -358,17 +343,17 @@ Steps:
 | Variable | Production value |
 |---|---|
 | `JWT_SECRET` | A strong random string, at least 32 characters |
-| `COOKIE_DOMAIN` | `veyra.dev` |
-| `COOKIE_SAMESITE` | `lax` |
-| `COOKIE_SECURE` | `true` |
-| `CORS_ALLOWED_ORIGINS` | `https://veyra.dev` |
+
+`DATABASE_URL` and `REDIS_URL` are injected by Railway when you attach the managed Postgres and
+Redis. The optional TTL knobs (`ACCESS_TTL_SECS`, `REFRESH_TTL_SECS`, `REFRESH_GRACE_SECS`) default
+sensibly — set them only to override. There is no cookie or CORS configuration: the API serves the
+native mobile client over bearer tokens.
 
 ### Mobile client (Flutter)
 
 The Flutter app (see [Mobile app](#mobile-app)) targets the API at `api.veyra.dev`, distributed via
 TestFlight / Play Store (or a self-host build). It uses `Authorization: Bearer` tokens stored in the
-platform secure store (Keychain / Keystore); native clients are not subject to CORS, so no allowlist
-entry is required.
+platform secure store (Keychain / Keystore).
 
 ---
 
@@ -381,7 +366,7 @@ entry is required.
 - [x] v0.5 — Fuel + expense logs
 - [x] v0.6 — Reminders
 - [x] v0.7 — Dashboard summary
-- [x] v0.8 — Redis auth (access + refresh cookies, CSRF, session revocation, read cache)
+- [x] v0.8 — Redis auth (rotating refresh tokens, session revocation, read cache)
 - [x] v0.9 — Bearer-mode auth (ADR-0007) + Flutter app (auth, garage, all feature screens)
 - [x] v0.10 — Standardized response envelope + machine-readable error codes (ADR-0008)
 - [x] v0.11 — Full mobile i18n (en/id) — localized errors, language toggle, per-screen strings

@@ -5,13 +5,11 @@ use serde_json::json;
 async fn create_vehicle_returns_201() {
     let app = common::spawn_app().await;
     let s = common::register_and_login(&app, "car@example.com").await;
-    let (csrf_name, csrf_value) = common::csrf_header(&s.csrf);
 
     let resp = app
         .client
         .post("/vehicles")
-        .add_cookies(s.cookies.clone())
-        .add_header(csrf_name, csrf_value)
+        .authorization_bearer(&s.access)
         .json(&json!({
             "brand": "Toyota",
             "model": "Avanza",
@@ -32,13 +30,11 @@ async fn list_vehicles_returns_only_own_vehicles() {
     let app = common::spawn_app().await;
     let a = common::register_and_login(&app, "alice@cars.com").await;
     let b = common::register_and_login(&app, "bob@cars.com").await;
-    let (a_csrf_name, a_csrf_value) = common::csrf_header(&a.csrf);
 
     // Alice creates a vehicle
     app.client
         .post("/vehicles")
-        .add_cookies(a.cookies.clone())
-        .add_header(a_csrf_name, a_csrf_value)
+        .authorization_bearer(&a.access)
         .json(&json!({
             "brand": "Honda",
             "model": "Brio",
@@ -53,7 +49,7 @@ async fn list_vehicles_returns_only_own_vehicles() {
     let resp = app
         .client
         .get("/vehicles")
-        .add_cookies(b.cookies.clone())
+        .authorization_bearer(&b.access)
         .await;
 
     resp.assert_status_ok();
@@ -66,13 +62,11 @@ async fn get_vehicle_not_owned_returns_404() {
     let app = common::spawn_app().await;
     let a = common::register_and_login(&app, "owner@cars.com").await;
     let b = common::register_and_login(&app, "intruder@cars.com").await;
-    let (a_csrf_name, a_csrf_value) = common::csrf_header(&a.csrf);
 
     let created = app
         .client
         .post("/vehicles")
-        .add_cookies(a.cookies.clone())
-        .add_header(a_csrf_name, a_csrf_value)
+        .authorization_bearer(&a.access)
         .json(&json!({
             "brand": "Daihatsu",
             "model": "Xenia",
@@ -88,7 +82,7 @@ async fn get_vehicle_not_owned_returns_404() {
     let resp = app
         .client
         .get(&format!("/vehicles/{id}"))
-        .add_cookies(b.cookies.clone())
+        .authorization_bearer(&b.access)
         .await;
 
     resp.assert_status(axum::http::StatusCode::NOT_FOUND);

@@ -4,12 +4,10 @@ use serde_json::json;
 
 /// Helper: create a vehicle for `session` and return its id string.
 async fn create_vehicle(app: &common::TestApp, session: &Session, plate: &str) -> String {
-    let (cn, cv) = common::csrf_header(&session.csrf);
     let v: serde_json::Value = app
         .client
         .post("/vehicles")
-        .add_cookies(session.cookies.clone())
-        .add_header(cn, cv)
+        .authorization_bearer(&session.access)
         .json(&json!({
             "brand": "Toyota", "model": "Avanza", "year": 2021,
             "plate_number": plate, "fuel_type": "petrol", "current_odometer": 0
@@ -24,13 +22,11 @@ async fn create_and_list_reminders() {
     let app = common::spawn_app().await;
     let s = common::register_and_login(&app, "reminder_list@example.com").await;
     let vid = create_vehicle(&app, &s, "B 0001 REM").await;
-    let (cn, cv) = common::csrf_header(&s.csrf);
 
     let resp = app
         .client
         .post(&format!("/vehicles/{vid}/reminders"))
-        .add_cookies(s.cookies.clone())
-        .add_header(cn, cv)
+        .authorization_bearer(&s.access)
         .json(&json!({
             "title": "Oil change",
             "reminder_type": "date",
@@ -46,7 +42,7 @@ async fn create_and_list_reminders() {
     let list: serde_json::Value = app
         .client
         .get(&format!("/vehicles/{vid}/reminders"))
-        .add_cookies(s.cookies.clone())
+        .authorization_bearer(&s.access)
         .await
         .json();
     assert_eq!(list["data"].as_array().unwrap().len(), 1);
@@ -58,14 +54,12 @@ async fn mark_reminder_complete() {
     let app = common::spawn_app().await;
     let s = common::register_and_login(&app, "reminder_patch@example.com").await;
     let vid = create_vehicle(&app, &s, "B 0002 REM").await;
-    let (cn, cv) = common::csrf_header(&s.csrf);
 
     // Create a reminder
     let created: serde_json::Value = app
         .client
         .post(&format!("/vehicles/{vid}/reminders"))
-        .add_cookies(s.cookies.clone())
-        .add_header(cn.clone(), cv.clone())
+        .authorization_bearer(&s.access)
         .json(&json!({
             "title": "Tire rotation",
             "reminder_type": "odometer",
@@ -79,8 +73,7 @@ async fn mark_reminder_complete() {
     let resp = app
         .client
         .patch(&format!("/vehicles/{vid}/reminders/{rid}"))
-        .add_cookies(s.cookies.clone())
-        .add_header(cn, cv)
+        .authorization_bearer(&s.access)
         .json(&json!({ "is_completed": true }))
         .await;
     resp.assert_status(axum::http::StatusCode::OK);
@@ -91,7 +84,7 @@ async fn mark_reminder_complete() {
     let list: serde_json::Value = app
         .client
         .get(&format!("/vehicles/{vid}/reminders"))
-        .add_cookies(s.cookies.clone())
+        .authorization_bearer(&s.access)
         .await
         .json();
     assert!(list["data"][0]["is_completed"].as_bool().unwrap());
@@ -102,13 +95,11 @@ async fn date_reminder_without_due_date_returns_422() {
     let app = common::spawn_app().await;
     let s = common::register_and_login(&app, "reminder_422@example.com").await;
     let vid = create_vehicle(&app, &s, "B 0003 REM").await;
-    let (cn, cv) = common::csrf_header(&s.csrf);
 
     let resp = app
         .client
         .post(&format!("/vehicles/{vid}/reminders"))
-        .add_cookies(s.cookies.clone())
-        .add_header(cn, cv)
+        .authorization_bearer(&s.access)
         .json(&json!({
             "title": "Missing due_date",
             "reminder_type": "date"
@@ -123,13 +114,11 @@ async fn odometer_reminder_without_due_odometer_returns_422() {
     let app = common::spawn_app().await;
     let s = common::register_and_login(&app, "reminder_422b@example.com").await;
     let vid = create_vehicle(&app, &s, "B 0004 REM").await;
-    let (cn, cv) = common::csrf_header(&s.csrf);
 
     let resp = app
         .client
         .post(&format!("/vehicles/{vid}/reminders"))
-        .add_cookies(s.cookies.clone())
-        .add_header(cn, cv)
+        .authorization_bearer(&s.access)
         .json(&json!({
             "title": "Missing odometer",
             "reminder_type": "odometer"
@@ -144,13 +133,11 @@ async fn invalid_reminder_type_returns_422() {
     let app = common::spawn_app().await;
     let s = common::register_and_login(&app, "reminder_invalid_type@example.com").await;
     let vid = create_vehicle(&app, &s, "B 0005 REM").await;
-    let (cn, cv) = common::csrf_header(&s.csrf);
 
     let resp = app
         .client
         .post(&format!("/vehicles/{vid}/reminders"))
-        .add_cookies(s.cookies.clone())
-        .add_header(cn, cv)
+        .authorization_bearer(&s.access)
         .json(&json!({
             "title": "Bad type",
             "reminder_type": "invalid_type",
@@ -167,13 +154,11 @@ async fn reminder_for_other_users_vehicle_returns_404() {
     let b = common::register_and_login(&app, "reminder_intruder@example.com").await;
 
     let vid = create_vehicle(&app, &a, "B 0006 REM").await;
-    let (b_cn, b_cv) = common::csrf_header(&b.csrf);
 
     let resp = app
         .client
         .post(&format!("/vehicles/{vid}/reminders"))
-        .add_cookies(b.cookies.clone())
-        .add_header(b_cn, b_cv)
+        .authorization_bearer(&b.access)
         .json(&json!({
             "title": "Unauthorised reminder",
             "reminder_type": "date",
@@ -188,14 +173,12 @@ async fn patch_both_type_reminder_preserves_existing_due_date() {
     let app = common::spawn_app().await;
     let s = common::register_and_login(&app, "reminder_both_patch@example.com").await;
     let vid = create_vehicle(&app, &s, "B 0007 REM").await;
-    let (cn, cv) = common::csrf_header(&s.csrf);
 
     // Create a both-type reminder with both triggers
     let created: serde_json::Value = app
         .client
         .post(&format!("/vehicles/{vid}/reminders"))
-        .add_cookies(s.cookies.clone())
-        .add_header(cn.clone(), cv.clone())
+        .authorization_bearer(&s.access)
         .json(&json!({
             "title": "Full service",
             "reminder_type": "both",
@@ -210,8 +193,7 @@ async fn patch_both_type_reminder_preserves_existing_due_date() {
     let resp = app
         .client
         .patch(&format!("/vehicles/{vid}/reminders/{rid}"))
-        .add_cookies(s.cookies.clone())
-        .add_header(cn, cv)
+        .authorization_bearer(&s.access)
         .json(&json!({ "is_completed": true }))
         .await;
     resp.assert_status(axum::http::StatusCode::OK);

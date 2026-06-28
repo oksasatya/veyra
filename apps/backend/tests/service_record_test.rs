@@ -5,13 +5,11 @@ use serde_json::json;
 async fn create_and_list_service_records() {
     let app = common::spawn_app().await;
     let s = common::register_and_login(&app, "svc@example.com").await;
-    let (cn, cv) = common::csrf_header(&s.csrf);
 
     let v = app
         .client
         .post("/vehicles")
-        .add_cookies(s.cookies.clone())
-        .add_header(cn.clone(), cv.clone())
+        .authorization_bearer(&s.access)
         .json(&json!({
             "brand": "Toyota", "model": "Avanza", "year": 2020,
             "plate_number": "B 0001 SVC", "fuel_type": "petrol", "current_odometer": 0
@@ -24,8 +22,7 @@ async fn create_and_list_service_records() {
     let resp = app
         .client
         .post(&format!("/vehicles/{vid}/services"))
-        .add_cookies(s.cookies.clone())
-        .add_header(cn.clone(), cv.clone())
+        .authorization_bearer(&s.access)
         .json(&json!({
             "service_date": "2026-01-15",
             "odometer": 5000,
@@ -40,7 +37,7 @@ async fn create_and_list_service_records() {
     let list = app
         .client
         .get(&format!("/vehicles/{vid}/services"))
-        .add_cookies(s.cookies.clone())
+        .authorization_bearer(&s.access)
         .await;
     list.assert_status_ok();
     let list_body: serde_json::Value = list.json();
@@ -56,15 +53,12 @@ async fn service_record_for_other_users_vehicle_returns_404() {
     let app = common::spawn_app().await;
     let a = common::register_and_login(&app, "owner@svc.com").await;
     let b = common::register_and_login(&app, "intruder@svc.com").await;
-    let (a_cn, a_cv) = common::csrf_header(&a.csrf);
-    let (b_cn, b_cv) = common::csrf_header(&b.csrf);
 
     // Owner creates a vehicle
     let v = app
         .client
         .post("/vehicles")
-        .add_cookies(a.cookies.clone())
-        .add_header(a_cn, a_cv)
+        .authorization_bearer(&a.access)
         .json(&json!({
             "brand": "Honda", "model": "Brio", "year": 2021,
             "plate_number": "B 0002 SVC", "fuel_type": "petrol", "current_odometer": 0
@@ -77,8 +71,7 @@ async fn service_record_for_other_users_vehicle_returns_404() {
     let resp = app
         .client
         .post(&format!("/vehicles/{vid}/services"))
-        .add_cookies(b.cookies.clone())
-        .add_header(b_cn, b_cv)
+        .authorization_bearer(&b.access)
         .json(&json!({
             "service_date": "2026-01-15",
             "odometer": 1000,

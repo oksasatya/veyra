@@ -1,5 +1,3 @@
-pub mod auth_mode;
-pub mod cookies;
 pub mod dto;
 pub mod errors;
 pub mod handlers;

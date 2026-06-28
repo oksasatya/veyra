@@ -22,8 +22,6 @@ uuid = { version = "1", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 jsonwebtoken = "9"
 argon2 = "0.5"
-tower = "0.5"
-tower-http = { version = "0.6", features = ["cors", "trace"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 figment = { version = "0.10", features = ["env", "toml"] }
@@ -32,8 +30,6 @@ rand_core = { version = "0.6", features = ["std"] }
 rust_decimal = { version = "1", features = ["db-postgres"] }
 async-trait = "0.1"
 fred = { version = "10", features = ["i-scripts"] }
-axum-extra = { version = "0.10", features = ["cookie"] }
-time = "0.3"
 sha2 = "0.10"
 rand = "0.8"
 hex = "0.4"
@@ -43,5 +39,4 @@ base64 = "0.22"
 tokio = { version = "1", features = ["full", "test-util"] }
 axum-test = "21"
 testcontainers-modules = { version = "0.15", features = ["postgres", "redis"] }
-cookie = "0.18"
 fred = { version = "10", features = ["i-scripts"] }

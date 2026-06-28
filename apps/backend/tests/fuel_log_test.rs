@@ -5,13 +5,11 @@ use serde_json::json;
 async fn create_and_list_fuel_logs() {
     let app = common::spawn_app().await;
     let s = common::register_and_login(&app, "fuel@example.com").await;
-    let (cn, cv) = common::csrf_header(&s.csrf);
 
     let v: serde_json::Value = app
         .client
         .post("/vehicles")
-        .add_cookies(s.cookies.clone())
-        .add_header(cn.clone(), cv.clone())
+        .authorization_bearer(&s.access)
         .json(&json!({
             "brand": "Honda", "model": "Brio", "year": 2022,
             "plate_number": "B 0001 FUL", "fuel_type": "petrol", "current_odometer": 0
@@ -23,8 +21,7 @@ async fn create_and_list_fuel_logs() {
     let resp = app
         .client
         .post(&format!("/vehicles/{vid}/fuel-logs"))
-        .add_cookies(s.cookies.clone())
-        .add_header(cn.clone(), cv.clone())
+        .authorization_bearer(&s.access)
         .json(&json!({
             "log_date": "2026-01-20",
             "odometer": 10000,
@@ -41,7 +38,7 @@ async fn create_and_list_fuel_logs() {
     let list: serde_json::Value = app
         .client
         .get(&format!("/vehicles/{vid}/fuel-logs"))
-        .add_cookies(s.cookies.clone())
+        .authorization_bearer(&s.access)
         .await
         .json();
     assert_eq!(list["data"].as_array().unwrap().len(), 1);
@@ -52,14 +49,11 @@ async fn fuel_log_for_other_users_vehicle_returns_404() {
     let app = common::spawn_app().await;
     let a = common::register_and_login(&app, "owner@fuel.com").await;
     let b = common::register_and_login(&app, "intruder@fuel.com").await;
-    let (a_cn, a_cv) = common::csrf_header(&a.csrf);
-    let (b_cn, b_cv) = common::csrf_header(&b.csrf);
 
     let v: serde_json::Value = app
         .client
         .post("/vehicles")
-        .add_cookies(a.cookies.clone())
-        .add_header(a_cn, a_cv)
+        .authorization_bearer(&a.access)
         .json(&json!({
             "brand": "Honda", "model": "Brio", "year": 2022,
             "plate_number": "B 0002 FUL", "fuel_type": "petrol", "current_odometer": 0
@@ -71,8 +65,7 @@ async fn fuel_log_for_other_users_vehicle_returns_404() {
     let resp = app
         .client
         .post(&format!("/vehicles/{vid}/fuel-logs"))
-        .add_cookies(b.cookies.clone())
-        .add_header(b_cn, b_cv)
+        .authorization_bearer(&b.access)
         .json(&json!({
             "log_date": "2026-01-20",
             "odometer": 5000,

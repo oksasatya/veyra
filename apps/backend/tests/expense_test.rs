@@ -5,13 +5,11 @@ use serde_json::json;
 async fn create_and_list_expenses() {
     let app = common::spawn_app().await;
     let s = common::register_and_login(&app, "expense@example.com").await;
-    let (cn, cv) = common::csrf_header(&s.csrf);
 
     let v: serde_json::Value = app
         .client
         .post("/vehicles")
-        .add_cookies(s.cookies.clone())
-        .add_header(cn.clone(), cv.clone())
+        .authorization_bearer(&s.access)
         .json(&json!({
             "brand": "Toyota", "model": "Avanza", "year": 2021,
             "plate_number": "B 0001 EXP", "fuel_type": "petrol", "current_odometer": 0
@@ -23,8 +21,7 @@ async fn create_and_list_expenses() {
     let resp = app
         .client
         .post(&format!("/vehicles/{vid}/expenses"))
-        .add_cookies(s.cookies.clone())
-        .add_header(cn.clone(), cv.clone())
+        .authorization_bearer(&s.access)
         .json(&json!({
             "expense_date": "2026-06-15",
             "category": "tire",
@@ -40,7 +37,7 @@ async fn create_and_list_expenses() {
     let list: serde_json::Value = app
         .client
         .get(&format!("/vehicles/{vid}/expenses"))
-        .add_cookies(s.cookies.clone())
+        .authorization_bearer(&s.access)
         .await
         .json();
     assert_eq!(list["data"].as_array().unwrap().len(), 1);
@@ -50,13 +47,11 @@ async fn create_and_list_expenses() {
 async fn expense_invalid_category_returns_422() {
     let app = common::spawn_app().await;
     let s = common::register_and_login(&app, "exp_invalid@example.com").await;
-    let (cn, cv) = common::csrf_header(&s.csrf);
 
     let v: serde_json::Value = app
         .client
         .post("/vehicles")
-        .add_cookies(s.cookies.clone())
-        .add_header(cn.clone(), cv.clone())
+        .authorization_bearer(&s.access)
         .json(&json!({
             "brand": "Honda", "model": "Jazz", "year": 2020,
             "plate_number": "B 0002 EXP", "fuel_type": "petrol", "current_odometer": 0
@@ -68,8 +63,7 @@ async fn expense_invalid_category_returns_422() {
     let resp = app
         .client
         .post(&format!("/vehicles/{vid}/expenses"))
-        .add_cookies(s.cookies.clone())
-        .add_header(cn, cv)
+        .authorization_bearer(&s.access)
         .json(&json!({
             "expense_date": "2026-06-15",
             "category": "INVALID_CATEGORY",
@@ -85,14 +79,11 @@ async fn expense_for_other_users_vehicle_returns_404() {
     let app = common::spawn_app().await;
     let a = common::register_and_login(&app, "owner@expense.com").await;
     let b = common::register_and_login(&app, "intruder@expense.com").await;
-    let (a_cn, a_cv) = common::csrf_header(&a.csrf);
-    let (b_cn, b_cv) = common::csrf_header(&b.csrf);
 
     let v: serde_json::Value = app
         .client
         .post("/vehicles")
-        .add_cookies(a.cookies.clone())
-        .add_header(a_cn, a_cv)
+        .authorization_bearer(&a.access)
         .json(&json!({
             "brand": "Honda", "model": "Brio", "year": 2022,
             "plate_number": "B 0003 EXP", "fuel_type": "petrol", "current_odometer": 0
@@ -104,8 +95,7 @@ async fn expense_for_other_users_vehicle_returns_404() {
     let resp = app
         .client
         .post(&format!("/vehicles/{vid}/expenses"))
-        .add_cookies(b.cookies.clone())
-        .add_header(b_cn, b_cv)
+        .authorization_bearer(&b.access)
         .json(&json!({
             "expense_date": "2026-06-15",
             "category": "battery",

@@ -80,10 +80,10 @@ return {'REUSED'}
 ///
 /// # Why the single-prev + grace window is safe
 ///
-/// Cookies are shared **per browser**: when a rotation completes the browser's
-/// cookie jar is updated to the new secret, so the same browser never holds two
-/// valid refresh secrets simultaneously. The grace window covers in-flight
-/// concurrent refreshes (e.g. two tabs rotating at the exact same instant).
+/// The refresh token is held **per device**: when a rotation completes the
+/// client stores the new secret, so the same device never holds two valid
+/// refresh secrets simultaneously. The grace window covers in-flight concurrent
+/// refreshes (e.g. a lost-response retry rotating at the same instant).
 /// Each **login** creates a *separate* family — different devices never share a
 /// family — so one device being compromised does not grant access to another
 /// device's family. The only multi-secret window is the brief grace interval for

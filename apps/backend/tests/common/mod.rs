@@ -1,15 +1,13 @@
 use axum::http::{header::AUTHORIZATION, HeaderName, HeaderValue};
 use axum_test::TestServer;
-use cookie::CookieJar;
 use fred::clients::Pool as RedisPool;
 use serde_json::json;
 use sqlx::PgPool;
 use testcontainers_modules::postgres::Postgres;
 use testcontainers_modules::redis::Redis;
 use testcontainers_modules::testcontainers::{runners::AsyncRunner, ContainerAsync, ImageExt};
-use veyra::adapters::inbound::http::cookies::X_CSRF_TOKEN;
 use veyra::adapters::outbound::redis::{client::build_pool, session_store::RedisSessionStore};
-use veyra::bootstrap::config::{Config, SameSiteCfg};
+use veyra::bootstrap::config::Config;
 use veyra::{adapters::inbound::http::router, bootstrap::state::AppState};
 
 pub struct TestApp {
@@ -29,19 +27,17 @@ pub struct TestApp {
     _redis: ContainerAsync<Redis>,
 }
 
-/// An authenticated session captured after register+login. Holds the user's
-/// auth cookies (access/refresh/csrf) so a request can be scoped to *this* user
-/// explicitly — robust even when several users exist in one test — plus the CSRF
-/// token to send via the `X-CSRF-Token` header on mutating requests.
+/// An authenticated session captured after register+login. Holds the bearer
+/// access + refresh tokens so a request can be scoped to *this* user explicitly —
+/// robust even when several users exist in one test.
 #[allow(dead_code)] // fields read by different test binaries
 pub struct Session {
-    pub csrf: String,
-    pub cookies: CookieJar,
+    pub access: String,
+    pub refresh: String,
 }
 
-/// A test [`Config`]: insecure cookies (HTTP test transport), `SameSite=Strict`,
-/// no domain, no CORS allowlist (same-origin), and the standard TTLs. The
-/// refresh grace window is configurable so tests can exercise reuse detection.
+/// A test [`Config`] with the standard TTLs. The refresh grace window is
+/// configurable so tests can exercise reuse detection.
 fn test_config(refresh_grace_secs: u64) -> Config {
     Config {
         database_url: String::new(),
@@ -51,103 +47,48 @@ fn test_config(refresh_grace_secs: u64) -> Config {
         access_ttl_secs: 900,
         refresh_ttl_secs: 604_800,
         refresh_grace_secs,
-        cookie_secure: false,
-        cookie_samesite: SameSiteCfg::Strict,
-        cookie_domain: None,
-        cors_allowed_origins: Vec::new(),
     }
 }
 
 /// Register a user, then log in, and return the authenticated [`Session`]
-/// (auth cookies + CSRF token). The login response's cookies are also stored in
-/// the shared server jar (`save_cookies`), but tests scope each request to a
-/// specific user via [`Session::cookies`] for correctness across multi-user
-/// scenarios.
+/// (`access_token` + `refresh_token` read from the JSON body).
 ///
 /// Password is always `"password123"` and name is `"User"`.
 #[allow(dead_code)] // only some test binaries call this
 pub async fn register_and_login(app: &TestApp, email: &str) -> Session {
     app.client
         .post("/auth/register")
-        .json(&json!({
-            "email": email,
-            "password": "password123",
-            "name": "User"
-        }))
+        .json(&json!({ "email": email, "password": "password123", "name": "User" }))
         .await;
     let resp = app
         .client
         .post("/auth/login")
-        .json(&json!({
-            "email": email,
-            "password": "password123"
-        }))
+        .json(&json!({ "email": email, "password": "password123" }))
         .await;
-    // The csrf cookie is readable (not HttpOnly); its value is the CSRF token.
-    let csrf = resp.cookie("veyra_csrf").value().to_string();
-    Session {
-        csrf,
-        cookies: resp.cookies(),
-    }
-}
-
-/// Build the `(name, value)` pair for the `X-CSRF-Token` header. Attach to every
-/// mutating request: `.add_header(name, value)`.
-#[allow(dead_code)] // only some test binaries call this
-pub fn csrf_header(token: &str) -> (HeaderName, HeaderValue) {
-    let name = HeaderName::from_static(X_CSRF_TOKEN);
-    let value = HeaderValue::from_str(token).expect("valid csrf header value");
-    (name, value)
-}
-
-/// The `X-Auth-Mode: bearer` header pair — opts a request into bearer delivery.
-#[allow(dead_code)]
-pub fn auth_mode_header() -> (HeaderName, HeaderValue) {
-    (
-        HeaderName::from_static("x-auth-mode"),
-        HeaderValue::from_static("bearer"),
-    )
+    let body: serde_json::Value = resp.json();
+    let access = body["data"]["tokens"]["access_token"]
+        .as_str()
+        .expect("login returns an access token")
+        .to_string();
+    let refresh = body["data"]["tokens"]["refresh_token"]
+        .as_str()
+        .expect("login returns a refresh token")
+        .to_string();
+    Session { access, refresh }
 }
 
 /// The `Authorization: Bearer <access>` header pair for protected requests.
-#[allow(dead_code)]
+/// Attach via `.add_header(name, value)`.
+#[allow(dead_code)] // only some test binaries call this
 pub fn bearer_header(access: &str) -> (HeaderName, HeaderValue) {
     let value =
         HeaderValue::from_str(&format!("Bearer {access}")).expect("valid bearer header value");
     (AUTHORIZATION, value)
 }
 
-/// Register + login a user in BEARER mode; returns `(access_token, refresh_token)`
-/// read from the JSON body. No cookies are set in bearer mode.
-#[allow(dead_code)]
-pub async fn register_and_login_bearer(app: &TestApp, email: &str) -> (String, String) {
-    let (n, v) = auth_mode_header();
-    app.client
-        .post("/auth/register")
-        .add_header(n.clone(), v.clone())
-        .json(&json!({ "email": email, "password": "password123", "name": "User" }))
-        .await;
-    let resp = app
-        .client
-        .post("/auth/login")
-        .add_header(n, v)
-        .json(&json!({ "email": email, "password": "password123" }))
-        .await;
-    let body: serde_json::Value = resp.json();
-    let access = body["data"]["tokens"]["access_token"]
-        .as_str()
-        .unwrap()
-        .to_string();
-    let refresh = body["data"]["tokens"]["refresh_token"]
-        .as_str()
-        .unwrap()
-        .to_string();
-    (access, refresh)
-}
-
 /// Spins up real Postgres AND Redis containers, runs migrations, builds the
-/// Redis pool, and returns a [`TestApp`] backed by the full axum router with
-/// cookie persistence enabled. Uses the default refresh grace window (10s).
+/// Redis pool, and returns a [`TestApp`] backed by the full axum router. Uses the
+/// default refresh grace window (10s).
 #[allow(dead_code)] // only some test binaries call this
 pub async fn spawn_app() -> TestApp {
     spawn_app_with_grace(10).await
@@ -155,8 +96,6 @@ pub async fn spawn_app() -> TestApp {
 
 /// Like [`spawn_app`] but with an explicit refresh grace window — `0` makes the
 /// previous refresh secret immediately invalid (used to test reuse detection).
-/// Containers are leaked intentionally so they outlive the test; process exit
-/// cleans them up.
 #[allow(dead_code)] // only some test binaries call this
 pub async fn spawn_app_with_grace(refresh_grace_secs: u64) -> TestApp {
     let pg = Postgres::default()
@@ -177,7 +116,7 @@ pub async fn spawn_app_with_grace(refresh_grace_secs: u64) -> TestApp {
 
     let state = AppState::new(pool, redis_pool.clone(), &test_config(refresh_grace_secs));
     let app = router::build(state);
-    let client = TestServer::builder().save_cookies().build(app);
+    let client = TestServer::new(app);
 
     // Hold the container handles in TestApp so they live for the whole test and are
     // stopped on Drop when it ends — never leaked.

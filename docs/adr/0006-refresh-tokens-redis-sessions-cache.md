@@ -1,9 +1,14 @@
 # ADR-0006: Refresh Tokens, Redis Session Store, and Read Caching
 
 **Date:** 2026-06-27
-**Status:** Accepted
+**Status:** Accepted (token delivery later narrowed by ADR-0007)
 **Supersedes:** ADR-0003 (JWT Authentication, No Refresh Token in MVP)
 **Deciders:** Oksa Satya
+
+> **Note (2026-06-28):** [ADR-0007](0007-dual-mode-auth-bearer-mobile.md) narrowed token **delivery**
+> to **bearer-only** for the native mobile client — the cookie / CSRF / CORS / cookie-prefix details
+> described below were removed. The session model in this ADR (access JWT + rotating Redis refresh
+> family + sid revocation + read caching) is unchanged and still current; only the transport differs.
 
 ---
 

@@ -8,7 +8,7 @@ async fn me_returns_preferred_language_default_en() {
     let app = common::spawn_app().await;
     let s = common::register_and_login(&app, "lang-default@example.com").await;
 
-    let resp = app.client.get("/me").add_cookies(s.cookies.clone()).await;
+    let resp = app.client.get("/me").authorization_bearer(&s.access).await;
 
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
@@ -22,13 +22,11 @@ async fn me_returns_preferred_language_default_en() {
 async fn patch_me_updates_preferred_language() {
     let app = common::spawn_app().await;
     let s = common::register_and_login(&app, "lang-update@example.com").await;
-    let (csrf_name, csrf_value) = common::csrf_header(&s.csrf);
 
     let resp = app
         .client
         .patch("/me")
-        .add_cookies(s.cookies.clone())
-        .add_header(csrf_name, csrf_value)
+        .authorization_bearer(&s.access)
         .json(&json!({ "preferred_language": "id" }))
         .await;
 
@@ -37,9 +35,12 @@ async fn patch_me_updates_preferred_language() {
     assert_eq!(body["data"]["preferred_language"].as_str().unwrap(), "id");
 
     // Persisted: a subsequent GET /me reflects the new language.
-    let me = app.client.get("/me").add_cookies(s.cookies.clone()).await;
+    let me = app.client.get("/me").authorization_bearer(&s.access).await;
     let me_body: serde_json::Value = me.json();
-    assert_eq!(me_body["data"]["preferred_language"].as_str().unwrap(), "id");
+    assert_eq!(
+        me_body["data"]["preferred_language"].as_str().unwrap(),
+        "id"
+    );
 }
 
 /// An unsupported language code is rejected as a 422 with the stable code.
@@ -47,13 +48,11 @@ async fn patch_me_updates_preferred_language() {
 async fn patch_me_rejects_unsupported_language() {
     let app = common::spawn_app().await;
     let s = common::register_and_login(&app, "lang-bad@example.com").await;
-    let (csrf_name, csrf_value) = common::csrf_header(&s.csrf);
 
     let resp = app
         .client
         .patch("/me")
-        .add_cookies(s.cookies.clone())
-        .add_header(csrf_name, csrf_value)
+        .authorization_bearer(&s.access)
         .json(&json!({ "preferred_language": "fr" }))
         .await;
 
@@ -76,7 +75,7 @@ async fn not_found_uses_error_envelope() {
     let resp = app
         .client
         .get(&format!("/vehicles/{missing}"))
-        .add_cookies(s.cookies.clone())
+        .authorization_bearer(&s.access)
         .await;
 
     resp.assert_status(axum::http::StatusCode::NOT_FOUND);

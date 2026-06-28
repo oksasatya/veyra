@@ -12,13 +12,11 @@ use veyra::adapters::outbound::redis::cache::RedisCache;
 async fn write_invalidates_list_cache() {
     let app = common::spawn_app().await;
     let s = common::register_and_login(&app, "cache_user@example.com").await;
-    let (csrf_name, csrf_value) = common::csrf_header(&s.csrf);
 
     // Create first vehicle.
     app.client
         .post("/vehicles")
-        .add_cookies(s.cookies.clone())
-        .add_header(csrf_name.clone(), csrf_value.clone())
+        .authorization_bearer(&s.access)
         .json(&json!({
             "brand": "Toyota",
             "model": "Avanza",
@@ -33,7 +31,7 @@ async fn write_invalidates_list_cache() {
     let resp = app
         .client
         .get("/vehicles")
-        .add_cookies(s.cookies.clone())
+        .authorization_bearer(&s.access)
         .await;
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
@@ -47,8 +45,7 @@ async fn write_invalidates_list_cache() {
     // invalidating the stale list key.
     app.client
         .post("/vehicles")
-        .add_cookies(s.cookies.clone())
-        .add_header(csrf_name.clone(), csrf_value.clone())
+        .authorization_bearer(&s.access)
         .json(&json!({
             "brand": "Honda",
             "model": "Jazz",
@@ -63,7 +60,7 @@ async fn write_invalidates_list_cache() {
     let resp = app
         .client
         .get("/vehicles")
-        .add_cookies(s.cookies.clone())
+        .authorization_bearer(&s.access)
         .await;
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
@@ -81,13 +78,11 @@ async fn cross_user_cache_isolation() {
     let app = common::spawn_app().await;
     let a = common::register_and_login(&app, "alice_cache@example.com").await;
     let b = common::register_and_login(&app, "bob_cache@example.com").await;
-    let (a_csrf_name, a_csrf_value) = common::csrf_header(&a.csrf);
 
     // Alice creates a vehicle — populates her slice of the cache on the first list.
     app.client
         .post("/vehicles")
-        .add_cookies(a.cookies.clone())
-        .add_header(a_csrf_name.clone(), a_csrf_value.clone())
+        .authorization_bearer(&a.access)
         .json(&json!({
             "brand": "Suzuki",
             "model": "Ertiga",
@@ -102,7 +97,7 @@ async fn cross_user_cache_isolation() {
     let resp = app
         .client
         .get("/vehicles")
-        .add_cookies(a.cookies.clone())
+        .authorization_bearer(&a.access)
         .await;
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
@@ -112,7 +107,7 @@ async fn cross_user_cache_isolation() {
     let resp = app
         .client
         .get("/vehicles")
-        .add_cookies(b.cookies.clone())
+        .authorization_bearer(&b.access)
         .await;
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
@@ -129,14 +124,12 @@ async fn cross_user_cache_isolation() {
 async fn update_invalidates_detail_cache() {
     let app = common::spawn_app().await;
     let s = common::register_and_login(&app, "detail_cache@example.com").await;
-    let (csrf_name, csrf_value) = common::csrf_header(&s.csrf);
 
     // Create vehicle.
     let resp = app
         .client
         .post("/vehicles")
-        .add_cookies(s.cookies.clone())
-        .add_header(csrf_name.clone(), csrf_value.clone())
+        .authorization_bearer(&s.access)
         .json(&json!({
             "brand": "Mitsubishi",
             "model": "Xpander",
@@ -153,7 +146,7 @@ async fn update_invalidates_detail_cache() {
     let resp = app
         .client
         .get(&format!("/vehicles/{vehicle_id}"))
-        .add_cookies(s.cookies.clone())
+        .authorization_bearer(&s.access)
         .await;
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
@@ -162,8 +155,7 @@ async fn update_invalidates_detail_cache() {
     // Update the vehicle — bumps cache version.
     app.client
         .put(&format!("/vehicles/{vehicle_id}"))
-        .add_cookies(s.cookies.clone())
-        .add_header(csrf_name.clone(), csrf_value.clone())
+        .authorization_bearer(&s.access)
         .json(&json!({
             "brand": "Mitsubishi",
             "model": "Xpander Cross",
@@ -178,7 +170,7 @@ async fn update_invalidates_detail_cache() {
     let resp = app
         .client
         .get(&format!("/vehicles/{vehicle_id}"))
-        .add_cookies(s.cookies.clone())
+        .authorization_bearer(&s.access)
         .await;
     resp.assert_status_ok();
     let body: serde_json::Value = resp.json();
@@ -204,37 +196,19 @@ async fn cached_list_entry_has_ttl() {
     let app = common::spawn_app().await;
 
     // Register + login — capture user_id from the JSON response body.
-    app.client
-        .post("/auth/register")
-        .json(&json!({
-            "email": "ttl_test@example.com",
-            "password": "password123",
-            "name": "User"
-        }))
-        .await;
-    let login_resp = app
-        .client
-        .post("/auth/login")
-        .json(&json!({
-            "email": "ttl_test@example.com",
-            "password": "password123"
-        }))
-        .await;
-    let login_body: serde_json::Value = login_resp.json();
-    let user_id: Uuid = login_body["data"]["id"]
+    let s = common::register_and_login(&app, "ttl_test@example.com").await;
+    let me_resp = app.client.get("/me").authorization_bearer(&s.access).await;
+    let me_body: serde_json::Value = me_resp.json();
+    let user_id: Uuid = me_body["data"]["id"]
         .as_str()
-        .expect("login response must have id field")
+        .expect("me response must have id field")
         .parse()
         .expect("id must be a valid UUID");
-    let csrf = login_resp.cookie("veyra_csrf").value().to_string();
-    let cookies = login_resp.cookies();
-    let (csrf_name, csrf_value) = common::csrf_header(&csrf);
 
     // Insert one vehicle — bumps version counter to 1.
     app.client
         .post("/vehicles")
-        .add_cookies(cookies.clone())
-        .add_header(csrf_name.clone(), csrf_value.clone())
+        .authorization_bearer(&s.access)
         .json(&json!({
             "brand": "Daihatsu",
             "model": "Rocky",
@@ -250,7 +224,7 @@ async fn cached_list_entry_has_ttl() {
     let resp = app
         .client
         .get("/vehicles")
-        .add_cookies(cookies.clone())
+        .authorization_bearer(&s.access)
         .await;
     resp.assert_status_ok();
 

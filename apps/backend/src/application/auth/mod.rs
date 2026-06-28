@@ -20,8 +20,8 @@ pub struct AuthSession {
 }
 
 /// Result of register/login: the authenticated [`User`] plus the freshly-issued
-/// [`AuthSession`]. The handler builds both the cookie jar (from the session)
-/// and the response body (from the user) without a second database read.
+/// [`AuthSession`]. The handler builds the token pair (from the session) and the
+/// user profile (from the user) into one response without a second database read.
 pub struct AuthOutcome {
     pub user: User,
     pub session: AuthSession,

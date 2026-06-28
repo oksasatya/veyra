@@ -5,12 +5,10 @@ use serde_json::json;
 /// Helper: register+login, create a vehicle, return (session, vehicle_id).
 async fn setup(app: &common::TestApp, email: &str, plate: &str) -> (common::Session, String) {
     let s = common::register_and_login(app, email).await;
-    let (cn, cv) = common::csrf_header(&s.csrf);
     let v: serde_json::Value = app
         .client
         .post("/vehicles")
-        .add_cookies(s.cookies.clone())
-        .add_header(cn, cv)
+        .authorization_bearer(&s.access)
         .json(&json!({
             "brand": "Toyota", "model": "Avanza", "year": 2021,
             "plate_number": plate,
@@ -31,13 +29,11 @@ async fn setup(app: &common::TestApp, email: &str, plate: &str) -> (common::Sess
 async fn summary_cached_within_ttl() {
     let app = common::spawn_app().await;
     let (s, vid) = setup(&app, "cache_summary@example.com", "B 1001 CSM").await;
-    let (cn, cv) = common::csrf_header(&s.csrf);
 
     // Seed: 2 service records
     app.client
         .post(&format!("/vehicles/{vid}/services"))
-        .add_cookies(s.cookies.clone())
-        .add_header(cn.clone(), cv.clone())
+        .authorization_bearer(&s.access)
         .json(&json!({
             "service_date": "2026-01-10",
             "odometer": 10500,
@@ -49,8 +45,7 @@ async fn summary_cached_within_ttl() {
 
     app.client
         .post(&format!("/vehicles/{vid}/services"))
-        .add_cookies(s.cookies.clone())
-        .add_header(cn.clone(), cv.clone())
+        .authorization_bearer(&s.access)
         .json(&json!({
             "service_date": "2026-02-15",
             "odometer": 11000,
@@ -63,8 +58,7 @@ async fn summary_cached_within_ttl() {
     // Seed: 1 fuel log
     app.client
         .post(&format!("/vehicles/{vid}/fuel-logs"))
-        .add_cookies(s.cookies.clone())
-        .add_header(cn.clone(), cv.clone())
+        .authorization_bearer(&s.access)
         .json(&json!({
             "log_date": "2026-03-01",
             "odometer": 11500,
@@ -78,8 +72,7 @@ async fn summary_cached_within_ttl() {
     // Seed: 1 expense
     app.client
         .post(&format!("/vehicles/{vid}/expenses"))
-        .add_cookies(s.cookies.clone())
-        .add_header(cn.clone(), cv.clone())
+        .authorization_bearer(&s.access)
         .json(&json!({
             "expense_date": "2026-04-01",
             "category": "tire",
@@ -95,8 +88,7 @@ async fn summary_cached_within_ttl() {
         .to_string();
     app.client
         .post(&format!("/vehicles/{vid}/reminders"))
-        .add_cookies(s.cookies.clone())
-        .add_header(cn.clone(), cv.clone())
+        .authorization_bearer(&s.access)
         .json(&json!({
             "title": "Tyre rotation",
             "reminder_type": "date",
@@ -109,7 +101,7 @@ async fn summary_cached_within_ttl() {
     let resp1 = app
         .client
         .get(&format!("/vehicles/{vid}/summary"))
-        .add_cookies(s.cookies.clone())
+        .authorization_bearer(&s.access)
         .await;
     resp1.assert_status_ok();
     let body1: serde_json::Value = resp1.json();
@@ -149,7 +141,7 @@ async fn summary_cached_within_ttl() {
     let resp2 = app
         .client
         .get(&format!("/vehicles/{vid}/summary"))
-        .add_cookies(s.cookies.clone())
+        .authorization_bearer(&s.access)
         .await;
     resp2.assert_status_ok();
     let body2: serde_json::Value = resp2.json();
@@ -175,7 +167,7 @@ async fn cross_user_summary_isolation() {
     let resp = app
         .client
         .get(&format!("/vehicles/{vid}/summary"))
-        .add_cookies(a.cookies.clone())
+        .authorization_bearer(&a.access)
         .await;
     resp.assert_status_ok();
 
@@ -184,7 +176,7 @@ async fn cross_user_summary_isolation() {
     let resp = app
         .client
         .get(&format!("/vehicles/{vid}/summary"))
-        .add_cookies(b.cookies.clone())
+        .authorization_bearer(&b.access)
         .await;
     resp.assert_status(axum::http::StatusCode::NOT_FOUND);
 }
