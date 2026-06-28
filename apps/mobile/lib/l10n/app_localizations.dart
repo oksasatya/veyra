@@ -866,6 +866,18 @@ abstract class AppLocalizations {
   /// **'Save'**
   String get reminderFormSave;
 
+  /// No description provided for @reminderAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add reminder'**
+  String get reminderAdd;
+
+  /// No description provided for @reminderPickVehicle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a vehicle'**
+  String get reminderPickVehicle;
+
   /// No description provided for @commonTryAgain.
   ///
   /// In en, this message translates to:

@@ -200,6 +200,8 @@
   "reminderFormDueDate": "Due Date",
   "reminderFormDueOdometer": "Due Odometer (km)",
   "reminderFormSave": "Save",
+  "reminderAdd": "Add reminder",
+  "reminderPickVehicle": "Choose a vehicle",
 
   "commonTryAgain": "Try again",
 

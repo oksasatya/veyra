@@ -200,6 +200,8 @@
   "reminderFormDueDate": "Tanggal Jatuh Tempo",
   "reminderFormDueOdometer": "Odometer Jatuh Tempo (km)",
   "reminderFormSave": "Simpan",
+  "reminderAdd": "Tambah pengingat",
+  "reminderPickVehicle": "Pilih kendaraan",
 
   "commonTryAgain": "Coba lagi",
 

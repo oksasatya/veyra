@@ -444,6 +444,12 @@ class AppLocalizationsId extends AppLocalizations {
   String get reminderFormSave => 'Simpan';
 
   @override
+  String get reminderAdd => 'Tambah pengingat';
+
+  @override
+  String get reminderPickVehicle => 'Pilih kendaraan';
+
+  @override
   String get commonTryAgain => 'Coba lagi';
 
   @override

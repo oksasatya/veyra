@@ -10,7 +10,9 @@ import 'package:veyra_mobile/core/widgets/skeleton.dart';
 import 'package:veyra_mobile/core/widgets/veyra_mark.dart';
 import 'package:veyra_mobile/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:veyra_mobile/features/document/presentation/screens/documents_overview.dart';
+import 'package:veyra_mobile/features/reminder/presentation/controllers/reminders_overview_controller.dart';
 import 'package:veyra_mobile/features/reminder/presentation/screens/reminders_overview.dart';
+import 'package:veyra_mobile/features/reminder/presentation/widgets/add_reminder_sheet.dart';
 import 'package:veyra_mobile/features/settings/presentation/screens/settings_screen.dart';
 import 'package:veyra_mobile/features/vehicle/presentation/controllers/garage_dashboard_controller.dart';
 import 'package:veyra_mobile/l10n/app_localizations.dart';
@@ -32,23 +34,56 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
     (icon: Icons.settings_outlined, label: l10n.garageNavSettings),
   ];
 
+  Future<void> _openAddReminder(GarageDashboard dashboard) async {
+    final entries = dashboard.entries;
+    if (entries.isEmpty) return;
+    var vehicleId = entries.first.vehicle.id;
+    if (entries.length > 1) {
+      final picked = await showModalBottomSheet<String>(
+        context: context,
+        backgroundColor: Colors.transparent,
+        builder: (_) => _VehiclePickerSheet(entries: entries),
+      );
+      if (picked == null || !mounted) return;
+      vehicleId = picked;
+    }
+    if (!mounted) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => AddReminderSheet(vehicleId: vehicleId),
+    );
+    ref.invalidate(remindersOverviewProvider);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     // The design shows the add affordance only on the empty garage; on a
     // populated list we still offer a FAB so a second vehicle can be added.
-    final hasVehicles =
-        ref.watch(garageDashboardProvider).asData?.value.isEmpty == false;
+    final dashboard = ref.watch(garageDashboardProvider).asData?.value;
+    final hasVehicles = dashboard != null && !dashboard.isEmpty;
     return Scaffold(
-      floatingActionButton: _nav == 0 && hasVehicles
-          ? FloatingActionButton.extended(
-              onPressed: () => context.push('/vehicles/new'),
-              backgroundColor: VeyraColors.accent,
-              foregroundColor: VeyraColors.bg,
-              icon: const Icon(Icons.add),
-              label: Text(l10n.garageAddVehicle),
-            )
-          : null,
+      floatingActionButton: !hasVehicles
+          ? null
+          : switch (_nav) {
+              0 => FloatingActionButton.extended(
+                  onPressed: () => context.push('/vehicles/new'),
+                  backgroundColor: VeyraColors.accent,
+                  foregroundColor: VeyraColors.bg,
+                  icon: const Icon(Icons.add),
+                  label: Text(l10n.garageAddVehicle),
+                ),
+              1 => FloatingActionButton.extended(
+                  onPressed: () => _openAddReminder(dashboard),
+                  backgroundColor: VeyraColors.accent,
+                  foregroundColor: VeyraColors.bg,
+                  icon: const Icon(Icons.add),
+                  label: Text(l10n.reminderAdd),
+                ),
+              _ => null,
+            },
       bottomNavigationBar: _BottomNav(
         index: _nav,
         items: _navItems(l10n),
@@ -444,6 +479,77 @@ class _BottomNav extends StatelessWidget {
       ),
     ),
   );
+}
+
+// ── Vehicle picker (for cross-vehicle add-reminder) ──────────────────────────
+
+class _VehiclePickerSheet extends StatelessWidget {
+  const _VehiclePickerSheet({required this.entries});
+  final List<GarageEntry> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      decoration: const BoxDecoration(
+        color: VeyraColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+        border: Border(top: BorderSide(color: VeyraColors.border)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 5,
+                margin: const EdgeInsets.only(top: 12, bottom: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF39424F),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(22, 8, 22, 12),
+              child: Text(l10n.reminderPickVehicle, style: soraDisplay(size: 21)),
+            ),
+            for (final e in entries)
+              ListTile(
+                onTap: () => Navigator.of(context).pop(e.vehicle.id),
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: VeyraColors.surface2,
+                    borderRadius: BorderRadius.circular(11),
+                    border: Border.all(color: VeyraColors.border),
+                  ),
+                  child: const Icon(
+                    Icons.directions_car_outlined,
+                    color: VeyraColors.accent,
+                    size: 20,
+                  ),
+                ),
+                title: Text(
+                  e.vehicle.displayName,
+                  style: soraDisplay(size: 16),
+                ),
+                subtitle: Text(e.vehicle.plateNumber, style: plexMono(size: 12)),
+                trailing: const Icon(
+                  Icons.chevron_right,
+                  color: VeyraColors.textMuted,
+                ),
+              ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 // ── States ───────────────────────────────────────────────────────────────────

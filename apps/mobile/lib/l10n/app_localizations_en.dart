@@ -442,6 +442,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reminderFormSave => 'Save';
 
   @override
+  String get reminderAdd => 'Add reminder';
+
+  @override
+  String get reminderPickVehicle => 'Choose a vehicle';
+
+  @override
   String get commonTryAgain => 'Try again';
 
   @override
