@@ -3,54 +3,130 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:veyra_mobile/core/error/failure.dart';
 import 'package:veyra_mobile/core/theme/app_theme.dart';
+import 'package:veyra_mobile/features/document/presentation/widgets/add_document_sheet.dart';
+import 'package:veyra_mobile/features/document/presentation/widgets/document_list.dart';
+import 'package:veyra_mobile/features/expense/presentation/widgets/add_expense_sheet.dart';
+import 'package:veyra_mobile/features/expense/presentation/widgets/expense_list.dart';
+import 'package:veyra_mobile/features/fuel_log/presentation/widgets/add_fuel_log_sheet.dart';
+import 'package:veyra_mobile/features/fuel_log/presentation/widgets/fuel_log_list.dart';
+import 'package:veyra_mobile/features/service_record/presentation/widgets/add_service_record_sheet.dart';
+import 'package:veyra_mobile/features/service_record/presentation/widgets/service_record_list.dart';
 import 'package:veyra_mobile/features/vehicle/data/repositories/vehicle_repository_impl.dart';
 import 'package:veyra_mobile/features/vehicle/domain/entities/vehicle.dart';
 import 'package:veyra_mobile/features/vehicle/domain/entities/vehicle_summary.dart';
 
 const _tabs = ['Overview', 'Fuel', 'Service', 'Expenses', 'Docs'];
 
-class VehicleDetailScreen extends ConsumerWidget {
+class VehicleDetailScreen extends ConsumerStatefulWidget {
   const VehicleDetailScreen({required this.vehicle, super.key});
   final Vehicle vehicle;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final summary = ref.watch(vehicleSummaryProvider(vehicle.id));
+  ConsumerState<VehicleDetailScreen> createState() => _VehicleDetailScreenState();
+}
+
+class _VehicleDetailScreenState extends ConsumerState<VehicleDetailScreen> {
+  int _tab = 0;
+
+  String get _vehicleId => widget.vehicle.id;
+
+  String get _addLabel => switch (_tab) {
+        2 => 'Add service',
+        3 => 'Add expense',
+        4 => 'Add document',
+        _ => 'Log fuel',
+      };
+
+  Future<void> _openAdd() async {
+    Widget sheet() => switch (_tab) {
+          2 => AddServiceRecordSheet(vehicleId: _vehicleId),
+          3 => AddExpenseSheet(vehicleId: _vehicleId),
+          4 => AddDocumentSheet(vehicleId: _vehicleId),
+          _ => AddFuelLogSheet(vehicleId: _vehicleId),
+        };
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => sheet(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final vehicle = widget.vehicle;
+    final summary = ref.watch(vehicleSummaryProvider(_vehicleId));
     return Scaffold(
       appBar: AppBar(title: Text(vehicle.displayName, style: soraDisplay(size: 18))),
-      bottomNavigationBar: const _LogBar(),
+      bottomNavigationBar: _AddBar(label: _addLabel, onPressed: _openAdd),
       body: SafeArea(
         top: false,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(vehicle.displayName, style: soraDisplay(size: 26)),
-            const SizedBox(height: 6),
-            Text(
-              '${vehicle.plateNumber} · ${vehicle.year} · ${vehicle.fuelType.label}'
-              '${vehicle.color != null ? ' · ${vehicle.color}' : ''}',
-              style: plexMono(size: 13),
-            ),
-            const SizedBox(height: 16),
-            _OdometerCard(vehicle: vehicle, summary: summary.asData?.value),
-            const SizedBox(height: 16),
-            summary.when(
-              loading: () => const _StatsSkeleton(),
-              error: (e, _) => _StatsError(
-                message: e is Failure ? e.message : 'Could not load summary.',
-                onRetry: () => ref.invalidate(vehicleSummaryProvider(vehicle.id)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(vehicle.displayName, style: soraDisplay(size: 24)),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${vehicle.plateNumber} · ${vehicle.year} · ${vehicle.fuelType.label}'
+                    '${vehicle.color != null ? ' · ${vehicle.color}' : ''}',
+                    style: plexMono(size: 13),
+                  ),
+                  const SizedBox(height: 14),
+                  _OdometerCard(vehicle: vehicle, summary: summary.asData?.value),
+                  const SizedBox(height: 16),
+                ],
               ),
-              data: (s) => _StatsGrid(summary: s),
             ),
-            const SizedBox(height: 18),
-            const _TabRow(),
-            const SizedBox(height: 20),
-            const _ActivityPlaceholder(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _TabRow(
+                selected: _tab,
+                onSelect: (i) => setState(() => _tab = i),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Expanded(child: _content(summary)),
           ],
         ),
       ),
     );
   }
+
+  Widget _content(AsyncValue<VehicleSummary> summary) => switch (_tab) {
+        1 => FuelLogList(vehicleId: _vehicleId),
+        2 => ServiceRecordList(vehicleId: _vehicleId),
+        3 => ExpenseList(vehicleId: _vehicleId),
+        4 => DocumentList(vehicleId: _vehicleId),
+        _ => _Overview(summary: summary, vehicleId: _vehicleId),
+      };
+}
+
+class _Overview extends ConsumerWidget {
+  const _Overview({required this.summary, required this.vehicleId});
+  final AsyncValue<VehicleSummary> summary;
+  final String vehicleId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => ListView(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        children: [
+          summary.when(
+            loading: () => const _StatsSkeleton(),
+            error: (e, _) => _StatsError(
+              message: e is Failure ? e.message : 'Could not load summary.',
+              onRetry: () => ref.invalidate(vehicleSummaryProvider(vehicleId)),
+            ),
+            data: (s) => _StatsGrid(summary: s),
+          ),
+          const SizedBox(height: 20),
+          const _ActivityHint(),
+        ],
+      );
 }
 
 class _OdometerCard extends StatelessWidget {
@@ -76,7 +152,8 @@ class _OdometerCard extends StatelessWidget {
               const Text('Odometer',
                   style: TextStyle(color: VeyraColors.textMuted, fontSize: 12)),
               const SizedBox(height: 4),
-              Text('${_grouped(vehicle.odometer)} km', style: plexMono(size: 20, color: VeyraColors.text)),
+              Text('${_grouped(vehicle.odometer)} km',
+                  style: plexMono(size: 20, color: VeyraColors.text)),
             ],
           ),
           const Spacer(),
@@ -154,7 +231,9 @@ class _StatCell extends StatelessWidget {
 }
 
 class _TabRow extends StatelessWidget {
-  const _TabRow();
+  const _TabRow({required this.selected, required this.onSelect});
+  final int selected;
+  final ValueChanged<int> onSelect;
 
   @override
   Widget build(BuildContext context) => SizedBox(
@@ -164,22 +243,25 @@ class _TabRow extends StatelessWidget {
           itemCount: _tabs.length,
           separatorBuilder: (_, _) => const SizedBox(width: 8),
           itemBuilder: (context, i) {
-            final active = i == 0;
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: active ? VeyraColors.accent : VeyraColors.surface,
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                    color: active ? VeyraColors.accent : VeyraColors.border),
-              ),
-              child: Text(
-                _tabs[i],
-                style: TextStyle(
-                  color: active ? VeyraColors.bg : VeyraColors.textMuted,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+            final active = i == selected;
+            return GestureDetector(
+              onTap: () => onSelect(i),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: active ? VeyraColors.accent : VeyraColors.surface,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                      color: active ? VeyraColors.accent : VeyraColors.border),
+                ),
+                child: Text(
+                  _tabs[i],
+                  style: TextStyle(
+                    color: active ? VeyraColors.bg : VeyraColors.textMuted,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             );
@@ -188,15 +270,16 @@ class _TabRow extends StatelessWidget {
       );
 }
 
-class _ActivityPlaceholder extends StatelessWidget {
-  const _ActivityPlaceholder();
+class _ActivityHint extends StatelessWidget {
+  const _ActivityHint();
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 28),
+        padding: const EdgeInsets.symmetric(vertical: 24),
         alignment: Alignment.center,
         child: const Text(
-          'Service, fuel & expense history arrives next.',
+          'Open the Fuel, Service, Expenses, or Docs tab to see entries.',
+          textAlign: TextAlign.center,
           style: TextStyle(color: VeyraColors.textMuted, fontSize: 14),
         ),
       );
@@ -251,16 +334,19 @@ class _StatsError extends StatelessWidget {
       );
 }
 
-class _LogBar extends StatelessWidget {
-  const _LogBar();
+class _AddBar extends StatelessWidget {
+  const _AddBar({required this.label, required this.onPressed});
+  final String label;
+  final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context) => const SafeArea(
+  Widget build(BuildContext context) => SafeArea(
         child: Padding(
-          padding: EdgeInsets.fromLTRB(20, 8, 20, 8),
-          child: FilledButton(
-            onPressed: null,
-            child: Text('Log fuel'),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+          child: FilledButton.icon(
+            onPressed: onPressed,
+            icon: const Icon(Icons.add, size: 20),
+            label: Text(label),
           ),
         ),
       );
