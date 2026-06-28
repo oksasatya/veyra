@@ -1,11 +1,13 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:veyra_mobile/core/error/failure_l10n.dart';
 import 'package:veyra_mobile/core/theme/app_theme.dart';
 import 'package:veyra_mobile/features/fuel_log/data/repositories/fuel_log_repository_impl.dart';
 import 'package:veyra_mobile/features/fuel_log/domain/repositories/fuel_log_repository.dart';
 import 'package:veyra_mobile/features/fuel_log/domain/value_objects/positive_decimal.dart';
 import 'package:veyra_mobile/features/vehicle/domain/value_objects/odometer.dart';
+import 'package:veyra_mobile/l10n/app_localizations.dart';
 
 const _months = [
   'Jan',
@@ -79,23 +81,24 @@ class _AddFuelLogSheetState extends ConsumerState<AddFuelLogSheet> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context);
     final odo = Odometer.create(
       int.tryParse(_odometer.text.trim()) ?? -1,
     ).toNullable();
     if (odo == null) {
-      setState(() => _error = 'Enter a valid odometer reading.');
+      setState(() => _error = l10n.fuelLogErrorOdometer);
       return;
     }
     final liters = PositiveDecimal.create(_liters.text, field: 'liters');
     final litersValue = liters.toNullable();
     if (litersValue == null) {
-      setState(() => _error = 'Enter the liters filled.');
+      setState(() => _error = l10n.fuelLogErrorLiters);
       return;
     }
     final price = PositiveDecimal.create(_price.text, field: 'price');
     final priceValue = price.toNullable();
     if (priceValue == null) {
-      setState(() => _error = 'Enter the price per liter.');
+      setState(() => _error = l10n.fuelLogErrorPricePerLiter);
       return;
     }
 
@@ -116,9 +119,10 @@ class _AddFuelLogSheetState extends ConsumerState<AddFuelLogSheet> {
       ),
     );
     if (!mounted) return;
+    final l10nAfter = AppLocalizations.of(context);
     result.fold(
       (failure) => setState(() {
-        _error = failure.message;
+        _error = localizedFailure(l10nAfter, failure);
         _saving = false;
       }),
       (_) {
@@ -130,6 +134,7 @@ class _AddFuelLogSheetState extends ConsumerState<AddFuelLogSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final total = _total;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     return Padding(
@@ -153,7 +158,10 @@ class _AddFuelLogSheetState extends ConsumerState<AddFuelLogSheet> {
                 Row(
                   children: [
                     Expanded(
-                      child: Text('Log fuel', style: soraDisplay(size: 21)),
+                      child: Text(
+                        l10n.fuelLogTitle,
+                        style: soraDisplay(size: 21),
+                      ),
                     ),
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
@@ -168,12 +176,16 @@ class _AddFuelLogSheetState extends ConsumerState<AddFuelLogSheet> {
                 Row(
                   children: [
                     Expanded(
-                      child: _DateField(date: _date, onTap: _pickDate),
+                      child: _DateField(
+                        label: l10n.fuelLogFieldDate,
+                        date: _date,
+                        onTap: _pickDate,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: _LabeledField(
-                        label: 'Odometer',
+                        label: l10n.fuelLogFieldOdometer,
                         controller: _odometer,
                         hint: '0',
                         suffix: 'km',
@@ -187,7 +199,7 @@ class _AddFuelLogSheetState extends ConsumerState<AddFuelLogSheet> {
                   children: [
                     Expanded(
                       child: _LabeledField(
-                        label: 'Liters',
+                        label: l10n.fuelLogFieldLiters,
                         controller: _liters,
                         hint: '0.0',
                         suffix: 'L',
@@ -197,7 +209,7 @@ class _AddFuelLogSheetState extends ConsumerState<AddFuelLogSheet> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _LabeledField(
-                        label: 'Price / liter',
+                        label: l10n.fuelLogFieldPricePerLiter,
                         controller: _price,
                         hint: '0',
                         suffix: 'Rp',
@@ -207,15 +219,17 @@ class _AddFuelLogSheetState extends ConsumerState<AddFuelLogSheet> {
                   ],
                 ),
                 const SizedBox(height: 18),
-                _TotalRow(total: total),
+                _TotalRow(label: l10n.fuelLogFieldTotalCost, total: total),
                 const SizedBox(height: 14),
                 _LabeledField(
-                  label: 'Station (optional)',
+                  label: l10n.fuelLogFieldStation,
                   controller: _station,
                   hint: 'Pertamina',
                 ),
                 const SizedBox(height: 18),
                 _FullTankToggle(
+                  label: l10n.fuelLogFieldFullTank,
+                  hint: l10n.fuelLogFieldFullTankHint,
                   value: _isFullTank,
                   onChanged: (v) => setState(() => _isFullTank = v),
                 ),
@@ -241,7 +255,7 @@ class _AddFuelLogSheetState extends ConsumerState<AddFuelLogSheet> {
                             color: VeyraColors.bg,
                           ),
                         )
-                      : const Text('Save fuel log'),
+                      : Text(l10n.fuelLogSave),
                 ),
               ],
             ),
@@ -326,7 +340,12 @@ class _LabeledField extends StatelessWidget {
 }
 
 class _DateField extends StatelessWidget {
-  const _DateField({required this.date, required this.onTap});
+  const _DateField({
+    required this.label,
+    required this.date,
+    required this.onTap,
+  });
+  final String label;
   final DateTime date;
   final VoidCallback onTap;
 
@@ -334,7 +353,7 @@ class _DateField extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const _Label('Date'),
+      _Label(label),
       InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
@@ -358,7 +377,8 @@ class _DateField extends StatelessWidget {
 }
 
 class _TotalRow extends StatelessWidget {
-  const _TotalRow({required this.total});
+  const _TotalRow({required this.label, required this.total});
+  final String label;
   final Decimal? total;
 
   @override
@@ -371,10 +391,13 @@ class _TotalRow extends StatelessWidget {
     ),
     child: Row(
       children: [
-        const Expanded(
+        Expanded(
           child: Text(
-            'Total cost',
-            style: TextStyle(color: VeyraColors.textMuted, fontSize: 13),
+            label,
+            style: const TextStyle(
+              color: VeyraColors.textMuted,
+              fontSize: 13,
+            ),
           ),
         ),
         Text(
@@ -387,29 +410,39 @@ class _TotalRow extends StatelessWidget {
 }
 
 class _FullTankToggle extends StatelessWidget {
-  const _FullTankToggle({required this.value, required this.onChanged});
+  const _FullTankToggle({
+    required this.label,
+    required this.hint,
+    required this.value,
+    required this.onChanged,
+  });
+  final String label;
+  final String hint;
   final bool value;
   final ValueChanged<bool> onChanged;
 
   @override
   Widget build(BuildContext context) => Row(
     children: [
-      const Expanded(
+      Expanded(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Full tank',
-              style: TextStyle(
+              label,
+              style: const TextStyle(
                 color: VeyraColors.text,
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
               ),
             ),
-            SizedBox(height: 3),
+            const SizedBox(height: 3),
             Text(
-              'Used to compute consumption',
-              style: TextStyle(color: VeyraColors.textMuted, fontSize: 12),
+              hint,
+              style: const TextStyle(
+                color: VeyraColors.textMuted,
+                fontSize: 12,
+              ),
             ),
           ],
         ),

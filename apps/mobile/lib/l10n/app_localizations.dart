@@ -1022,6 +1022,96 @@ abstract class AppLocalizations {
   /// **'Other'**
   String get docTypeOther;
 
+  /// No description provided for @fuelLogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Log fuel'**
+  String get fuelLogTitle;
+
+  /// No description provided for @fuelLogFieldDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get fuelLogFieldDate;
+
+  /// No description provided for @fuelLogFieldOdometer.
+  ///
+  /// In en, this message translates to:
+  /// **'Odometer'**
+  String get fuelLogFieldOdometer;
+
+  /// No description provided for @fuelLogFieldLiters.
+  ///
+  /// In en, this message translates to:
+  /// **'Liters'**
+  String get fuelLogFieldLiters;
+
+  /// No description provided for @fuelLogFieldPricePerLiter.
+  ///
+  /// In en, this message translates to:
+  /// **'Price / liter'**
+  String get fuelLogFieldPricePerLiter;
+
+  /// No description provided for @fuelLogFieldStation.
+  ///
+  /// In en, this message translates to:
+  /// **'Station (optional)'**
+  String get fuelLogFieldStation;
+
+  /// No description provided for @fuelLogFieldTotalCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Total cost'**
+  String get fuelLogFieldTotalCost;
+
+  /// No description provided for @fuelLogFieldFullTank.
+  ///
+  /// In en, this message translates to:
+  /// **'Full tank'**
+  String get fuelLogFieldFullTank;
+
+  /// No description provided for @fuelLogFieldFullTankHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Used to compute consumption'**
+  String get fuelLogFieldFullTankHint;
+
+  /// No description provided for @fuelLogSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save fuel log'**
+  String get fuelLogSave;
+
+  /// No description provided for @fuelLogErrorOdometer.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid odometer reading.'**
+  String get fuelLogErrorOdometer;
+
+  /// No description provided for @fuelLogErrorLiters.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the liters filled.'**
+  String get fuelLogErrorLiters;
+
+  /// No description provided for @fuelLogErrorPricePerLiter.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the price per liter.'**
+  String get fuelLogErrorPricePerLiter;
+
+  /// No description provided for @fuelLogEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No fuel logs yet. Tap \"Log fuel\" to add your first fill-up.'**
+  String get fuelLogEmpty;
+
+  /// No description provided for @fuelLogLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load fuel logs.'**
+  String get fuelLogLoadError;
+
   /// No description provided for @expenseAddTitle.
   ///
   /// In en, this message translates to:

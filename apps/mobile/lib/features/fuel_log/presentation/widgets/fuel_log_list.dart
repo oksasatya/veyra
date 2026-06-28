@@ -2,9 +2,11 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:veyra_mobile/core/error/failure.dart';
+import 'package:veyra_mobile/core/error/failure_l10n.dart';
 import 'package:veyra_mobile/core/theme/app_theme.dart';
 import 'package:veyra_mobile/features/fuel_log/data/repositories/fuel_log_repository_impl.dart';
 import 'package:veyra_mobile/features/fuel_log/domain/entities/fuel_log.dart';
+import 'package:veyra_mobile/l10n/app_localizations.dart';
 
 const _months = [
   'Jan',
@@ -28,15 +30,18 @@ class FuelLogList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final logs = ref.watch(fuelLogListProvider(vehicleId));
     return logs.when(
       loading: () => const _FuelLogSkeleton(),
       error: (e, _) => _FuelLogError(
-        message: e is Failure ? e.message : 'Could not load fuel logs.',
+        message: e is Failure
+            ? localizedFailure(l10n, e)
+            : l10n.fuelLogLoadError,
         onRetry: () => ref.invalidate(fuelLogListProvider(vehicleId)),
       ),
       data: (rows) => rows.isEmpty
-          ? const _FuelLogEmpty()
+          ? _FuelLogEmpty(l10n: l10n)
           : Column(
               children: [
                 for (final log in rows) _FuelLogRow(log: log),
@@ -95,16 +100,17 @@ class _FuelLogRow extends StatelessWidget {
 }
 
 class _FuelLogEmpty extends StatelessWidget {
-  const _FuelLogEmpty();
+  const _FuelLogEmpty({required this.l10n});
+  final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
     alignment: Alignment.center,
-    child: const Text(
-      'No fuel logs yet. Tap “Log fuel” to add your first fill-up.',
+    child: Text(
+      l10n.fuelLogEmpty,
       textAlign: TextAlign.center,
-      style: TextStyle(color: VeyraColors.textMuted, fontSize: 14),
+      style: const TextStyle(color: VeyraColors.textMuted, fontSize: 14),
     ),
   );
 }
@@ -135,28 +141,31 @@ class _FuelLogError extends StatelessWidget {
   final VoidCallback onRetry;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: VeyraColors.surface,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: VeyraColors.border),
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: Text(
-            message,
-            style: const TextStyle(
-              color: VeyraColors.textMuted,
-              fontSize: 13,
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VeyraColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: VeyraColors.border),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: VeyraColors.textMuted,
+                fontSize: 13,
+              ),
             ),
           ),
-        ),
-        TextButton(onPressed: onRetry, child: const Text('Retry')),
-      ],
-    ),
-  );
+          TextButton(onPressed: onRetry, child: Text(l10n.commonRetry)),
+        ],
+      ),
+    );
+  }
 }
 
 String _formatDate(DateTime d) => '${d.day} ${_months[d.month - 1]} ${d.year}';
