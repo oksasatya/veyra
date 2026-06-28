@@ -40,6 +40,9 @@ class AuthRemoteDataSource {
     return UserDto.fromJson(res.dataObject);
   }
 
+  Future<void> updatePreferences(String language) =>
+      _dio.patch<void>('/me', data: {'preferred_language': language});
+
   AuthPayload _parseAuth(Map<String, dynamic> data) => (
     user: UserDto.fromJson(data['user'] as Map<String, dynamic>),
     tokens: AuthTokensDto.fromJson(data['tokens'] as Map<String, dynamic>),

@@ -20,4 +20,6 @@ abstract interface class AuthRepository {
   Future<Either<Failure, Unit>> logout();
 
   Future<Either<Failure, User>> getMe();
+
+  Future<Either<Failure, void>> updatePreferences(String language);
 }

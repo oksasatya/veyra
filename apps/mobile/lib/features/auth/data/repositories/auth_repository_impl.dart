@@ -12,6 +12,7 @@ import 'package:veyra_mobile/features/auth/domain/usecases/get_me_usecase.dart';
 import 'package:veyra_mobile/features/auth/domain/usecases/login_usecase.dart';
 import 'package:veyra_mobile/features/auth/domain/usecases/logout_usecase.dart';
 import 'package:veyra_mobile/features/auth/domain/usecases/register_usecase.dart';
+import 'package:veyra_mobile/features/auth/domain/usecases/update_preferences_usecase.dart';
 import 'package:veyra_mobile/features/auth/domain/value_objects/email.dart';
 import 'package:veyra_mobile/features/auth/domain/value_objects/password.dart';
 
@@ -56,6 +57,16 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, void>> updatePreferences(String language) async {
+    try {
+      await remote.updatePreferences(language);
+      return right(null);
+    } on DioException catch (e) {
+      return left(mapDioError(e));
+    }
+  }
+
   Future<Either<Failure, User>> _authCall(
     Future<AuthPayload> Function() call,
   ) async {
@@ -89,4 +100,7 @@ final logoutUseCaseProvider = Provider<LogoutUseCase>(
 );
 final getMeUseCaseProvider = Provider<GetMeUseCase>(
   (ref) => GetMeUseCase(ref.watch(authRepositoryProvider)),
+);
+final updatePreferencesUseCaseProvider = Provider<UpdatePreferencesUseCase>(
+  (ref) => UpdatePreferencesUseCase(ref.watch(authRepositoryProvider)),
 );
