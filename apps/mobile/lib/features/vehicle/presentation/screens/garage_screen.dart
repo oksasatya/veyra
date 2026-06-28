@@ -11,6 +11,7 @@ import 'package:veyra_mobile/core/widgets/veyra_mark.dart';
 import 'package:veyra_mobile/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:veyra_mobile/features/document/presentation/screens/documents_overview.dart';
 import 'package:veyra_mobile/features/reminder/presentation/screens/reminders_overview.dart';
+import 'package:veyra_mobile/features/settings/presentation/screens/settings_screen.dart';
 import 'package:veyra_mobile/features/vehicle/presentation/controllers/garage_dashboard_controller.dart';
 import 'package:veyra_mobile/l10n/app_localizations.dart';
 
@@ -60,7 +61,7 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
             0 => const _DashboardTab(),
             1 => const RemindersOverview(),
             2 => const DocumentsOverview(),
-            _ => const _SettingsTab(),
+            _ => const SettingsScreen(),
           },
         ),
       ),
@@ -383,47 +384,6 @@ class _StatDivider extends StatelessWidget {
     margin: const EdgeInsets.symmetric(horizontal: 12),
     color: VeyraColors.border,
   );
-}
-
-// ── Other tabs (placeholders) ────────────────────────────────────────────────
-
-class _SettingsTab extends ConsumerWidget {
-  const _SettingsTab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final user = ref.watch(authControllerProvider).asData?.value;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-          child: Text(l10n.garageNavSettings, style: soraDisplay(size: 32)),
-        ),
-        if (user != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text(
-              '${user.name} · ${user.email}',
-              style: const TextStyle(
-                color: VeyraColors.textMuted,
-                fontSize: 14,
-              ),
-            ),
-          ),
-        const Spacer(),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-          child: FilledButton.tonalIcon(
-            onPressed: () => ref.read(authControllerProvider.notifier).logout(),
-            icon: const Icon(Icons.logout),
-            label: Text(l10n.settingsLogOut),
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 // ── Bottom navigation ────────────────────────────────────────────────────────
