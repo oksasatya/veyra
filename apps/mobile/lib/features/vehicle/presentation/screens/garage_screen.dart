@@ -91,7 +91,8 @@ class _DashboardTab extends ConsumerWidget {
                 : RefreshIndicator(
                     color: VeyraColors.accent,
                     backgroundColor: VeyraColors.surface,
-                    onRefresh: () => ref.refresh(garageDashboardProvider.future),
+                    onRefresh: () =>
+                        ref.refresh(garageDashboardProvider.future),
                     child: ListView(
                       padding: const EdgeInsets.fromLTRB(20, 4, 20, 96),
                       children: [
@@ -151,53 +152,58 @@ class _OverviewRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-        children: [
-          _OvTile(label: 'Vehicles', value: '${dashboard.vehicleCount}'),
-          const SizedBox(width: 10),
-          _OvTile(
-            label: 'Due soon',
-            value: '${dashboard.dueSoon}',
-            accent: dashboard.dueSoon > 0,
-          ),
-          const SizedBox(width: 10),
-          _OvTile(label: 'Spent', value: _compactRp(dashboard.totalSpent)),
-        ],
-      );
+    children: [
+      _OvTile(label: 'Vehicles', value: '${dashboard.vehicleCount}'),
+      const SizedBox(width: 10),
+      _OvTile(
+        label: 'Due soon',
+        value: '${dashboard.dueSoon}',
+        accent: dashboard.dueSoon > 0,
+      ),
+      const SizedBox(width: 10),
+      _OvTile(label: 'Spent', value: _compactRp(dashboard.totalSpent)),
+    ],
+  );
 }
 
 class _OvTile extends StatelessWidget {
-  const _OvTile({required this.label, required this.value, this.accent = false});
+  const _OvTile({
+    required this.label,
+    required this.value,
+    this.accent = false,
+  });
   final String label;
   final String value;
   final bool accent;
 
   @override
   Widget build(BuildContext context) => Expanded(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-          decoration: BoxDecoration(
-            color: VeyraColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: VeyraColors.border),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      decoration: BoxDecoration(
+        color: VeyraColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: VeyraColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(color: VeyraColors.textMuted, fontSize: 12),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label,
-                  style: const TextStyle(
-                      color: VeyraColors.textMuted, fontSize: 12)),
-              const SizedBox(height: 6),
-              Text(
-                value,
-                style: soraDisplay(
-                  size: 18,
-                  color: accent ? VeyraColors.accent : VeyraColors.text,
-                ),
-              ),
-            ],
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: soraDisplay(
+              size: 18,
+              color: accent ? VeyraColors.accent : VeyraColors.text,
+            ),
           ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
 }
 
 class _VehicleCard extends StatelessWidget {
@@ -234,8 +240,11 @@ class _VehicleCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: VeyraColors.border),
                     ),
-                    child: const Icon(Icons.directions_car_outlined,
-                        color: VeyraColors.accent, size: 22),
+                    child: const Icon(
+                      Icons.directions_car_outlined,
+                      color: VeyraColors.accent,
+                      size: 22,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -244,18 +253,25 @@ class _VehicleCard extends StatelessWidget {
                       children: [
                         Text(v.displayName, style: soraDisplay(size: 17)),
                         const SizedBox(height: 3),
-                        Text('${v.plateNumber} · ${v.year}',
-                            style: plexMono(size: 13)),
+                        Text(
+                          '${v.plateNumber} · ${v.year}',
+                          style: plexMono(size: 13),
+                        ),
                       ],
                     ),
                   ),
-                  if (s.upcomingReminders > 0) _DueBadge(count: s.upcomingReminders),
+                  if (s.upcomingReminders > 0)
+                    _DueBadge(count: s.upcomingReminders),
                 ],
               ),
               const SizedBox(height: 13),
-              Text('Odometer ${_grouped(v.odometer)} km',
-                  style: const TextStyle(
-                      color: VeyraColors.textMuted, fontSize: 13)),
+              Text(
+                'Odometer ${_grouped(v.odometer)} km',
+                style: const TextStyle(
+                  color: VeyraColors.textMuted,
+                  fontSize: 13,
+                ),
+              ),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.only(top: 12),
@@ -267,12 +283,15 @@ class _VehicleCard extends StatelessWidget {
                     _StatItem(label: 'Services', value: '${s.totalServices}'),
                     _StatDivider(),
                     _StatItem(
-                        label: 'Fuel',
-                        value: _compactRp(s.totalFuelCost),
-                        color: VeyraColors.info),
+                      label: 'Fuel',
+                      value: _compactRp(s.totalFuelCost),
+                      color: VeyraColors.info,
+                    ),
                     _StatDivider(),
                     _StatItem(
-                        label: 'Expenses', value: _compactRp(s.totalExpenses)),
+                      label: 'Expenses',
+                      value: _compactRp(s.totalExpenses),
+                    ),
                   ],
                 ),
               ),
@@ -290,21 +309,21 @@ class _DueBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: const Color(0x24F26A21),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: const Color(0x52F26A21)),
-        ),
-        child: Text(
-          count == 1 ? '1 due' : '$count due',
-          style: const TextStyle(
-            color: VeyraColors.accent,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+    decoration: BoxDecoration(
+      color: const Color(0x24F26A21),
+      borderRadius: BorderRadius.circular(999),
+      border: Border.all(color: const Color(0x52F26A21)),
+    ),
+    child: Text(
+      count == 1 ? '1 due' : '$count due',
+      style: const TextStyle(
+        color: VeyraColors.accent,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+  );
 }
 
 class _StatItem extends StatelessWidget {
@@ -315,31 +334,35 @@ class _StatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label,
-                style: const TextStyle(
-                    color: VeyraColors.textMuted, fontSize: 11)),
-            const SizedBox(height: 4),
-            Text(value,
-                style: TextStyle(
-                    color: color ?? VeyraColors.text,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600)),
-          ],
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: VeyraColors.textMuted, fontSize: 11),
         ),
-      );
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            color: color ?? VeyraColors.text,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _StatDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
-        width: 1,
-        height: 30,
-        margin: const EdgeInsets.symmetric(horizontal: 12),
-        color: VeyraColors.border,
-      );
+    width: 1,
+    height: 30,
+    margin: const EdgeInsets.symmetric(horizontal: 12),
+    color: VeyraColors.border,
+  );
 }
 
 // ── Other tabs (placeholders) ────────────────────────────────────────────────
@@ -350,20 +373,22 @@ class _SoonTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-            child: Text(title, style: soraDisplay(size: 32)),
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+        child: Text(title, style: soraDisplay(size: 32)),
+      ),
+      const Expanded(
+        child: Center(
+          child: Text(
+            'Coming soon',
+            style: TextStyle(color: VeyraColors.textMuted, fontSize: 15),
           ),
-          const Expanded(
-            child: Center(
-              child: Text('Coming soon',
-                  style: TextStyle(color: VeyraColors.textMuted, fontSize: 15)),
-            ),
-          ),
-        ],
-      );
+        ),
+      ),
+    ],
+  );
 }
 
 class _SettingsTab extends ConsumerWidget {
@@ -382,16 +407,19 @@ class _SettingsTab extends ConsumerWidget {
         if (user != null)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text('${user.name} · ${user.email}',
-                style: const TextStyle(
-                    color: VeyraColors.textMuted, fontSize: 14)),
+            child: Text(
+              '${user.name} · ${user.email}',
+              style: const TextStyle(
+                color: VeyraColors.textMuted,
+                fontSize: 14,
+              ),
+            ),
           ),
         const Spacer(),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
           child: FilledButton.tonalIcon(
-            onPressed: () =>
-                ref.read(authControllerProvider.notifier).logout(),
+            onPressed: () => ref.read(authControllerProvider.notifier).logout(),
             icon: const Icon(Icons.logout),
             label: const Text('Log out'),
           ),
@@ -415,50 +443,50 @@ class _BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
-        decoration: const BoxDecoration(
-          color: VeyraColors.surface,
-          border: Border(top: BorderSide(color: VeyraColors.border)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: SizedBox(
-            height: 62,
-            child: Row(
-              children: [
-                for (var i = 0; i < items.length; i++)
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => onTap(i),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            items[i].icon,
-                            size: 22,
-                            color: i == index
-                                ? VeyraColors.accent
-                                : VeyraColors.textMuted,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            items[i].label,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: i == index
-                                  ? VeyraColors.accent
-                                  : VeyraColors.textMuted,
-                            ),
-                          ),
-                        ],
+    decoration: const BoxDecoration(
+      color: VeyraColors.surface,
+      border: Border(top: BorderSide(color: VeyraColors.border)),
+    ),
+    child: SafeArea(
+      top: false,
+      child: SizedBox(
+        height: 62,
+        child: Row(
+          children: [
+            for (var i = 0; i < items.length; i++)
+              Expanded(
+                child: InkWell(
+                  onTap: () => onTap(i),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        items[i].icon,
+                        size: 22,
+                        color: i == index
+                            ? VeyraColors.accent
+                            : VeyraColors.textMuted,
                       ),
-                    ),
+                      const SizedBox(height: 4),
+                      Text(
+                        items[i].label,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: i == index
+                              ? VeyraColors.accent
+                              : VeyraColors.textMuted,
+                        ),
+                      ),
+                    ],
                   ),
-              ],
-            ),
-          ),
+                ),
+              ),
+          ],
         ),
-      );
+      ),
+    ),
+  );
 }
 
 // ── States ───────────────────────────────────────────────────────────────────
@@ -468,36 +496,39 @@ class _EmptyGarage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 108,
-                height: 108,
-                decoration: BoxDecoration(
-                  color: VeyraColors.surface,
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: VeyraColors.border),
-                ),
-                alignment: Alignment.center,
-                child: const VeyraMark(size: 52),
-              ),
-              const SizedBox(height: 24),
-              Text('Add your first vehicle', style: soraDisplay(size: 21)),
-              const SizedBox(height: 10),
-              const Text(
-                'Track services, fuel, expenses, and reminders once your car '
-                'or bike is in the garage.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    color: VeyraColors.textMuted, fontSize: 15, height: 1.5),
-              ),
-            ],
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 108,
+            height: 108,
+            decoration: BoxDecoration(
+              color: VeyraColors.surface,
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: VeyraColors.border),
+            ),
+            alignment: Alignment.center,
+            child: const VeyraMark(size: 52),
           ),
-        ),
-      );
+          const SizedBox(height: 24),
+          Text('Add your first vehicle', style: soraDisplay(size: 21)),
+          const SizedBox(height: 10),
+          const Text(
+            'Track services, fuel, expenses, and reminders once your car '
+            'or bike is in the garage.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: VeyraColors.textMuted,
+              fontSize: 15,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _ErrorState extends StatelessWidget {
@@ -507,27 +538,30 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.cloud_off, color: VeyraColors.danger, size: 40),
-              const SizedBox(height: 16),
-              Text("Can't load your garage", style: soraDisplay(size: 20)),
-              const SizedBox(height: 10),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                    color: VeyraColors.textMuted, fontSize: 15, height: 1.5),
-              ),
-              const SizedBox(height: 22),
-              FilledButton(onPressed: onRetry, child: const Text('Try again')),
-            ],
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.cloud_off, color: VeyraColors.danger, size: 40),
+          const SizedBox(height: 16),
+          Text("Can't load your garage", style: soraDisplay(size: 20)),
+          const SizedBox(height: 10),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: VeyraColors.textMuted,
+              fontSize: 15,
+              height: 1.5,
+            ),
           ),
-        ),
-      );
+          const SizedBox(height: 22),
+          FilledButton(onPressed: onRetry, child: const Text('Try again')),
+        ],
+      ),
+    ),
+  );
 }
 
 class _DashboardSkeleton extends StatelessWidget {
@@ -535,32 +569,32 @@ class _DashboardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListView(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+    padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+    children: [
+      Row(
         children: [
-          Row(
-            children: [
-              for (var i = 0; i < 3; i++) ...[
-                Expanded(child: _box(64)),
-                if (i < 2) const SizedBox(width: 10),
-              ],
-            ],
-          ),
-          const SizedBox(height: 18),
           for (var i = 0; i < 3; i++) ...[
-            _box(150),
-            const SizedBox(height: 14),
+            Expanded(child: _box(64)),
+            if (i < 2) const SizedBox(width: 10),
           ],
         ],
-      );
+      ),
+      const SizedBox(height: 18),
+      for (var i = 0; i < 3; i++) ...[
+        _box(150),
+        const SizedBox(height: 14),
+      ],
+    ],
+  );
 
   Widget _box(double h) => Container(
-        height: h,
-        decoration: BoxDecoration(
-          color: VeyraColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: VeyraColors.border),
-        ),
-      );
+    height: h,
+    decoration: BoxDecoration(
+      color: VeyraColors.surface,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: VeyraColors.border),
+    ),
+  );
 }
 
 // ── Formatters ────────────────────────────────────────────────────────────────
