@@ -367,6 +367,348 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter your name.'**
   String get authEnterName;
+
+  /// No description provided for @commonRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get commonRetry;
+
+  /// No description provided for @commonServices.
+  ///
+  /// In en, this message translates to:
+  /// **'Services'**
+  String get commonServices;
+
+  /// No description provided for @commonExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses'**
+  String get commonExpenses;
+
+  /// No description provided for @garageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Garage'**
+  String get garageTitle;
+
+  /// No description provided for @garageNavGarage.
+  ///
+  /// In en, this message translates to:
+  /// **'Garage'**
+  String get garageNavGarage;
+
+  /// No description provided for @garageNavReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get garageNavReminders;
+
+  /// No description provided for @garageNavDocs.
+  ///
+  /// In en, this message translates to:
+  /// **'Docs'**
+  String get garageNavDocs;
+
+  /// No description provided for @garageNavSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get garageNavSettings;
+
+  /// No description provided for @garageOverviewVehicles.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicles'**
+  String get garageOverviewVehicles;
+
+  /// No description provided for @garageOverviewDueSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Due soon'**
+  String get garageOverviewDueSoon;
+
+  /// No description provided for @garageOverviewSpent.
+  ///
+  /// In en, this message translates to:
+  /// **'Spent'**
+  String get garageOverviewSpent;
+
+  /// No description provided for @garageCardFuel.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel'**
+  String get garageCardFuel;
+
+  /// No description provided for @garageCardOdometer.
+  ///
+  /// In en, this message translates to:
+  /// **'Odometer {value} km'**
+  String garageCardOdometer(String value);
+
+  /// No description provided for @garageDueBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'{count,plural, =1{1 due} other{{count} due}}'**
+  String garageDueBadge(int count);
+
+  /// No description provided for @garageAddVehicle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add vehicle'**
+  String get garageAddVehicle;
+
+  /// No description provided for @garageEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your first vehicle'**
+  String get garageEmptyTitle;
+
+  /// No description provided for @garageEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Track services, fuel, expenses, and reminders once your car or bike is in the garage.'**
+  String get garageEmptyBody;
+
+  /// No description provided for @garageErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t reach Veyra'**
+  String get garageErrorTitle;
+
+  /// No description provided for @garageErrorBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load your garage. Check your connection, then try again.'**
+  String get garageErrorBody;
+
+  /// No description provided for @garageErrorTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get garageErrorTryAgain;
+
+  /// No description provided for @garageErrorCheckSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Check server settings'**
+  String get garageErrorCheckSettings;
+
+  /// No description provided for @settingsLogOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Log out'**
+  String get settingsLogOut;
+
+  /// No description provided for @vehicleDetailTabOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get vehicleDetailTabOverview;
+
+  /// No description provided for @vehicleDetailTabFuel.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel'**
+  String get vehicleDetailTabFuel;
+
+  /// No description provided for @vehicleDetailTabService.
+  ///
+  /// In en, this message translates to:
+  /// **'Service'**
+  String get vehicleDetailTabService;
+
+  /// No description provided for @vehicleDetailTabExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses'**
+  String get vehicleDetailTabExpenses;
+
+  /// No description provided for @vehicleDetailTabDocs.
+  ///
+  /// In en, this message translates to:
+  /// **'Docs'**
+  String get vehicleDetailTabDocs;
+
+  /// No description provided for @vehicleDetailStatServices.
+  ///
+  /// In en, this message translates to:
+  /// **'Services'**
+  String get vehicleDetailStatServices;
+
+  /// No description provided for @vehicleDetailStatServiceCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Service cost'**
+  String get vehicleDetailStatServiceCost;
+
+  /// No description provided for @vehicleDetailStatRefuels.
+  ///
+  /// In en, this message translates to:
+  /// **'Refuels'**
+  String get vehicleDetailStatRefuels;
+
+  /// No description provided for @vehicleDetailStatFuelCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel cost'**
+  String get vehicleDetailStatFuelCost;
+
+  /// No description provided for @vehicleDetailOdometerLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Odometer'**
+  String get vehicleDetailOdometerLabel;
+
+  /// No description provided for @vehicleDetailDueSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Due soon'**
+  String get vehicleDetailDueSoon;
+
+  /// No description provided for @vehicleDetailReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'{count,plural, =1{1 reminder} other{{count} reminders}}'**
+  String vehicleDetailReminders(int count);
+
+  /// No description provided for @vehicleDetailAddFuel.
+  ///
+  /// In en, this message translates to:
+  /// **'Log fuel'**
+  String get vehicleDetailAddFuel;
+
+  /// No description provided for @vehicleDetailAddService.
+  ///
+  /// In en, this message translates to:
+  /// **'Add service'**
+  String get vehicleDetailAddService;
+
+  /// No description provided for @vehicleDetailAddExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Add expense'**
+  String get vehicleDetailAddExpense;
+
+  /// No description provided for @vehicleDetailAddDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Add document'**
+  String get vehicleDetailAddDocument;
+
+  /// No description provided for @vehicleDetailActivityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the Fuel, Service, Expenses, or Docs tab to see entries.'**
+  String get vehicleDetailActivityHint;
+
+  /// No description provided for @vehicleDetailErrorRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get vehicleDetailErrorRetry;
+
+  /// No description provided for @vehicleAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add vehicle'**
+  String get vehicleAddTitle;
+
+  /// No description provided for @vehicleAddFieldBrand.
+  ///
+  /// In en, this message translates to:
+  /// **'Brand'**
+  String get vehicleAddFieldBrand;
+
+  /// No description provided for @vehicleAddFieldModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Model'**
+  String get vehicleAddFieldModel;
+
+  /// No description provided for @vehicleAddFieldYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
+  String get vehicleAddFieldYear;
+
+  /// No description provided for @vehicleAddFieldPlate.
+  ///
+  /// In en, this message translates to:
+  /// **'Plate number'**
+  String get vehicleAddFieldPlate;
+
+  /// No description provided for @vehicleAddFieldFuelType.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel type'**
+  String get vehicleAddFieldFuelType;
+
+  /// No description provided for @vehicleAddFieldOdometer.
+  ///
+  /// In en, this message translates to:
+  /// **'Odometer (km)'**
+  String get vehicleAddFieldOdometer;
+
+  /// No description provided for @vehicleAddFieldColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Color (optional)'**
+  String get vehicleAddFieldColor;
+
+  /// No description provided for @vehicleAddSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save vehicle'**
+  String get vehicleAddSave;
+
+  /// No description provided for @vehicleAddErrorBrandModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the brand and model.'**
+  String get vehicleAddErrorBrandModel;
+
+  /// No description provided for @vehicleAddErrorYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid year.'**
+  String get vehicleAddErrorYear;
+
+  /// No description provided for @vehicleAddErrorPlate.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a plate number.'**
+  String get vehicleAddErrorPlate;
+
+  /// No description provided for @vehicleAddErrorOdometer.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid odometer reading.'**
+  String get vehicleAddErrorOdometer;
+
+  /// No description provided for @fuelTypePetrol.
+  ///
+  /// In en, this message translates to:
+  /// **'Petrol'**
+  String get fuelTypePetrol;
+
+  /// No description provided for @fuelTypeDiesel.
+  ///
+  /// In en, this message translates to:
+  /// **'Diesel'**
+  String get fuelTypeDiesel;
+
+  /// No description provided for @fuelTypeElectric.
+  ///
+  /// In en, this message translates to:
+  /// **'Electric'**
+  String get fuelTypeElectric;
+
+  /// No description provided for @fuelTypeHybrid.
+  ///
+  /// In en, this message translates to:
+  /// **'Hybrid'**
+  String get fuelTypeHybrid;
 }
 
 class _AppLocalizationsDelegate

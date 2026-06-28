@@ -148,4 +148,196 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authEnterName => 'Enter your name.';
+
+  @override
+  String get commonRetry => 'Retry';
+
+  @override
+  String get commonServices => 'Services';
+
+  @override
+  String get commonExpenses => 'Expenses';
+
+  @override
+  String get garageTitle => 'Garage';
+
+  @override
+  String get garageNavGarage => 'Garage';
+
+  @override
+  String get garageNavReminders => 'Reminders';
+
+  @override
+  String get garageNavDocs => 'Docs';
+
+  @override
+  String get garageNavSettings => 'Settings';
+
+  @override
+  String get garageOverviewVehicles => 'Vehicles';
+
+  @override
+  String get garageOverviewDueSoon => 'Due soon';
+
+  @override
+  String get garageOverviewSpent => 'Spent';
+
+  @override
+  String get garageCardFuel => 'Fuel';
+
+  @override
+  String garageCardOdometer(String value) {
+    return 'Odometer $value km';
+  }
+
+  @override
+  String garageDueBadge(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count due',
+      one: '1 due',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get garageAddVehicle => 'Add vehicle';
+
+  @override
+  String get garageEmptyTitle => 'Add your first vehicle';
+
+  @override
+  String get garageEmptyBody =>
+      'Track services, fuel, expenses, and reminders once your car or bike is in the garage.';
+
+  @override
+  String get garageErrorTitle => 'Can\'t reach Veyra';
+
+  @override
+  String get garageErrorBody =>
+      'We couldn\'t load your garage. Check your connection, then try again.';
+
+  @override
+  String get garageErrorTryAgain => 'Try again';
+
+  @override
+  String get garageErrorCheckSettings => 'Check server settings';
+
+  @override
+  String get settingsLogOut => 'Log out';
+
+  @override
+  String get vehicleDetailTabOverview => 'Overview';
+
+  @override
+  String get vehicleDetailTabFuel => 'Fuel';
+
+  @override
+  String get vehicleDetailTabService => 'Service';
+
+  @override
+  String get vehicleDetailTabExpenses => 'Expenses';
+
+  @override
+  String get vehicleDetailTabDocs => 'Docs';
+
+  @override
+  String get vehicleDetailStatServices => 'Services';
+
+  @override
+  String get vehicleDetailStatServiceCost => 'Service cost';
+
+  @override
+  String get vehicleDetailStatRefuels => 'Refuels';
+
+  @override
+  String get vehicleDetailStatFuelCost => 'Fuel cost';
+
+  @override
+  String get vehicleDetailOdometerLabel => 'Odometer';
+
+  @override
+  String get vehicleDetailDueSoon => 'Due soon';
+
+  @override
+  String vehicleDetailReminders(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count reminders',
+      one: '1 reminder',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get vehicleDetailAddFuel => 'Log fuel';
+
+  @override
+  String get vehicleDetailAddService => 'Add service';
+
+  @override
+  String get vehicleDetailAddExpense => 'Add expense';
+
+  @override
+  String get vehicleDetailAddDocument => 'Add document';
+
+  @override
+  String get vehicleDetailActivityHint =>
+      'Open the Fuel, Service, Expenses, or Docs tab to see entries.';
+
+  @override
+  String get vehicleDetailErrorRetry => 'Retry';
+
+  @override
+  String get vehicleAddTitle => 'Add vehicle';
+
+  @override
+  String get vehicleAddFieldBrand => 'Brand';
+
+  @override
+  String get vehicleAddFieldModel => 'Model';
+
+  @override
+  String get vehicleAddFieldYear => 'Year';
+
+  @override
+  String get vehicleAddFieldPlate => 'Plate number';
+
+  @override
+  String get vehicleAddFieldFuelType => 'Fuel type';
+
+  @override
+  String get vehicleAddFieldOdometer => 'Odometer (km)';
+
+  @override
+  String get vehicleAddFieldColor => 'Color (optional)';
+
+  @override
+  String get vehicleAddSave => 'Save vehicle';
+
+  @override
+  String get vehicleAddErrorBrandModel => 'Enter the brand and model.';
+
+  @override
+  String get vehicleAddErrorYear => 'Enter a valid year.';
+
+  @override
+  String get vehicleAddErrorPlate => 'Enter a plate number.';
+
+  @override
+  String get vehicleAddErrorOdometer => 'Enter a valid odometer reading.';
+
+  @override
+  String get fuelTypePetrol => 'Petrol';
+
+  @override
+  String get fuelTypeDiesel => 'Diesel';
+
+  @override
+  String get fuelTypeElectric => 'Electric';
+
+  @override
+  String get fuelTypeHybrid => 'Hybrid';
 }

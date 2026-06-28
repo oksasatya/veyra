@@ -47,5 +47,89 @@
   "authNameHint": "Your name",
   "authPasswordHelp": "Use 8 or more characters.",
   "authAlreadyHaveAccount": "Already have an account? Log in",
-  "authEnterName": "Enter your name."
+  "authEnterName": "Enter your name.",
+
+  "commonRetry": "Retry",
+  "commonServices": "Services",
+  "commonExpenses": "Expenses",
+
+  "garageTitle": "Garage",
+  "garageNavGarage": "Garage",
+  "garageNavReminders": "Reminders",
+  "garageNavDocs": "Docs",
+  "garageNavSettings": "Settings",
+  "garageOverviewVehicles": "Vehicles",
+  "garageOverviewDueSoon": "Due soon",
+  "garageOverviewSpent": "Spent",
+  "garageCardFuel": "Fuel",
+  "garageCardOdometer": "Odometer {value} km",
+  "@garageCardOdometer": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "garageDueBadge": "{count,plural, =1{1 due} other{{count} due}}",
+  "@garageDueBadge": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "garageAddVehicle": "Add vehicle",
+  "garageEmptyTitle": "Add your first vehicle",
+  "garageEmptyBody": "Track services, fuel, expenses, and reminders once your car or bike is in the garage.",
+  "garageErrorTitle": "Can't reach Veyra",
+  "garageErrorBody": "We couldn't load your garage. Check your connection, then try again.",
+  "garageErrorTryAgain": "Try again",
+  "garageErrorCheckSettings": "Check server settings",
+
+  "settingsLogOut": "Log out",
+
+  "vehicleDetailTabOverview": "Overview",
+  "vehicleDetailTabFuel": "Fuel",
+  "vehicleDetailTabService": "Service",
+  "vehicleDetailTabExpenses": "Expenses",
+  "vehicleDetailTabDocs": "Docs",
+  "vehicleDetailStatServices": "Services",
+  "vehicleDetailStatServiceCost": "Service cost",
+  "vehicleDetailStatRefuels": "Refuels",
+  "vehicleDetailStatFuelCost": "Fuel cost",
+  "vehicleDetailOdometerLabel": "Odometer",
+  "vehicleDetailDueSoon": "Due soon",
+  "vehicleDetailReminders": "{count,plural, =1{1 reminder} other{{count} reminders}}",
+  "@vehicleDetailReminders": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "vehicleDetailAddFuel": "Log fuel",
+  "vehicleDetailAddService": "Add service",
+  "vehicleDetailAddExpense": "Add expense",
+  "vehicleDetailAddDocument": "Add document",
+  "vehicleDetailActivityHint": "Open the Fuel, Service, Expenses, or Docs tab to see entries.",
+  "vehicleDetailErrorRetry": "Retry",
+
+  "vehicleAddTitle": "Add vehicle",
+  "vehicleAddFieldBrand": "Brand",
+  "vehicleAddFieldModel": "Model",
+  "vehicleAddFieldYear": "Year",
+  "vehicleAddFieldPlate": "Plate number",
+  "vehicleAddFieldFuelType": "Fuel type",
+  "vehicleAddFieldOdometer": "Odometer (km)",
+  "vehicleAddFieldColor": "Color (optional)",
+  "vehicleAddSave": "Save vehicle",
+  "vehicleAddErrorBrandModel": "Enter the brand and model.",
+  "vehicleAddErrorYear": "Enter a valid year.",
+  "vehicleAddErrorPlate": "Enter a plate number.",
+  "vehicleAddErrorOdometer": "Enter a valid odometer reading.",
+
+  "fuelTypePetrol": "Petrol",
+  "fuelTypeDiesel": "Diesel",
+  "fuelTypeElectric": "Electric",
+  "fuelTypeHybrid": "Hybrid"
 }

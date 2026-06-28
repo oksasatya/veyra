@@ -47,5 +47,89 @@
   "authNameHint": "Nama Anda",
   "authPasswordHelp": "Gunakan 8 karakter atau lebih.",
   "authAlreadyHaveAccount": "Sudah punya akun? Masuk",
-  "authEnterName": "Masukkan nama Anda."
+  "authEnterName": "Masukkan nama Anda.",
+
+  "commonRetry": "Coba lagi",
+  "commonServices": "Servis",
+  "commonExpenses": "Pengeluaran",
+
+  "garageTitle": "Garasi",
+  "garageNavGarage": "Garasi",
+  "garageNavReminders": "Pengingat",
+  "garageNavDocs": "Dokumen",
+  "garageNavSettings": "Pengaturan",
+  "garageOverviewVehicles": "Kendaraan",
+  "garageOverviewDueSoon": "Segera jatuh tempo",
+  "garageOverviewSpent": "Total biaya",
+  "garageCardFuel": "BBM",
+  "garageCardOdometer": "Odometer {value} km",
+  "@garageCardOdometer": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "garageDueBadge": "{count,plural, =1{1 jatuh tempo} other{{count} jatuh tempo}}",
+  "@garageDueBadge": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "garageAddVehicle": "Tambah kendaraan",
+  "garageEmptyTitle": "Tambah kendaraan pertama Anda",
+  "garageEmptyBody": "Lacak servis, BBM, pengeluaran, dan pengingat setelah kendaraan masuk ke garasi.",
+  "garageErrorTitle": "Tidak dapat menghubungi Veyra",
+  "garageErrorBody": "Garasi gagal dimuat. Periksa koneksi Anda, lalu coba lagi.",
+  "garageErrorTryAgain": "Coba lagi",
+  "garageErrorCheckSettings": "Periksa pengaturan server",
+
+  "settingsLogOut": "Keluar",
+
+  "vehicleDetailTabOverview": "Ikhtisar",
+  "vehicleDetailTabFuel": "BBM",
+  "vehicleDetailTabService": "Servis",
+  "vehicleDetailTabExpenses": "Pengeluaran",
+  "vehicleDetailTabDocs": "Dokumen",
+  "vehicleDetailStatServices": "Servis",
+  "vehicleDetailStatServiceCost": "Biaya servis",
+  "vehicleDetailStatRefuels": "Pengisian BBM",
+  "vehicleDetailStatFuelCost": "Biaya BBM",
+  "vehicleDetailOdometerLabel": "Odometer",
+  "vehicleDetailDueSoon": "Segera jatuh tempo",
+  "vehicleDetailReminders": "{count,plural, =1{1 pengingat} other{{count} pengingat}}",
+  "@vehicleDetailReminders": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "vehicleDetailAddFuel": "Catat BBM",
+  "vehicleDetailAddService": "Tambah servis",
+  "vehicleDetailAddExpense": "Tambah pengeluaran",
+  "vehicleDetailAddDocument": "Tambah dokumen",
+  "vehicleDetailActivityHint": "Buka tab BBM, Servis, Pengeluaran, atau Dokumen untuk melihat catatan.",
+  "vehicleDetailErrorRetry": "Coba lagi",
+
+  "vehicleAddTitle": "Tambah kendaraan",
+  "vehicleAddFieldBrand": "Merek",
+  "vehicleAddFieldModel": "Model",
+  "vehicleAddFieldYear": "Tahun",
+  "vehicleAddFieldPlate": "Nomor pelat",
+  "vehicleAddFieldFuelType": "Jenis bahan bakar",
+  "vehicleAddFieldOdometer": "Odometer (km)",
+  "vehicleAddFieldColor": "Warna (opsional)",
+  "vehicleAddSave": "Simpan kendaraan",
+  "vehicleAddErrorBrandModel": "Masukkan merek dan model kendaraan.",
+  "vehicleAddErrorYear": "Masukkan tahun yang valid.",
+  "vehicleAddErrorPlate": "Masukkan nomor pelat.",
+  "vehicleAddErrorOdometer": "Masukkan pembacaan odometer yang valid.",
+
+  "fuelTypePetrol": "Bensin",
+  "fuelTypeDiesel": "Solar",
+  "fuelTypeElectric": "Listrik",
+  "fuelTypeHybrid": "Hibrida"
 }

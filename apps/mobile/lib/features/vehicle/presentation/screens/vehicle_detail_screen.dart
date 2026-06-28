@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:veyra_mobile/core/error/failure.dart';
+import 'package:veyra_mobile/core/error/failure_l10n.dart';
 import 'package:veyra_mobile/core/theme/app_theme.dart';
 import 'package:veyra_mobile/core/widgets/app_background.dart';
 import 'package:veyra_mobile/core/widgets/segmented_tabs.dart';
@@ -16,8 +17,18 @@ import 'package:veyra_mobile/features/service_record/presentation/widgets/servic
 import 'package:veyra_mobile/features/vehicle/data/repositories/vehicle_repository_impl.dart';
 import 'package:veyra_mobile/features/vehicle/domain/entities/vehicle.dart';
 import 'package:veyra_mobile/features/vehicle/domain/entities/vehicle_summary.dart';
+import 'package:veyra_mobile/features/vehicle/domain/value_objects/fuel_type.dart';
+import 'package:veyra_mobile/l10n/app_localizations.dart';
 
-const _tabs = ['Overview', 'Fuel', 'Service', 'Expenses', 'Docs'];
+/// Map a [FuelType] to its localized label. Kept here (screen layer) so the
+/// domain enum stays free of Flutter/l10n dependencies.
+String _localizedFuelType(AppLocalizations l10n, FuelType fuelType) =>
+    switch (fuelType) {
+      FuelType.petrol => l10n.fuelTypePetrol,
+      FuelType.diesel => l10n.fuelTypeDiesel,
+      FuelType.electric => l10n.fuelTypeElectric,
+      FuelType.hybrid => l10n.fuelTypeHybrid,
+    };
 
 class VehicleDetailScreen extends ConsumerStatefulWidget {
   const VehicleDetailScreen({required this.vehicle, super.key});
@@ -33,11 +44,11 @@ class _VehicleDetailScreenState extends ConsumerState<VehicleDetailScreen> {
 
   String get _vehicleId => widget.vehicle.id;
 
-  String get _addLabel => switch (_tab) {
-    2 => 'Add service',
-    3 => 'Add expense',
-    4 => 'Add document',
-    _ => 'Log fuel',
+  String _addLabel(AppLocalizations l10n) => switch (_tab) {
+    2 => l10n.vehicleDetailAddService,
+    3 => l10n.vehicleDetailAddExpense,
+    4 => l10n.vehicleDetailAddDocument,
+    _ => l10n.vehicleDetailAddFuel,
   };
 
   Future<void> _openAdd() async {
@@ -57,13 +68,21 @@ class _VehicleDetailScreenState extends ConsumerState<VehicleDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final vehicle = widget.vehicle;
     final summary = ref.watch(vehicleSummaryProvider(_vehicleId));
+    final tabs = [
+      l10n.vehicleDetailTabOverview,
+      l10n.vehicleDetailTabFuel,
+      l10n.vehicleDetailTabService,
+      l10n.vehicleDetailTabExpenses,
+      l10n.vehicleDetailTabDocs,
+    ];
     return Scaffold(
       appBar: AppBar(
         title: Text(vehicle.displayName, style: soraDisplay(size: 18)),
       ),
-      bottomNavigationBar: _AddBar(label: _addLabel, onPressed: _openAdd),
+      bottomNavigationBar: _AddBar(label: _addLabel(l10n), onPressed: _openAdd),
       body: AppBackground(
         child: SafeArea(
           top: false,
@@ -78,7 +97,7 @@ class _VehicleDetailScreenState extends ConsumerState<VehicleDetailScreen> {
                     Text(vehicle.displayName, style: soraDisplay(size: 24)),
                     const SizedBox(height: 6),
                     Text(
-                      '${vehicle.plateNumber} · ${vehicle.year} · ${vehicle.fuelType.label}'
+                      '${vehicle.plateNumber} · ${vehicle.year} · ${_localizedFuelType(l10n, vehicle.fuelType)}'
                       '${vehicle.color != null ? ' · ${vehicle.color}' : ''}',
                       style: plexMono(size: 13),
                     ),
@@ -92,7 +111,7 @@ class _VehicleDetailScreenState extends ConsumerState<VehicleDetailScreen> {
                 ),
               ),
               SegmentedTabs(
-                labels: _tabs,
+                labels: tabs,
                 index: _tab,
                 onChanged: (i) => setState(() => _tab = i),
               ),
@@ -120,21 +139,26 @@ class _Overview extends ConsumerWidget {
   final String vehicleId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => ListView(
-    padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-    children: [
-      summary.when(
-        loading: () => const _StatsSkeleton(),
-        error: (e, _) => _StatsError(
-          message: e is Failure ? e.message : 'Could not load summary.',
-          onRetry: () => ref.invalidate(vehicleSummaryProvider(vehicleId)),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+      children: [
+        summary.when(
+          loading: () => const _StatsSkeleton(),
+          error: (e, _) => _StatsError(
+            message: e is Failure
+                ? localizedFailure(l10n, e)
+                : l10n.errorServer,
+            onRetry: () => ref.invalidate(vehicleSummaryProvider(vehicleId)),
+          ),
+          data: (s) => _StatsGrid(summary: s),
         ),
-        data: (s) => _StatsGrid(summary: s),
-      ),
-      const SizedBox(height: 20),
-      const _ActivityHint(),
-    ],
-  );
+        const SizedBox(height: 20),
+        const _ActivityHint(),
+      ],
+    );
+  }
 }
 
 class _OdometerCard extends StatelessWidget {
@@ -144,6 +168,7 @@ class _OdometerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final due = summary?.upcomingReminders ?? 0;
     return Container(
       padding: const EdgeInsets.all(16),
@@ -157,9 +182,9 @@ class _OdometerCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Odometer',
-                style: TextStyle(color: VeyraColors.textMuted, fontSize: 12),
+              Text(
+                l10n.vehicleDetailOdometerLabel,
+                style: const TextStyle(color: VeyraColors.textMuted, fontSize: 12),
               ),
               const SizedBox(height: 4),
               Text(
@@ -172,13 +197,13 @@ class _OdometerCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text(
-                'Due soon',
-                style: TextStyle(color: VeyraColors.accent, fontSize: 12),
+              Text(
+                l10n.vehicleDetailDueSoon,
+                style: const TextStyle(color: VeyraColors.accent, fontSize: 12),
               ),
               const SizedBox(height: 4),
               Text(
-                '$due reminder${due == 1 ? '' : 's'}',
+                l10n.vehicleDetailReminders(due),
                 style: const TextStyle(color: VeyraColors.text, fontSize: 14),
               ),
             ],
@@ -196,62 +221,65 @@ class _StatsGrid extends StatelessWidget {
   final VehicleSummary summary;
 
   @override
-  Widget build(BuildContext context) => ClipRRect(
-    borderRadius: BorderRadius.circular(14),
-    child: DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border.all(color: VeyraColors.border),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        children: [
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: _StatCell(
-                    label: 'Services',
-                    value: '${summary.totalServices}',
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border.all(color: VeyraColors.border),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(
+          children: [
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: _StatCell(
+                      label: l10n.vehicleDetailStatServices,
+                      value: '${summary.totalServices}',
+                    ),
                   ),
-                ),
-                const _VDivider(),
-                Expanded(
-                  child: _StatCell(
-                    label: 'Service cost',
-                    value: _money(summary.totalServiceCost),
-                    color: VeyraColors.accent,
+                  const _VDivider(),
+                  Expanded(
+                    child: _StatCell(
+                      label: l10n.vehicleDetailStatServiceCost,
+                      value: _money(summary.totalServiceCost),
+                      color: VeyraColors.accent,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const _HDivider(),
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: _StatCell(
-                    label: 'Refuels',
-                    value: '${summary.totalRefuels}',
+            const _HDivider(),
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: _StatCell(
+                      label: l10n.vehicleDetailStatRefuels,
+                      value: '${summary.totalRefuels}',
+                    ),
                   ),
-                ),
-                const _VDivider(),
-                Expanded(
-                  child: _StatCell(
-                    label: 'Fuel cost',
-                    value: _money(summary.totalFuelCost),
-                    color: VeyraColors.info,
+                  const _VDivider(),
+                  Expanded(
+                    child: _StatCell(
+                      label: l10n.vehicleDetailStatFuelCost,
+                      value: _money(summary.totalFuelCost),
+                      color: VeyraColors.info,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _VDivider extends StatelessWidget {
@@ -305,15 +333,18 @@ class _ActivityHint extends StatelessWidget {
   const _ActivityHint();
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(vertical: 24),
-    alignment: Alignment.center,
-    child: const Text(
-      'Open the Fuel, Service, Expenses, or Docs tab to see entries.',
-      textAlign: TextAlign.center,
-      style: TextStyle(color: VeyraColors.textMuted, fontSize: 14),
-    ),
-  );
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      alignment: Alignment.center,
+      child: Text(
+        l10n.vehicleDetailActivityHint,
+        textAlign: TextAlign.center,
+        style: const TextStyle(color: VeyraColors.textMuted, fontSize: 14),
+      ),
+    );
+  }
 }
 
 class _StatsSkeleton extends StatelessWidget {
@@ -346,25 +377,31 @@ class _StatsError extends StatelessWidget {
   final VoidCallback onRetry;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: VeyraColors.surface,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: VeyraColors.border),
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: Text(
-            message,
-            style: const TextStyle(color: VeyraColors.textMuted, fontSize: 13),
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VeyraColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: VeyraColors.border),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: VeyraColors.textMuted, fontSize: 13),
+            ),
           ),
-        ),
-        TextButton(onPressed: onRetry, child: const Text('Retry')),
-      ],
-    ),
-  );
+          TextButton(
+            onPressed: onRetry,
+            child: Text(l10n.vehicleDetailErrorRetry),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _AddBar extends StatelessWidget {

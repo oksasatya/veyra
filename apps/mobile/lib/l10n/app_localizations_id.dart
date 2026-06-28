@@ -149,4 +149,197 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get authEnterName => 'Masukkan nama Anda.';
+
+  @override
+  String get commonRetry => 'Coba lagi';
+
+  @override
+  String get commonServices => 'Servis';
+
+  @override
+  String get commonExpenses => 'Pengeluaran';
+
+  @override
+  String get garageTitle => 'Garasi';
+
+  @override
+  String get garageNavGarage => 'Garasi';
+
+  @override
+  String get garageNavReminders => 'Pengingat';
+
+  @override
+  String get garageNavDocs => 'Dokumen';
+
+  @override
+  String get garageNavSettings => 'Pengaturan';
+
+  @override
+  String get garageOverviewVehicles => 'Kendaraan';
+
+  @override
+  String get garageOverviewDueSoon => 'Segera jatuh tempo';
+
+  @override
+  String get garageOverviewSpent => 'Total biaya';
+
+  @override
+  String get garageCardFuel => 'BBM';
+
+  @override
+  String garageCardOdometer(String value) {
+    return 'Odometer $value km';
+  }
+
+  @override
+  String garageDueBadge(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count jatuh tempo',
+      one: '1 jatuh tempo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get garageAddVehicle => 'Tambah kendaraan';
+
+  @override
+  String get garageEmptyTitle => 'Tambah kendaraan pertama Anda';
+
+  @override
+  String get garageEmptyBody =>
+      'Lacak servis, BBM, pengeluaran, dan pengingat setelah kendaraan masuk ke garasi.';
+
+  @override
+  String get garageErrorTitle => 'Tidak dapat menghubungi Veyra';
+
+  @override
+  String get garageErrorBody =>
+      'Garasi gagal dimuat. Periksa koneksi Anda, lalu coba lagi.';
+
+  @override
+  String get garageErrorTryAgain => 'Coba lagi';
+
+  @override
+  String get garageErrorCheckSettings => 'Periksa pengaturan server';
+
+  @override
+  String get settingsLogOut => 'Keluar';
+
+  @override
+  String get vehicleDetailTabOverview => 'Ikhtisar';
+
+  @override
+  String get vehicleDetailTabFuel => 'BBM';
+
+  @override
+  String get vehicleDetailTabService => 'Servis';
+
+  @override
+  String get vehicleDetailTabExpenses => 'Pengeluaran';
+
+  @override
+  String get vehicleDetailTabDocs => 'Dokumen';
+
+  @override
+  String get vehicleDetailStatServices => 'Servis';
+
+  @override
+  String get vehicleDetailStatServiceCost => 'Biaya servis';
+
+  @override
+  String get vehicleDetailStatRefuels => 'Pengisian BBM';
+
+  @override
+  String get vehicleDetailStatFuelCost => 'Biaya BBM';
+
+  @override
+  String get vehicleDetailOdometerLabel => 'Odometer';
+
+  @override
+  String get vehicleDetailDueSoon => 'Segera jatuh tempo';
+
+  @override
+  String vehicleDetailReminders(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pengingat',
+      one: '1 pengingat',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get vehicleDetailAddFuel => 'Catat BBM';
+
+  @override
+  String get vehicleDetailAddService => 'Tambah servis';
+
+  @override
+  String get vehicleDetailAddExpense => 'Tambah pengeluaran';
+
+  @override
+  String get vehicleDetailAddDocument => 'Tambah dokumen';
+
+  @override
+  String get vehicleDetailActivityHint =>
+      'Buka tab BBM, Servis, Pengeluaran, atau Dokumen untuk melihat catatan.';
+
+  @override
+  String get vehicleDetailErrorRetry => 'Coba lagi';
+
+  @override
+  String get vehicleAddTitle => 'Tambah kendaraan';
+
+  @override
+  String get vehicleAddFieldBrand => 'Merek';
+
+  @override
+  String get vehicleAddFieldModel => 'Model';
+
+  @override
+  String get vehicleAddFieldYear => 'Tahun';
+
+  @override
+  String get vehicleAddFieldPlate => 'Nomor pelat';
+
+  @override
+  String get vehicleAddFieldFuelType => 'Jenis bahan bakar';
+
+  @override
+  String get vehicleAddFieldOdometer => 'Odometer (km)';
+
+  @override
+  String get vehicleAddFieldColor => 'Warna (opsional)';
+
+  @override
+  String get vehicleAddSave => 'Simpan kendaraan';
+
+  @override
+  String get vehicleAddErrorBrandModel => 'Masukkan merek dan model kendaraan.';
+
+  @override
+  String get vehicleAddErrorYear => 'Masukkan tahun yang valid.';
+
+  @override
+  String get vehicleAddErrorPlate => 'Masukkan nomor pelat.';
+
+  @override
+  String get vehicleAddErrorOdometer =>
+      'Masukkan pembacaan odometer yang valid.';
+
+  @override
+  String get fuelTypePetrol => 'Bensin';
+
+  @override
+  String get fuelTypeDiesel => 'Solar';
+
+  @override
+  String get fuelTypeElectric => 'Listrik';
+
+  @override
+  String get fuelTypeHybrid => 'Hibrida';
 }
