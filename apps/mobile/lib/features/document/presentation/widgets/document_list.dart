@@ -5,8 +5,8 @@ import 'package:veyra_mobile/core/error/failure_l10n.dart';
 import 'package:veyra_mobile/core/theme/app_theme.dart';
 import 'package:veyra_mobile/features/document/data/repositories/document_repository_impl.dart';
 import 'package:veyra_mobile/features/document/domain/entities/document.dart';
-import 'package:veyra_mobile/features/document/domain/value_objects/doc_type.dart';
 import 'package:veyra_mobile/features/document/domain/value_objects/expiry_status.dart';
+import 'package:veyra_mobile/features/document/presentation/document_l10n.dart';
 import 'package:veyra_mobile/l10n/app_localizations.dart';
 
 /// Documents for a vehicle: doc icon · title · expiry meta, with an
@@ -119,7 +119,7 @@ class _DocCard extends StatelessWidget {
 
   String _meta(AppLocalizations l10n, Document d) {
     if (d.expiryDate == null) {
-      return l10n.documentNoExpiryMeta(_localizedDocType(l10n, d.docType));
+      return l10n.documentNoExpiryMeta(localizedDocType(l10n, d.docType));
     }
     return l10n.documentExpiresMeta(_formatDate(d.expiryDate!));
   }
@@ -280,10 +280,3 @@ const _months = [
 ];
 
 String _formatDate(DateTime d) => '${d.day} ${_months[d.month - 1]} ${d.year}';
-
-String _localizedDocType(AppLocalizations l10n, DocType type) => switch (type) {
-  DocType.stnk => l10n.docTypeStnk,
-  DocType.bpkb => l10n.docTypeBpkb,
-  DocType.insurance => l10n.docTypeInsurance,
-  DocType.other => l10n.docTypeOther,
-};

@@ -7,6 +7,7 @@ import 'package:veyra_mobile/features/expense/data/repositories/expense_reposito
 import 'package:veyra_mobile/features/expense/domain/repositories/expense_repository.dart';
 import 'package:veyra_mobile/features/expense/domain/value_objects/expense_category.dart';
 import 'package:veyra_mobile/features/expense/presentation/controllers/expense_list_controller.dart';
+import 'package:veyra_mobile/features/expense/presentation/expense_l10n.dart';
 import 'package:veyra_mobile/l10n/app_localizations.dart';
 
 /// Bottom-sheet form for logging an expense: date, category chips, description,
@@ -245,7 +246,7 @@ class _CategorySelector extends StatelessWidget {
       children: [
         for (final c in ExpenseCategory.values)
           ChoiceChip(
-            label: Text(_localizedCategory(l10n, c)),
+            label: Text(localizedExpenseCategory(l10n, c)),
             selected: c == value,
             onSelected: (_) => onChanged(c),
             backgroundColor: VeyraColors.surface,
@@ -260,15 +261,6 @@ class _CategorySelector extends StatelessWidget {
     );
   }
 }
-
-String _localizedCategory(AppLocalizations l10n, ExpenseCategory cat) =>
-    switch (cat) {
-      ExpenseCategory.tire => l10n.expenseCategoryTire,
-      ExpenseCategory.battery => l10n.expenseCategoryBattery,
-      ExpenseCategory.tax => l10n.expenseCategoryTax,
-      ExpenseCategory.insurance => l10n.expenseCategoryInsurance,
-      ExpenseCategory.other => l10n.expenseCategoryOther,
-    };
 
 const _months = [
   'Jan',

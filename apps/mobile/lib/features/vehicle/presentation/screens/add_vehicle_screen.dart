@@ -9,15 +9,8 @@ import 'package:veyra_mobile/features/vehicle/domain/value_objects/fuel_type.dar
 import 'package:veyra_mobile/features/vehicle/domain/value_objects/odometer.dart';
 import 'package:veyra_mobile/features/vehicle/domain/value_objects/plate_number.dart';
 import 'package:veyra_mobile/features/vehicle/presentation/controllers/garage_dashboard_controller.dart';
+import 'package:veyra_mobile/features/vehicle/presentation/vehicle_l10n.dart';
 import 'package:veyra_mobile/l10n/app_localizations.dart';
-
-String _localizedFuelType(AppLocalizations l10n, FuelType fuelType) =>
-    switch (fuelType) {
-      FuelType.petrol => l10n.fuelTypePetrol,
-      FuelType.diesel => l10n.fuelTypeDiesel,
-      FuelType.electric => l10n.fuelTypeElectric,
-      FuelType.hybrid => l10n.fuelTypeHybrid,
-    };
 
 class AddVehicleScreen extends ConsumerStatefulWidget {
   const AddVehicleScreen({super.key});
@@ -204,7 +197,7 @@ class _FuelSelector extends StatelessWidget {
     children: [
       for (final f in FuelType.values)
         ChoiceChip(
-          label: Text(_localizedFuelType(l10n, f)),
+          label: Text(localizedFuelType(l10n, f)),
           selected: f == value,
           onSelected: (_) => onChanged(f),
           backgroundColor: VeyraColors.surface,

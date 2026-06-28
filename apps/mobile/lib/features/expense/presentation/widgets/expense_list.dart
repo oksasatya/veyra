@@ -7,6 +7,7 @@ import 'package:veyra_mobile/core/theme/app_theme.dart';
 import 'package:veyra_mobile/features/expense/domain/entities/expense.dart';
 import 'package:veyra_mobile/features/expense/domain/value_objects/expense_category.dart';
 import 'package:veyra_mobile/features/expense/presentation/controllers/expense_list_controller.dart';
+import 'package:veyra_mobile/features/expense/presentation/expense_l10n.dart';
 import 'package:veyra_mobile/l10n/app_localizations.dart';
 
 /// Renders a vehicle's expenses (category icon/label · date · description,
@@ -59,7 +60,7 @@ class _ExpenseRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _localizedCategory(l10n, expense.category),
+                  localizedExpenseCategory(l10n, expense.category),
                   style: const TextStyle(
                     color: VeyraColors.text,
                     fontSize: 15,
@@ -169,15 +170,6 @@ class _ExpenseError extends StatelessWidget {
     );
   }
 }
-
-String _localizedCategory(AppLocalizations l10n, ExpenseCategory cat) =>
-    switch (cat) {
-      ExpenseCategory.tire => l10n.expenseCategoryTire,
-      ExpenseCategory.battery => l10n.expenseCategoryBattery,
-      ExpenseCategory.tax => l10n.expenseCategoryTax,
-      ExpenseCategory.insurance => l10n.expenseCategoryInsurance,
-      ExpenseCategory.other => l10n.expenseCategoryOther,
-    };
 
 IconData _iconFor(ExpenseCategory category) => switch (category) {
   ExpenseCategory.tire => Icons.trip_origin,

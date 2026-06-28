@@ -5,6 +5,7 @@ import 'package:veyra_mobile/core/theme/app_theme.dart';
 import 'package:veyra_mobile/features/document/data/repositories/document_repository_impl.dart';
 import 'package:veyra_mobile/features/document/domain/repositories/document_repository.dart';
 import 'package:veyra_mobile/features/document/domain/value_objects/doc_type.dart';
+import 'package:veyra_mobile/features/document/presentation/document_l10n.dart';
 import 'package:veyra_mobile/l10n/app_localizations.dart';
 
 /// Bottom-sheet form to add a document to a vehicle. Pops on success.
@@ -224,7 +225,7 @@ class _DocTypeSelector extends StatelessWidget {
       children: [
         for (final t in DocType.values)
           ChoiceChip(
-            label: Text(_localizedDocType(l10n, t)),
+            label: Text(localizedDocType(l10n, t)),
             selected: t == value,
             onSelected: (_) => onChanged(t),
             backgroundColor: VeyraColors.surface,
@@ -277,13 +278,6 @@ class _DateField extends StatelessWidget {
     );
   }
 }
-
-String _localizedDocType(AppLocalizations l10n, DocType type) => switch (type) {
-  DocType.stnk => l10n.docTypeStnk,
-  DocType.bpkb => l10n.docTypeBpkb,
-  DocType.insurance => l10n.docTypeInsurance,
-  DocType.other => l10n.docTypeOther,
-};
 
 const _months = [
   'Jan',

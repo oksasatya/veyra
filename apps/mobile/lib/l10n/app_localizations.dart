@@ -812,6 +812,42 @@ abstract class AppLocalizations {
   /// **'Add Reminder'**
   String get reminderFormTitle;
 
+  /// No description provided for @reminderFormTitleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get reminderFormTitleLabel;
+
+  /// No description provided for @reminderFormTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Road tax renewal'**
+  String get reminderFormTitleHint;
+
+  /// No description provided for @reminderFormTrigger.
+  ///
+  /// In en, this message translates to:
+  /// **'Trigger'**
+  String get reminderFormTrigger;
+
+  /// No description provided for @reminderFormNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes (optional)'**
+  String get reminderFormNotes;
+
+  /// No description provided for @reminderFormNotesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Anything to note'**
+  String get reminderFormNotesHint;
+
+  /// No description provided for @reminderFormPickDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a date'**
+  String get reminderFormPickDate;
+
   /// No description provided for @reminderFormDueDate.
   ///
   /// In en, this message translates to:

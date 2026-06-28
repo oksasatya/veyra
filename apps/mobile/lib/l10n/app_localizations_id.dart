@@ -417,6 +417,24 @@ class AppLocalizationsId extends AppLocalizations {
   String get reminderFormTitle => 'Tambah Pengingat';
 
   @override
+  String get reminderFormTitleLabel => 'Judul';
+
+  @override
+  String get reminderFormTitleHint => 'Perpanjangan pajak kendaraan';
+
+  @override
+  String get reminderFormTrigger => 'Pemicu';
+
+  @override
+  String get reminderFormNotes => 'Catatan (opsional)';
+
+  @override
+  String get reminderFormNotesHint => 'Tulis catatan apa pun';
+
+  @override
+  String get reminderFormPickDate => 'Pilih tanggal';
+
+  @override
   String get reminderFormDueDate => 'Tanggal Jatuh Tempo';
 
   @override

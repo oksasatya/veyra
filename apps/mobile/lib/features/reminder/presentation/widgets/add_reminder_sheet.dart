@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:veyra_mobile/core/error/failure_l10n.dart';
 import 'package:veyra_mobile/core/theme/app_theme.dart';
 import 'package:veyra_mobile/features/reminder/data/repositories/reminder_repository_impl.dart';
 import 'package:veyra_mobile/features/reminder/domain/usecases/validate_reminder.dart';
@@ -65,6 +66,7 @@ class _AddReminderSheetState extends ConsumerState<AddReminderSheet> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context);
     final odometer = _needsOdometer
         ? int.tryParse(_odometer.text.trim())
         : null;
@@ -93,7 +95,7 @@ class _AddReminderSheetState extends ConsumerState<AddReminderSheet> {
     if (!mounted) return;
     result.fold(
       (failure) => setState(() {
-        _error = failure.message;
+        _error = localizedFailure(l10n, failure);
         _saving = false;
       }),
       (_) {
@@ -126,15 +128,15 @@ class _AddReminderSheetState extends ConsumerState<AddReminderSheet> {
                 const SizedBox(height: 14),
                 Text(l10n.reminderFormTitle, style: soraDisplay(size: 20)),
                 const SizedBox(height: 18),
-                const _Label('Title'),
+                _Label(l10n.reminderFormTitleLabel),
                 TextField(
                   controller: _title,
-                  decoration: const InputDecoration(
-                    hintText: 'Road tax renewal',
+                  decoration: InputDecoration(
+                    hintText: l10n.reminderFormTitleHint,
                   ),
                 ),
                 const SizedBox(height: 16),
-                const _Label('Trigger'),
+                _Label(l10n.reminderFormTrigger),
                 _TypeSelector(
                   value: _type,
                   onChanged: (t) => setState(() => _type = t),
@@ -143,7 +145,11 @@ class _AddReminderSheetState extends ConsumerState<AddReminderSheet> {
                 const SizedBox(height: 16),
                 if (_needsDate) ...[
                   _Label(l10n.reminderFormDueDate),
-                  _DateField(value: _dueDate, onTap: _pickDate),
+                  _DateField(
+                    value: _dueDate,
+                    onTap: _pickDate,
+                    placeholder: l10n.reminderFormPickDate,
+                  ),
                   const SizedBox(height: 16),
                 ],
                 if (_needsOdometer) ...[
@@ -155,12 +161,12 @@ class _AddReminderSheetState extends ConsumerState<AddReminderSheet> {
                   ),
                   const SizedBox(height: 16),
                 ],
-                const _Label('Notes (optional)'),
+                _Label(l10n.reminderFormNotes),
                 TextField(
                   controller: _notes,
                   maxLines: 2,
-                  decoration: const InputDecoration(
-                    hintText: 'Anything to note',
+                  decoration: InputDecoration(
+                    hintText: l10n.reminderFormNotesHint,
                   ),
                 ),
                 if (_error != null) ...[
@@ -269,9 +275,14 @@ class _TypeSelector extends StatelessWidget {
 }
 
 class _DateField extends StatelessWidget {
-  const _DateField({required this.value, required this.onTap});
+  const _DateField({
+    required this.value,
+    required this.onTap,
+    required this.placeholder,
+  });
   final DateTime? value;
   final VoidCallback onTap;
+  final String placeholder;
 
   @override
   Widget build(BuildContext context) => InkWell(
@@ -288,7 +299,7 @@ class _DateField extends StatelessWidget {
       child: Row(
         children: [
           Text(
-            value == null ? 'Pick a date' : _format(value!),
+            value == null ? placeholder : _format(value!),
             style: TextStyle(
               color: value == null ? const Color(0xFF5A6472) : VeyraColors.text,
               fontSize: 16,

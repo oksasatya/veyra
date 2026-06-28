@@ -415,6 +415,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reminderFormTitle => 'Add Reminder';
 
   @override
+  String get reminderFormTitleLabel => 'Title';
+
+  @override
+  String get reminderFormTitleHint => 'Road tax renewal';
+
+  @override
+  String get reminderFormTrigger => 'Trigger';
+
+  @override
+  String get reminderFormNotes => 'Notes (optional)';
+
+  @override
+  String get reminderFormNotesHint => 'Anything to note';
+
+  @override
+  String get reminderFormPickDate => 'Pick a date';
+
+  @override
   String get reminderFormDueDate => 'Due Date';
 
   @override
