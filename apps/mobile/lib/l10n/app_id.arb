@@ -131,5 +131,66 @@
   "fuelTypePetrol": "Bensin",
   "fuelTypeDiesel": "Solar",
   "fuelTypeElectric": "Listrik",
-  "fuelTypeHybrid": "Hibrida"
+  "fuelTypeHybrid": "Hibrida",
+
+  "reminderTitle": "Pengingat",
+  "reminderSectionOverdue": "Terlambat",
+  "reminderSectionDueSoon": "Segera Jatuh Tempo",
+  "reminderSectionUpcoming": "Mendatang",
+  "reminderSectionCompleted": "Selesai",
+  "reminderDaysLate": "{count,plural, =1{1 hari terlambat} other{{count} hari terlambat}}",
+  "@reminderDaysLate": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reminderDaysUntil": "{count,plural, =1{dalam 1 hari} other{dalam {count} hari}}",
+  "@reminderDaysUntil": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reminderAtKm": "di {km} km",
+  "@reminderAtKm": {
+    "placeholders": {
+      "km": {
+        "type": "int"
+      }
+    }
+  },
+  "reminderMetaVehicleDate": "{vehicle} · jatuh tempo {date}",
+  "@reminderMetaVehicleDate": {
+    "placeholders": {
+      "vehicle": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "reminderMetaVehicleKm": "{vehicle} · di {km} km",
+  "@reminderMetaVehicleKm": {
+    "placeholders": {
+      "vehicle": {
+        "type": "String"
+      },
+      "km": {
+        "type": "int"
+      }
+    }
+  },
+  "reminderEmpty": "Belum ada pengingat",
+  "reminderError": "Gagal memuat pengingat",
+  "reminderTypeDate": "Tanggal",
+  "reminderTypeOdometer": "Odometer",
+  "reminderTypeBoth": "Tanggal & Odometer",
+  "reminderFormTitle": "Tambah Pengingat",
+  "reminderFormDueDate": "Tanggal Jatuh Tempo",
+  "reminderFormDueOdometer": "Odometer Jatuh Tempo (km)",
+  "reminderFormSave": "Simpan"
 }

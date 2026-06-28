@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:veyra_mobile/core/error/failure.dart';
+import 'package:veyra_mobile/core/error/failure_l10n.dart';
 import 'package:veyra_mobile/core/theme/app_theme.dart';
 import 'package:veyra_mobile/core/widgets/skeleton.dart';
 import 'package:veyra_mobile/core/widgets/status_pill.dart';
@@ -8,6 +9,7 @@ import 'package:veyra_mobile/features/reminder/data/repositories/reminder_reposi
 import 'package:veyra_mobile/features/reminder/domain/entities/reminder.dart';
 import 'package:veyra_mobile/features/reminder/domain/value_objects/reminder_type.dart';
 import 'package:veyra_mobile/features/reminder/presentation/controllers/reminders_overview_controller.dart';
+import 'package:veyra_mobile/l10n/app_localizations.dart';
 
 /// Cross-vehicle reminders, grouped by due status (design `reminders.html`).
 class RemindersOverview extends ConsumerWidget {
@@ -15,19 +17,22 @@ class RemindersOverview extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final reminders = ref.watch(remindersOverviewProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-          child: Text('Reminders', style: soraDisplay(size: 30)),
+          child: Text(l10n.reminderTitle, style: soraDisplay(size: 30)),
         ),
         Expanded(
           child: reminders.when(
             loading: () => const _RemindersSkeleton(),
             error: (e, _) => _SectionError(
-              message: e is Failure ? e.message : 'Could not load reminders.',
+              message: e is Failure
+                  ? localizedFailure(l10n, e)
+                  : l10n.reminderError,
               onRetry: () => ref.invalidate(remindersOverviewProvider),
             ),
             data: (items) => items.isEmpty
@@ -48,17 +53,18 @@ class _GroupedList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final groups = <_Bucket, List<ReminderWithVehicle>>{
       for (final b in _Bucket.values) b: [],
     };
     for (final item in items) {
       groups[_bucketFor(item.reminder)]!.add(item);
     }
-    const order = [
-      (_Bucket.overdue, 'Overdue'),
-      (_Bucket.soon, 'Due soon'),
-      (_Bucket.upcoming, 'Upcoming'),
-      (_Bucket.completed, 'Completed'),
+    final order = [
+      (_Bucket.overdue, l10n.reminderSectionOverdue),
+      (_Bucket.soon, l10n.reminderSectionDueSoon),
+      (_Bucket.upcoming, l10n.reminderSectionUpcoming),
+      (_Bucket.completed, l10n.reminderSectionCompleted),
     ];
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 6, 20, 96),
@@ -106,6 +112,7 @@ class _ReminderItemState extends ConsumerState<_ReminderItem> {
   Future<void> _complete() async {
     final r = widget.item.reminder;
     if (r.isCompleted || _busy) return;
+    final l10n = AppLocalizations.of(context);
     setState(() => _busy = true);
     final result =
         await ref.read(completeReminderUseCaseProvider)(r.vehicleId, r.id);
@@ -114,7 +121,7 @@ class _ReminderItemState extends ConsumerState<_ReminderItem> {
       (failure) {
         setState(() => _busy = false);
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(failure.message)));
+            .showSnackBar(SnackBar(content: Text(localizedFailure(l10n, failure))));
       },
       (_) => ref.invalidate(remindersOverviewProvider),
     );
@@ -122,6 +129,7 @@ class _ReminderItemState extends ConsumerState<_ReminderItem> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final r = widget.item.reminder;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -152,13 +160,13 @@ class _ReminderItemState extends ConsumerState<_ReminderItem> {
                   ),
                 ),
                 const SizedBox(height: 3),
-                Text(_meta(widget.item), style: plexMono(size: 12)),
+                Text(_meta(l10n, widget.item), style: plexMono(size: 12)),
               ],
             ),
           ),
           if (!r.isCompleted) ...[
             const SizedBox(width: 10),
-            _duePill(r),
+            _duePill(l10n, r),
           ],
         ],
       ),
@@ -224,17 +232,19 @@ class _RemindersEmpty extends StatelessWidget {
   const _RemindersEmpty();
 
   @override
-  Widget build(BuildContext context) => const Center(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 40),
-          child: Text(
-            'No reminders yet. Add one from a vehicle to stay ahead of '
-            'service and renewals.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: VeyraColors.textMuted, fontSize: 15),
-          ),
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Text(
+          l10n.reminderEmpty,
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: VeyraColors.textMuted, fontSize: 15),
         ),
-      );
+      ),
+    );
+  }
 }
 
 class _SectionError extends StatelessWidget {
@@ -243,26 +253,29 @@ class _SectionError extends StatelessWidget {
   final VoidCallback onRetry;
 
   @override
-  Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: VeyraColors.textMuted,
-                  fontSize: 15,
-                ),
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: VeyraColors.textMuted,
+                fontSize: 15,
               ),
-              const SizedBox(height: 16),
-              FilledButton(onPressed: onRetry, child: const Text('Try again')),
-            ],
-          ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton(onPressed: onRetry, child: Text(l10n.commonRetry)),
+          ],
         ),
-      );
+      ),
+    );
+  }
 }
 
 _Bucket _bucketFor(Reminder r) {
@@ -275,33 +288,34 @@ _Bucket _bucketFor(Reminder r) {
   return _Bucket.upcoming;
 }
 
-StatusPill _duePill(Reminder r) {
+StatusPill _duePill(AppLocalizations l10n, Reminder r) {
   final date = r.dueDate;
   if (date == null) {
-    return StatusPill(_km(r.dueOdometer), tone: PillTone.muted);
+    return StatusPill(_kmLabel(r.dueOdometer), tone: PillTone.muted);
   }
   final days = _daysUntil(date);
   if (days < 0) {
     final late = -days;
     return StatusPill(
-      '$late day${late == 1 ? '' : 's'} late',
+      l10n.reminderDaysLate(late),
       tone: PillTone.danger,
     );
   }
   if (days <= 14) {
-    return StatusPill('in $days day${days == 1 ? '' : 's'}',
-        tone: PillTone.accent);
+    return StatusPill(l10n.reminderDaysUntil(days), tone: PillTone.accent);
   }
-  return StatusPill('in $days days', tone: PillTone.muted);
+  return StatusPill(l10n.reminderDaysUntil(days), tone: PillTone.muted);
 }
 
-String _meta(ReminderWithVehicle item) {
+String _meta(AppLocalizations l10n, ReminderWithVehicle item) {
   final r = item.reminder;
   final target = switch (r.type) {
-    ReminderType.odometer => 'at ${_km(r.dueOdometer)}',
-    _ => 'due ${_shortDate(r.dueDate)}',
+    ReminderType.odometer => r.dueOdometer == null
+        ? '—'
+        : l10n.reminderMetaVehicleKm(item.vehicleName, r.dueOdometer!),
+    _ => l10n.reminderMetaVehicleDate(item.vehicleName, _shortDate(r.dueDate)),
   };
-  return '${item.vehicleName} · $target';
+  return target;
 }
 
 int _daysUntil(DateTime date) {
@@ -319,7 +333,7 @@ const _months = [
 String _shortDate(DateTime? date) =>
     date == null ? '—' : '${date.day} ${_months[date.month - 1]}';
 
-String _km(int? odometer) =>
+String _kmLabel(int? odometer) =>
     odometer == null ? '—' : '${_grouped(odometer)} km';
 
 String _grouped(int n) {

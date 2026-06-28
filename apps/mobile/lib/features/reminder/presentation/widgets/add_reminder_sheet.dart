@@ -4,6 +4,7 @@ import 'package:veyra_mobile/core/theme/app_theme.dart';
 import 'package:veyra_mobile/features/reminder/data/repositories/reminder_repository_impl.dart';
 import 'package:veyra_mobile/features/reminder/domain/usecases/validate_reminder.dart';
 import 'package:veyra_mobile/features/reminder/domain/value_objects/reminder_type.dart';
+import 'package:veyra_mobile/l10n/app_localizations.dart';
 
 const _months = [
   'Jan',
@@ -104,6 +105,7 @@ class _AddReminderSheetState extends ConsumerState<AddReminderSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final inset = MediaQuery.of(context).viewInsets.bottom;
     return Padding(
       padding: EdgeInsets.only(bottom: inset),
@@ -122,7 +124,7 @@ class _AddReminderSheetState extends ConsumerState<AddReminderSheet> {
               children: [
                 const _Grabber(),
                 const SizedBox(height: 14),
-                Text('Add reminder', style: soraDisplay(size: 20)),
+                Text(l10n.reminderFormTitle, style: soraDisplay(size: 20)),
                 const SizedBox(height: 18),
                 const _Label('Title'),
                 TextField(
@@ -136,15 +138,16 @@ class _AddReminderSheetState extends ConsumerState<AddReminderSheet> {
                 _TypeSelector(
                   value: _type,
                   onChanged: (t) => setState(() => _type = t),
+                  localizeType: (t) => _localizedReminderType(l10n, t),
                 ),
                 const SizedBox(height: 16),
                 if (_needsDate) ...[
-                  const _Label('Due date'),
+                  _Label(l10n.reminderFormDueDate),
                   _DateField(value: _dueDate, onTap: _pickDate),
                   const SizedBox(height: 16),
                 ],
                 if (_needsOdometer) ...[
-                  const _Label('Due odometer (km)'),
+                  _Label(l10n.reminderFormDueOdometer),
                   TextField(
                     controller: _odometer,
                     keyboardType: TextInputType.number,
@@ -182,7 +185,7 @@ class _AddReminderSheetState extends ConsumerState<AddReminderSheet> {
                             color: VeyraColors.bg,
                           ),
                         )
-                      : const Text('Save reminder'),
+                      : Text(l10n.reminderFormSave),
                 ),
               ],
             ),
@@ -192,6 +195,13 @@ class _AddReminderSheetState extends ConsumerState<AddReminderSheet> {
     );
   }
 }
+
+String _localizedReminderType(AppLocalizations l10n, ReminderType type) =>
+    switch (type) {
+      ReminderType.date => l10n.reminderTypeDate,
+      ReminderType.odometer => l10n.reminderTypeOdometer,
+      ReminderType.both => l10n.reminderTypeBoth,
+    };
 
 class _Grabber extends StatelessWidget {
   const _Grabber();
@@ -228,9 +238,14 @@ class _Label extends StatelessWidget {
 }
 
 class _TypeSelector extends StatelessWidget {
-  const _TypeSelector({required this.value, required this.onChanged});
+  const _TypeSelector({
+    required this.value,
+    required this.onChanged,
+    required this.localizeType,
+  });
   final ReminderType value;
   final ValueChanged<ReminderType> onChanged;
+  final String Function(ReminderType) localizeType;
 
   @override
   Widget build(BuildContext context) => Wrap(
@@ -238,7 +253,7 @@ class _TypeSelector extends StatelessWidget {
     children: [
       for (final t in ReminderType.values)
         ChoiceChip(
-          label: Text(t.label),
+          label: Text(localizeType(t)),
           selected: t == value,
           onSelected: (_) => onChanged(t),
           backgroundColor: VeyraColors.surface,

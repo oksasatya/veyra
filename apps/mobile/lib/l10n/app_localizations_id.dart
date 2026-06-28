@@ -342,4 +342,83 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get fuelTypeHybrid => 'Hibrida';
+
+  @override
+  String get reminderTitle => 'Pengingat';
+
+  @override
+  String get reminderSectionOverdue => 'Terlambat';
+
+  @override
+  String get reminderSectionDueSoon => 'Segera Jatuh Tempo';
+
+  @override
+  String get reminderSectionUpcoming => 'Mendatang';
+
+  @override
+  String get reminderSectionCompleted => 'Selesai';
+
+  @override
+  String reminderDaysLate(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hari terlambat',
+      one: '1 hari terlambat',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String reminderDaysUntil(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'dalam $count hari',
+      one: 'dalam 1 hari',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String reminderAtKm(int km) {
+    return 'di $km km';
+  }
+
+  @override
+  String reminderMetaVehicleDate(String vehicle, String date) {
+    return '$vehicle · jatuh tempo $date';
+  }
+
+  @override
+  String reminderMetaVehicleKm(String vehicle, int km) {
+    return '$vehicle · di $km km';
+  }
+
+  @override
+  String get reminderEmpty => 'Belum ada pengingat';
+
+  @override
+  String get reminderError => 'Gagal memuat pengingat';
+
+  @override
+  String get reminderTypeDate => 'Tanggal';
+
+  @override
+  String get reminderTypeOdometer => 'Odometer';
+
+  @override
+  String get reminderTypeBoth => 'Tanggal & Odometer';
+
+  @override
+  String get reminderFormTitle => 'Tambah Pengingat';
+
+  @override
+  String get reminderFormDueDate => 'Tanggal Jatuh Tempo';
+
+  @override
+  String get reminderFormDueOdometer => 'Odometer Jatuh Tempo (km)';
+
+  @override
+  String get reminderFormSave => 'Simpan';
 }

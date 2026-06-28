@@ -340,4 +340,83 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fuelTypeHybrid => 'Hybrid';
+
+  @override
+  String get reminderTitle => 'Reminders';
+
+  @override
+  String get reminderSectionOverdue => 'Overdue';
+
+  @override
+  String get reminderSectionDueSoon => 'Due Soon';
+
+  @override
+  String get reminderSectionUpcoming => 'Upcoming';
+
+  @override
+  String get reminderSectionCompleted => 'Completed';
+
+  @override
+  String reminderDaysLate(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days late',
+      one: '1 day late',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String reminderDaysUntil(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'in $count days',
+      one: 'in 1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String reminderAtKm(int km) {
+    return 'at $km km';
+  }
+
+  @override
+  String reminderMetaVehicleDate(String vehicle, String date) {
+    return '$vehicle · due $date';
+  }
+
+  @override
+  String reminderMetaVehicleKm(String vehicle, int km) {
+    return '$vehicle · at $km km';
+  }
+
+  @override
+  String get reminderEmpty => 'No reminders yet';
+
+  @override
+  String get reminderError => 'Could not load reminders';
+
+  @override
+  String get reminderTypeDate => 'Date';
+
+  @override
+  String get reminderTypeOdometer => 'Odometer';
+
+  @override
+  String get reminderTypeBoth => 'Date & Odometer';
+
+  @override
+  String get reminderFormTitle => 'Add Reminder';
+
+  @override
+  String get reminderFormDueDate => 'Due Date';
+
+  @override
+  String get reminderFormDueOdometer => 'Due Odometer (km)';
+
+  @override
+  String get reminderFormSave => 'Save';
 }

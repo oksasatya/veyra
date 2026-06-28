@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:veyra_mobile/core/error/failure.dart';
+import 'package:veyra_mobile/core/error/failure_l10n.dart';
 import 'package:veyra_mobile/core/theme/app_theme.dart';
 import 'package:veyra_mobile/features/reminder/data/repositories/reminder_repository_impl.dart';
 import 'package:veyra_mobile/features/reminder/domain/entities/reminder.dart';
 import 'package:veyra_mobile/features/reminder/domain/value_objects/reminder_type.dart';
+import 'package:veyra_mobile/l10n/app_localizations.dart';
 
 const _ok = Color(0xFF4FD08A);
 
@@ -15,11 +17,14 @@ class ReminderList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final reminders = ref.watch(reminderListProvider(vehicleId));
     return reminders.when(
       loading: () => const _RemindersSkeleton(),
       error: (e, _) => _RemindersError(
-        message: e is Failure ? e.message : 'Could not load reminders.',
+        message: e is Failure
+            ? localizedFailure(l10n, e)
+            : l10n.reminderError,
         onRetry: () => ref.invalidate(reminderListProvider(vehicleId)),
       ),
       data: (list) {
@@ -49,6 +54,7 @@ class _ReminderTileState extends ConsumerState<_ReminderTile> {
 
   Future<void> _complete() async {
     if (widget.reminder.isCompleted || _busy) return;
+    final l10n = AppLocalizations.of(context);
     setState(() => _busy = true);
     final result = await ref.read(completeReminderUseCaseProvider)(
       widget.vehicleId,
@@ -59,7 +65,7 @@ class _ReminderTileState extends ConsumerState<_ReminderTile> {
       (failure) {
         setState(() => _busy = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(failure.message)),
+          SnackBar(content: Text(localizedFailure(l10n, failure))),
         );
       },
       // On success the list refreshes and this tile rebuilds as completed.
@@ -69,6 +75,7 @@ class _ReminderTileState extends ConsumerState<_ReminderTile> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final r = widget.reminder;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -104,7 +111,7 @@ class _ReminderTileState extends ConsumerState<_ReminderTile> {
                   ),
                 ),
                 const SizedBox(height: 3),
-                Text(_meta(r), style: plexMono(size: 12)),
+                Text(_meta(l10n, r), style: plexMono(size: 12)),
               ],
             ),
           ),
@@ -168,7 +175,8 @@ class _DuePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (label, color) = _due(reminder);
+    final l10n = AppLocalizations.of(context);
+    final (label, color) = _due(l10n, reminder);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
@@ -212,15 +220,18 @@ class _RemindersEmpty extends StatelessWidget {
   const _RemindersEmpty();
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(vertical: 28),
-    alignment: Alignment.center,
-    child: const Text(
-      'No reminders yet. Add one to stay ahead of service & renewals.',
-      textAlign: TextAlign.center,
-      style: TextStyle(color: VeyraColors.textMuted, fontSize: 14),
-    ),
-  );
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 28),
+      alignment: Alignment.center,
+      child: Text(
+        l10n.reminderEmpty,
+        textAlign: TextAlign.center,
+        style: const TextStyle(color: VeyraColors.textMuted, fontSize: 14),
+      ),
+    );
+  }
 }
 
 class _RemindersError extends StatelessWidget {
@@ -229,28 +240,31 @@ class _RemindersError extends StatelessWidget {
   final VoidCallback onRetry;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: VeyraColors.surface,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: VeyraColors.border),
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: Text(
-            message,
-            style: const TextStyle(
-              color: VeyraColors.textMuted,
-              fontSize: 13,
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VeyraColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: VeyraColors.border),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: VeyraColors.textMuted,
+                fontSize: 13,
+              ),
             ),
           ),
-        ),
-        TextButton(onPressed: onRetry, child: const Text('Retry')),
-      ],
-    ),
-  );
+          TextButton(onPressed: onRetry, child: Text(l10n.commonRetry)),
+        ],
+      ),
+    );
+  }
 }
 
 const _months = [
@@ -269,15 +283,16 @@ const _months = [
 ];
 
 /// Meta line: the reminder's type-appropriate due target.
-String _meta(Reminder r) => switch (r.type) {
-  ReminderType.date => 'By date · due ${_shortDate(r.dueDate)}',
-  ReminderType.odometer => 'By odometer · at ${_km(r.dueOdometer)}',
+String _meta(AppLocalizations l10n, Reminder r) => switch (r.type) {
+  ReminderType.date => '${l10n.reminderTypeDate} · due ${_shortDate(r.dueDate)}',
+  ReminderType.odometer =>
+    '${l10n.reminderTypeOdometer} · at ${_km(r.dueOdometer)}',
   ReminderType.both =>
-    'Date & odometer · ${_shortDate(r.dueDate)} / ${_km(r.dueOdometer)}',
+    '${l10n.reminderTypeBoth} · ${_shortDate(r.dueDate)} / ${_km(r.dueOdometer)}',
 };
 
 /// Due pill label + colour, scaled by urgency for date-based reminders.
-(String, Color) _due(Reminder r) {
+(String, Color) _due(AppLocalizations l10n, Reminder r) {
   final date = r.dueDate;
   if (date == null) {
     return (_km(r.dueOdometer), VeyraColors.textMuted);
@@ -285,12 +300,12 @@ String _meta(Reminder r) => switch (r.type) {
   final days = _daysUntil(date);
   if (days < 0) {
     final late = -days;
-    return ('$late day${late == 1 ? '' : 's'} late', VeyraColors.danger);
+    return (l10n.reminderDaysLate(late), VeyraColors.danger);
   }
   if (days <= 14) {
-    return ('in $days day${days == 1 ? '' : 's'}', VeyraColors.accent);
+    return (l10n.reminderDaysUntil(days), VeyraColors.accent);
   }
-  return ('in $days days', VeyraColors.textMuted);
+  return (l10n.reminderDaysUntil(days), VeyraColors.textMuted);
 }
 
 int _daysUntil(DateTime date) {

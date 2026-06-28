@@ -709,6 +709,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hybrid'**
   String get fuelTypeHybrid;
+
+  /// No description provided for @reminderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get reminderTitle;
+
+  /// No description provided for @reminderSectionOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get reminderSectionOverdue;
+
+  /// No description provided for @reminderSectionDueSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Due Soon'**
+  String get reminderSectionDueSoon;
+
+  /// No description provided for @reminderSectionUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get reminderSectionUpcoming;
+
+  /// No description provided for @reminderSectionCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get reminderSectionCompleted;
+
+  /// No description provided for @reminderDaysLate.
+  ///
+  /// In en, this message translates to:
+  /// **'{count,plural, =1{1 day late} other{{count} days late}}'**
+  String reminderDaysLate(int count);
+
+  /// No description provided for @reminderDaysUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'{count,plural, =1{in 1 day} other{in {count} days}}'**
+  String reminderDaysUntil(int count);
+
+  /// No description provided for @reminderAtKm.
+  ///
+  /// In en, this message translates to:
+  /// **'at {km} km'**
+  String reminderAtKm(int km);
+
+  /// No description provided for @reminderMetaVehicleDate.
+  ///
+  /// In en, this message translates to:
+  /// **'{vehicle} · due {date}'**
+  String reminderMetaVehicleDate(String vehicle, String date);
+
+  /// No description provided for @reminderMetaVehicleKm.
+  ///
+  /// In en, this message translates to:
+  /// **'{vehicle} · at {km} km'**
+  String reminderMetaVehicleKm(String vehicle, int km);
+
+  /// No description provided for @reminderEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No reminders yet'**
+  String get reminderEmpty;
+
+  /// No description provided for @reminderError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load reminders'**
+  String get reminderError;
+
+  /// No description provided for @reminderTypeDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get reminderTypeDate;
+
+  /// No description provided for @reminderTypeOdometer.
+  ///
+  /// In en, this message translates to:
+  /// **'Odometer'**
+  String get reminderTypeOdometer;
+
+  /// No description provided for @reminderTypeBoth.
+  ///
+  /// In en, this message translates to:
+  /// **'Date & Odometer'**
+  String get reminderTypeBoth;
+
+  /// No description provided for @reminderFormTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Reminder'**
+  String get reminderFormTitle;
+
+  /// No description provided for @reminderFormDueDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Due Date'**
+  String get reminderFormDueDate;
+
+  /// No description provided for @reminderFormDueOdometer.
+  ///
+  /// In en, this message translates to:
+  /// **'Due Odometer (km)'**
+  String get reminderFormDueOdometer;
+
+  /// No description provided for @reminderFormSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get reminderFormSave;
 }
 
 class _AppLocalizationsDelegate

@@ -131,5 +131,66 @@
   "fuelTypePetrol": "Petrol",
   "fuelTypeDiesel": "Diesel",
   "fuelTypeElectric": "Electric",
-  "fuelTypeHybrid": "Hybrid"
+  "fuelTypeHybrid": "Hybrid",
+
+  "reminderTitle": "Reminders",
+  "reminderSectionOverdue": "Overdue",
+  "reminderSectionDueSoon": "Due Soon",
+  "reminderSectionUpcoming": "Upcoming",
+  "reminderSectionCompleted": "Completed",
+  "reminderDaysLate": "{count,plural, =1{1 day late} other{{count} days late}}",
+  "@reminderDaysLate": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reminderDaysUntil": "{count,plural, =1{in 1 day} other{in {count} days}}",
+  "@reminderDaysUntil": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reminderAtKm": "at {km} km",
+  "@reminderAtKm": {
+    "placeholders": {
+      "km": {
+        "type": "int"
+      }
+    }
+  },
+  "reminderMetaVehicleDate": "{vehicle} · due {date}",
+  "@reminderMetaVehicleDate": {
+    "placeholders": {
+      "vehicle": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "reminderMetaVehicleKm": "{vehicle} · at {km} km",
+  "@reminderMetaVehicleKm": {
+    "placeholders": {
+      "vehicle": {
+        "type": "String"
+      },
+      "km": {
+        "type": "int"
+      }
+    }
+  },
+  "reminderEmpty": "No reminders yet",
+  "reminderError": "Could not load reminders",
+  "reminderTypeDate": "Date",
+  "reminderTypeOdometer": "Odometer",
+  "reminderTypeBoth": "Date & Odometer",
+  "reminderFormTitle": "Add Reminder",
+  "reminderFormDueDate": "Due Date",
+  "reminderFormDueOdometer": "Due Odometer (km)",
+  "reminderFormSave": "Save"
 }
