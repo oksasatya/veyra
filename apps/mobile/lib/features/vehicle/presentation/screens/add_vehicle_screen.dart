@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:veyra_mobile/core/theme/app_theme.dart';
+import 'package:veyra_mobile/features/vehicle/data/repositories/vehicle_repository_impl.dart';
 import 'package:veyra_mobile/features/vehicle/domain/repositories/vehicle_repository.dart';
 import 'package:veyra_mobile/features/vehicle/domain/value_objects/fuel_type.dart';
 import 'package:veyra_mobile/features/vehicle/domain/value_objects/odometer.dart';
 import 'package:veyra_mobile/features/vehicle/domain/value_objects/plate_number.dart';
-import 'package:veyra_mobile/features/vehicle/presentation/controllers/garage_controller.dart';
+import 'package:veyra_mobile/features/vehicle/presentation/controllers/garage_dashboard_controller.dart';
 
 class AddVehicleScreen extends ConsumerStatefulWidget {
   const AddVehicleScreen({super.key});
@@ -65,28 +66,28 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
       _saving = true;
     });
     final color = _color.text.trim();
-    final failure = await ref
-        .read(garageControllerProvider.notifier)
-        .add(
-          CreateVehicleInput(
-            brand: _brand.text.trim(),
-            model: _model.text.trim(),
-            year: year,
-            plateNumber: plate.value,
-            fuelType: _fuel,
-            odometer: odo.value,
-            color: color.isEmpty ? null : color,
-          ),
-        );
+    final result = await ref.read(createVehicleUseCaseProvider)(
+      CreateVehicleInput(
+        brand: _brand.text.trim(),
+        model: _model.text.trim(),
+        year: year,
+        plateNumber: plate.value,
+        fuelType: _fuel,
+        odometer: odo.value,
+        color: color.isEmpty ? null : color,
+      ),
+    );
     if (!mounted) return;
-    if (failure == null) {
-      context.pop();
-    } else {
-      setState(() {
+    result.fold(
+      (failure) => setState(() {
         _error = failure.message;
         _saving = false;
-      });
-    }
+      }),
+      (_) {
+        ref.invalidate(garageDashboardProvider);
+        context.pop();
+      },
+    );
   }
 
   @override
