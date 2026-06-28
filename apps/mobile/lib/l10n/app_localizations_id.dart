@@ -594,6 +594,47 @@ class AppLocalizationsId extends AppLocalizations {
   String get fuelLogLoadError => 'Gagal memuat catatan BBM.';
 
   @override
+  String get serviceRecordTitle => 'Catat servis';
+
+  @override
+  String get serviceRecordFieldDate => 'Tanggal';
+
+  @override
+  String get serviceRecordFieldOdometer => 'Odometer (km)';
+
+  @override
+  String get serviceRecordFieldDescription => 'Deskripsi';
+
+  @override
+  String get serviceRecordFieldWorkshop => 'Bengkel (opsional)';
+
+  @override
+  String get serviceRecordFieldCost => 'Biaya (opsional)';
+
+  @override
+  String get serviceRecordFieldNotes => 'Catatan (opsional)';
+
+  @override
+  String get serviceRecordSave => 'Simpan servis';
+
+  @override
+  String get serviceRecordErrorDescription => 'Masukkan deskripsi.';
+
+  @override
+  String get serviceRecordErrorOdometer =>
+      'Masukkan pembacaan odometer yang valid.';
+
+  @override
+  String get serviceRecordErrorCost => 'Masukkan biaya yang valid.';
+
+  @override
+  String get serviceRecordEmpty =>
+      'Belum ada catatan servis. Tambahkan yang pertama.';
+
+  @override
+  String get serviceRecordLoadError => 'Gagal memuat catatan servis.';
+
+  @override
   String get expenseAddTitle => 'Tambah pengeluaran';
 
   @override

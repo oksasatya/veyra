@@ -2,9 +2,11 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:veyra_mobile/core/error/failure.dart';
+import 'package:veyra_mobile/core/error/failure_l10n.dart';
 import 'package:veyra_mobile/core/theme/app_theme.dart';
 import 'package:veyra_mobile/features/service_record/data/repositories/service_record_repository_impl.dart';
 import 'package:veyra_mobile/features/service_record/domain/entities/service_record.dart';
+import 'package:veyra_mobile/l10n/app_localizations.dart';
 
 /// Lists a vehicle's service records (date · odometer · description · workshop,
 /// trailing `Rp cost` when present) with loading / empty / error states.
@@ -14,15 +16,18 @@ class ServiceRecordList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final records = ref.watch(serviceRecordListProvider(vehicleId));
     return records.when(
       loading: () => const _ListSkeleton(),
       error: (e, _) => _ListError(
-        message: e is Failure ? e.message : 'Could not load service records.',
+        message: e is Failure
+            ? localizedFailure(l10n, e)
+            : l10n.serviceRecordLoadError,
         onRetry: () => ref.invalidate(serviceRecordListProvider(vehicleId)),
       ),
       data: (items) => items.isEmpty
-          ? const _EmptyState()
+          ? _EmptyState(message: l10n.serviceRecordEmpty)
           : Column(
               children: [
                 for (final r in items) ...[
@@ -87,15 +92,16 @@ class _ServiceRecordTile extends StatelessWidget {
 }
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState();
+  const _EmptyState({required this.message});
+  final String message;
 
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(vertical: 28),
     alignment: Alignment.center,
-    child: const Text(
-      'No service records yet. Log the first one.',
-      style: TextStyle(color: VeyraColors.textMuted, fontSize: 14),
+    child: Text(
+      message,
+      style: const TextStyle(color: VeyraColors.textMuted, fontSize: 14),
     ),
   );
 }
@@ -127,28 +133,31 @@ class _ListError extends StatelessWidget {
   final VoidCallback onRetry;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: VeyraColors.surface,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: VeyraColors.border),
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: Text(
-            message,
-            style: const TextStyle(
-              color: VeyraColors.textMuted,
-              fontSize: 13,
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VeyraColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: VeyraColors.border),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: VeyraColors.textMuted,
+                fontSize: 13,
+              ),
             ),
           ),
-        ),
-        TextButton(onPressed: onRetry, child: const Text('Retry')),
-      ],
-    ),
-  );
+          TextButton(onPressed: onRetry, child: Text(l10n.commonRetry)),
+        ],
+      ),
+    );
+  }
 }
 
 String _date(DateTime d) =>

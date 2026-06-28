@@ -1,9 +1,11 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:veyra_mobile/core/error/failure_l10n.dart';
 import 'package:veyra_mobile/core/theme/app_theme.dart';
 import 'package:veyra_mobile/features/service_record/data/repositories/service_record_repository_impl.dart';
 import 'package:veyra_mobile/features/service_record/domain/repositories/service_record_repository.dart';
+import 'package:veyra_mobile/l10n/app_localizations.dart';
 
 /// Bottom-sheet form to log a service record: date, odometer, description,
 /// optional workshop, optional cost, optional notes.
@@ -47,13 +49,14 @@ class _AddServiceRecordSheetState extends ConsumerState<AddServiceRecordSheet> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context);
     if (_description.text.trim().isEmpty) {
-      setState(() => _error = 'Enter a description.');
+      setState(() => _error = l10n.serviceRecordErrorDescription);
       return;
     }
     final odo = int.tryParse(_odometer.text.trim());
     if (odo == null || odo < 0) {
-      setState(() => _error = 'Enter a valid odometer reading.');
+      setState(() => _error = l10n.serviceRecordErrorOdometer);
       return;
     }
     Decimal? cost;
@@ -61,7 +64,7 @@ class _AddServiceRecordSheetState extends ConsumerState<AddServiceRecordSheet> {
     if (costText.isNotEmpty) {
       cost = Decimal.tryParse(costText);
       if (cost == null || cost < Decimal.zero) {
-        setState(() => _error = 'Enter a valid cost.');
+        setState(() => _error = l10n.serviceRecordErrorCost);
         return;
       }
     }
@@ -84,9 +87,10 @@ class _AddServiceRecordSheetState extends ConsumerState<AddServiceRecordSheet> {
       ),
     );
     if (!mounted) return;
+    final l10nAfter = AppLocalizations.of(context);
     result.fold(
       (failure) => setState(() {
-        _error = failure.message;
+        _error = localizedFailure(l10nAfter, failure);
         _saving = false;
       }),
       (_) {
@@ -98,6 +102,7 @@ class _AddServiceRecordSheetState extends ConsumerState<AddServiceRecordSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -109,16 +114,21 @@ class _AddServiceRecordSheetState extends ConsumerState<AddServiceRecordSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Log service', style: soraDisplay(size: 20)),
+              Text(l10n.serviceRecordTitle, style: soraDisplay(size: 20)),
               const SizedBox(height: 18),
-              const _Label('Date'),
+              _Label(l10n.serviceRecordFieldDate),
               _DateField(date: _date, onTap: _pickDate),
               const SizedBox(height: 14),
-              _field('Odometer (km)', _odometer, hint: '0', number: true),
-              _field('Description', _description, hint: 'Oil change'),
-              _field('Workshop (optional)', _workshop, hint: 'AutoCare'),
-              _field('Cost (optional)', _cost, hint: '350000', number: true),
-              _field('Notes (optional)', _notes, hint: 'Synthetic oil'),
+              _field(l10n.serviceRecordFieldOdometer, _odometer,
+                  hint: '0', number: true),
+              _field(l10n.serviceRecordFieldDescription, _description,
+                  hint: 'Oil change'),
+              _field(l10n.serviceRecordFieldWorkshop, _workshop,
+                  hint: 'AutoCare'),
+              _field(l10n.serviceRecordFieldCost, _cost,
+                  hint: '350000', number: true),
+              _field(l10n.serviceRecordFieldNotes, _notes,
+                  hint: 'Synthetic oil'),
               if (_error != null) ...[
                 const SizedBox(height: 6),
                 Text(
@@ -141,7 +151,7 @@ class _AddServiceRecordSheetState extends ConsumerState<AddServiceRecordSheet> {
                           color: VeyraColors.bg,
                         ),
                       )
-                    : const Text('Save service'),
+                    : Text(l10n.serviceRecordSave),
               ),
             ],
           ),

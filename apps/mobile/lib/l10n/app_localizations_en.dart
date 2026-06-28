@@ -592,6 +592,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fuelLogLoadError => 'Could not load fuel logs.';
 
   @override
+  String get serviceRecordTitle => 'Log service';
+
+  @override
+  String get serviceRecordFieldDate => 'Date';
+
+  @override
+  String get serviceRecordFieldOdometer => 'Odometer (km)';
+
+  @override
+  String get serviceRecordFieldDescription => 'Description';
+
+  @override
+  String get serviceRecordFieldWorkshop => 'Workshop (optional)';
+
+  @override
+  String get serviceRecordFieldCost => 'Cost (optional)';
+
+  @override
+  String get serviceRecordFieldNotes => 'Notes (optional)';
+
+  @override
+  String get serviceRecordSave => 'Save service';
+
+  @override
+  String get serviceRecordErrorDescription => 'Enter a description.';
+
+  @override
+  String get serviceRecordErrorOdometer => 'Enter a valid odometer reading.';
+
+  @override
+  String get serviceRecordErrorCost => 'Enter a valid cost.';
+
+  @override
+  String get serviceRecordEmpty => 'No service records yet. Log the first one.';
+
+  @override
+  String get serviceRecordLoadError => 'Could not load service records.';
+
+  @override
   String get expenseAddTitle => 'Add expense';
 
   @override

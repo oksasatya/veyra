@@ -1112,6 +1112,84 @@ abstract class AppLocalizations {
   /// **'Could not load fuel logs.'**
   String get fuelLogLoadError;
 
+  /// No description provided for @serviceRecordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Log service'**
+  String get serviceRecordTitle;
+
+  /// No description provided for @serviceRecordFieldDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get serviceRecordFieldDate;
+
+  /// No description provided for @serviceRecordFieldOdometer.
+  ///
+  /// In en, this message translates to:
+  /// **'Odometer (km)'**
+  String get serviceRecordFieldOdometer;
+
+  /// No description provided for @serviceRecordFieldDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get serviceRecordFieldDescription;
+
+  /// No description provided for @serviceRecordFieldWorkshop.
+  ///
+  /// In en, this message translates to:
+  /// **'Workshop (optional)'**
+  String get serviceRecordFieldWorkshop;
+
+  /// No description provided for @serviceRecordFieldCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost (optional)'**
+  String get serviceRecordFieldCost;
+
+  /// No description provided for @serviceRecordFieldNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes (optional)'**
+  String get serviceRecordFieldNotes;
+
+  /// No description provided for @serviceRecordSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save service'**
+  String get serviceRecordSave;
+
+  /// No description provided for @serviceRecordErrorDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a description.'**
+  String get serviceRecordErrorDescription;
+
+  /// No description provided for @serviceRecordErrorOdometer.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid odometer reading.'**
+  String get serviceRecordErrorOdometer;
+
+  /// No description provided for @serviceRecordErrorCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid cost.'**
+  String get serviceRecordErrorCost;
+
+  /// No description provided for @serviceRecordEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No service records yet. Log the first one.'**
+  String get serviceRecordEmpty;
+
+  /// No description provided for @serviceRecordLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load service records.'**
+  String get serviceRecordLoadError;
+
   /// No description provided for @expenseAddTitle.
   ///
   /// In en, this message translates to:
