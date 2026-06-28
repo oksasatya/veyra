@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:veyra_mobile/core/network/api_envelope.dart';
 import 'package:veyra_mobile/features/auth/data/models/auth_tokens_dto.dart';
 import 'package:veyra_mobile/features/auth/data/models/user_dto.dart';
 
@@ -16,7 +17,7 @@ class AuthRemoteDataSource {
       '/auth/login',
       data: {'email': email, 'password': password},
     );
-    return _parseAuth(res.data!);
+    return _parseAuth(res.dataObject);
   }
 
   Future<AuthPayload> register(
@@ -28,7 +29,7 @@ class AuthRemoteDataSource {
       '/auth/register',
       data: {'email': email, 'password': password, 'name': name},
     );
-    return _parseAuth(res.data!);
+    return _parseAuth(res.dataObject);
   }
 
   Future<void> logout(String refreshToken) =>
@@ -36,7 +37,7 @@ class AuthRemoteDataSource {
 
   Future<UserDto> me() async {
     final res = await _dio.get<Map<String, dynamic>>('/me');
-    return UserDto.fromJson(res.data!);
+    return UserDto.fromJson(res.dataObject);
   }
 
   AuthPayload _parseAuth(Map<String, dynamic> data) => (

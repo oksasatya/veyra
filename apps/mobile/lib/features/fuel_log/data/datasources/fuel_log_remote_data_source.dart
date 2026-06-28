@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:veyra_mobile/core/network/api_envelope.dart';
 import 'package:veyra_mobile/features/fuel_log/data/models/fuel_log_dto.dart';
 
 /// Raw HTTP calls for fuel logs. Throws [DioException] on failure (mapped to a
@@ -11,8 +12,7 @@ class FuelLogRemoteDataSource {
     final res = await _dio.get<Map<String, dynamic>>(
       '/vehicles/$vehicleId/fuel-logs',
     );
-    final rows = res.data!['logs'] as List<dynamic>;
-    return rows
+    return res.dataList
         .map((e) => FuelLogDto.fromJson(e as Map<String, dynamic>))
         .toList();
   }
@@ -25,6 +25,6 @@ class FuelLogRemoteDataSource {
       '/vehicles/$vehicleId/fuel-logs',
       data: body,
     );
-    return FuelLogDto.fromJson(res.data!);
+    return FuelLogDto.fromJson(res.dataObject);
   }
 }

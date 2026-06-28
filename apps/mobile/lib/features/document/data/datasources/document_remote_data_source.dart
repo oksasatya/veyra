@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:veyra_mobile/core/network/api_envelope.dart';
 import 'package:veyra_mobile/features/document/data/models/document_dto.dart';
 
 /// Raw HTTP calls for documents. Throws [DioException] on failure (mapped to a
@@ -11,8 +12,7 @@ class DocumentRemoteDataSource {
     final res = await _dio.get<Map<String, dynamic>>(
       '/vehicles/$vehicleId/documents',
     );
-    final rows = res.data!['documents'] as List<dynamic>;
-    return rows
+    return res.dataList
         .map((e) => DocumentDto.fromJson(e as Map<String, dynamic>))
         .toList();
   }
@@ -25,6 +25,6 @@ class DocumentRemoteDataSource {
       '/vehicles/$vehicleId/documents',
       data: body,
     );
-    return DocumentDto.fromJson(res.data!);
+    return DocumentDto.fromJson(res.dataObject);
   }
 }

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:veyra_mobile/core/network/api_envelope.dart';
 import 'package:veyra_mobile/core/storage/token_store.dart';
 
 /// On 401, performs ONE `POST /auth/refresh` even under concurrent failures
@@ -57,7 +58,7 @@ class RefreshInterceptor extends Interceptor {
         data: {'refresh_token': tokens.refresh},
         options: Options(headers: {'X-Auth-Mode': 'bearer'}),
       );
-      final t = res.data!['tokens'] as Map<String, dynamic>;
+      final t = res.dataObject['tokens'] as Map<String, dynamic>;
       await store.save(
         Tokens(
           access: t['access_token'] as String,
