@@ -1,0 +1,22 @@
+# Codecov configuration. The authoritative 90% gate is enforced in CI by
+# `cargo llvm-cov --fail-under-lines 90`; these statuses drive the PR comment + badge.
+coverage:
+  status:
+    project:
+      default:
+        target: 90%
+        threshold: 1%
+    patch:
+      default:
+        target: 90%
+
+# Exclude non-product code from the coverage denominator (mirrors the CI
+# --ignore-filename-regex so the badge matches the gate).
+ignore:
+  - "apps/backend/tests/**"
+  - "apps/backend/migrations/**"
+  - "apps/backend/src/main.rs"
+
+comment:
+  layout: "reach, diff, files"
+  require_changes: false
